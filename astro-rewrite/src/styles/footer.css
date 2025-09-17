@@ -1,0 +1,30 @@
+footer {
+  max-width: 100%;
+  overflow-x: auto;
+  .btn-nav {
+    background: var(--color-primary) !important;
+    * {
+      color: white;
+    }
+  }
+
+  footer-image svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    fill: var(--color-primary);
+  }
+
+  .footer-logo {
+    width: 250px;
+    vertical-align: bottom;
+  }
+
+  @media (max-width: var(--breakpoint-md)) {      
+    .footer-logo {
+      display: none; /* hide logo on mobile, doesn't scale well 
+      !!! and causes horizontal scrollbar and empty space beneath html tags */
+      width: 120px;
+    }
+  }
+}
