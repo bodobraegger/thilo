@@ -7,29 +7,39 @@ export interface Props {
 }
 
 const { section } = Astro.props;
+
+import '../styles/section.css';
+
 ---
 
-<div class="content">
-  <div id="section-title" class="section-title mb-2" style={`background-color: ${section.color_primary || '#0066cc'}`}>
-    <h1 class="bg-primary px-2">{section.title}</h1>
+
+
+
+<section class="content">
+
+  <div id="section-title" class={`section-title section-${section.sorting} mb-2`}>
+    <h1 class="bg-primary px-2">
+      {section.title}
+    </h1>
+    {section.icon && <img class="icon pl-2" src={section.icon.url} alt="icon" />}
   </div>
-
-  <div class="section-body rounded p-2 color-bg-default">
-    <div class="section-description">
-      <MarkdownRenderer content={section.content} />
+  {section.content && (
+    <div class="section-body rounded p-3 color-bg-default">
+      <div class="section-description">
+        <MarkdownRenderer content={section.content} />
+      </div>
     </div>
-
-    {section.chapters && section.chapters.length > 0 && (
-      <div class="chapters">
-        {section.chapters
-          .sort((a, b) => (a.sorting || 0) - (b.sorting || 0))
-          .map(chapter => (
+  )}
+  {section.chapters && section.chapters.length > 0 && (
+    <div class="chapters">
+      {section.chapters
+        .sort((a, b) => (a.sorting || 0) - (b.sorting || 0))
+        .map(chapter => (
           <div id={chapter.slug} class="chapter">
             <h2>{chapter.title}</h2>
             <div class="chapter-content">
               <MarkdownRenderer content={chapter.content} />
             </div>
-            
             {chapter.targets && chapter.targets.length > 0 && (
               <div class="targets">
                 <h3>Zielgruppe</h3>
@@ -46,9 +56,8 @@ const { section } = Astro.props;
             )}
           </div>
         ))}
-      </div>
-    )}
-  </div>
+    </div>
+  )}
 
   <!-- Back to top button -->
   <button 
@@ -59,7 +68,7 @@ const { section } = Astro.props;
   >
     ↑ Nach oben
   </button>
-</div>
+</section>
 
 
 

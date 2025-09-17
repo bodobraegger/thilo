@@ -16,6 +16,10 @@ const articles = await getArticlesBySection(section as string);
 if (!sectionData) {
   return Astro.redirect('/404');
 }
+
+import '../styles/section.css';
+
+
 ---
 
 <MainLayout title={`${sectionData.title} - Thilo`}>
@@ -46,4 +50,3 @@ if (!sectionData) {
     </nav>
   </div>
 </MainLayout>
-
