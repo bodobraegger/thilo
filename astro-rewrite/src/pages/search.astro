@@ -3,6 +3,8 @@ import MainLayout from '../layouts/MainLayout.astro';
 import { getSections } from '../utils/data';
 import { getTranslations } from '../i18n';
 
+import '../styles/search.css';
+
 const locale = Astro.currentLocale || 'de';
 const t = getTranslations(locale as any);
 
