@@ -5,7 +5,7 @@
 This is an Astro project converted from a React application. The project includes:
 
 - **Framework**: Astro with TypeScript support
-- **Styling**: SCSS
+- **Styling**: CSS
 - **Internationalization**: i18n support
 - **Architecture**: Multi-page application with components, layouts, and pages
 - **Content**: Static content loaded from JSON files
@@ -15,7 +15,7 @@ This is an Astro project converted from a React application. The project include
 - `src/pages/` - Astro pages (file-based routing)
 - `src/components/` - Reusable Astro components
 - `src/layouts/` - Page layouts
-- `src/styles/` - SCSS stylesheets
+- `src/styles/` - CSS stylesheets
 - `src/data/` - JSON data files
 - `public/` - Static assets
 
