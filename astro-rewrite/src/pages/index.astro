@@ -16,6 +16,13 @@ try {
   console.error('Error loading data:', e);
   error = e;
 }
+
+
+export async function getStaticPaths() {
+  const locales = ['en', 'de', 'fr', 'it'];
+  return locales.map(lang => ({ params: { lang } }));
+}
+
 ---
 
 <MainLayoutWithToC title={startPage?.title || "Thilo - Scout Magazin"} lang={locale}>
