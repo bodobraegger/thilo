@@ -1,0 +1,19 @@
+---
+import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
+import Section from './Section.astro';
+
+interface Props {
+  section: any;
+  locale: string;
+}
+
+const { section, locale } = Astro.props;
+
+if (!section) {
+  return Astro.redirect('/404');
+}
+---
+
+<MainLayoutWithToC title={section.title} lang={locale} currentSection={section}>
+  <Section section={section} />
+</MainLayoutWithToC>

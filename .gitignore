@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-
 # testing
 /coverage
 
@@ -37,3 +36,4 @@ astro-rewrite/.pnp.js
 astro-rewrite/coverage
 astro-rewrite/build
 astro-rewrite/dist
+astro-rewrite/.astro

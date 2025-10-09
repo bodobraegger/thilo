@@ -236,10 +236,13 @@ if (currentSection) {
   }
 
   function performSearch(query: string) {
+    const currentLocale = languageSelect?.dataset.currentLocale || 'de';
+    const baseUrl = currentLocale === 'de' ? '/search' : `/${currentLocale}/search`;
+    
     if (query.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+      window.location.href = `${baseUrl}?q=${encodeURIComponent(query.trim())}`;
     } else {
-      window.location.href = '/search';
+      window.location.href = baseUrl;
     }
   }
 

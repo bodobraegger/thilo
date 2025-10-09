@@ -1,50 +1,12 @@
 ---
-import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
-import Section from '../components/Section.astro';
-import { getSections } from '../utils/data';
-import { getAllSlugsForSection } from '../utils/slugMapping';
-import { slugify } from '../utils/slugify';
+import SectionPage from '../components/SectionPage.astro';
+import { generateSectionPaths } from '../utils/staticPaths';
 
 export async function getStaticPaths() {
-  const locale = 'de'; // German is the default for root level
-  const paths = [];
-  
-  try {
-    const sections = await getSections(locale);
-    for (const section of sections) {
-      const sectionId = section.id.toString();
-      // Get all possible slugs for this section
-      const slugVariants = getAllSlugsForSection(sectionId);
-      const germanSlug = slugVariants.find(s => s.locale === 'de')?.slug;
-      
-      if (germanSlug) {
-        paths.push({
-          params: { slug: germanSlug },
-          props: { section, locale }
-        });
-      } else {
-        // Fallback to generated slug if no custom mapping
-        paths.push({
-          params: { slug: section.slug },
-          props: { section, locale }
-        });
-      }
-    }
-  } catch (error) {
-    console.error(`Error loading sections for ${locale}:`, error);
-  }
-  
-  console.log(`Total German paths generated:`, paths.length, paths.map(p => p.params.slug));
-  return paths;
+  return generateSectionPaths(['de'], false); // German only, no locale param
 }
 
 const { section, locale } = Astro.props;
-
-if (!section) {
-  return Astro.redirect('/404');
-}
 ---
 
-<MainLayoutWithToC title={section.title} lang={locale} currentSection={section}>
-  <Section section={section} />
-</MainLayoutWithToC>
+<SectionPage section={section} locale={locale} />
