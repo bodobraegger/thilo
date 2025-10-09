@@ -8,14 +8,15 @@ export interface Props {
 
 const { content, class: className = '' } = Astro.props;
 
+// Custom renderer for links and images
+const renderer = new marked.Renderer();
+
 // Configure marked options
 marked.setOptions({
   gfm: true,
-  breaks: true,
+  async: true,
+  renderer: renderer,
 });
-
-// Custom renderer for links and images
-const renderer = new marked.Renderer();
 
 renderer.link = function(token: any): string {
   const { href, title, text } = token;
@@ -102,8 +103,6 @@ renderer.image = function(token: any): string {
   imgTag += ' />';
   return imgTag;
 };
-
-marked.use({ renderer });
 
 const processedContent = marked(content || '');
 ---
