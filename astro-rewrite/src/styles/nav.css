@@ -5,7 +5,7 @@ header {
   padding: 0.6em;
   @media screen and (min-width: calc(860px - 1px)) {
     box-shadow: 0 0 10px 0 rgba(0,0,0,0.5);
-    clip-path: inset(0px -15px 0px 0px); }
+    clip-path: inset(0px -15px 0px 0px);
   }
 }
 
@@ -95,4 +95,15 @@ nav.header-nav {
       font-size: 20px;
     }
   }
+}
+
+/* Table of Contents hover effects using CSS variables */
+#sidebar-nav .group:hover:not(.font-medium) {
+  background-color: var(--color-primary-50) !important;
+  color: var(--color-primary-700) !important;
+}
+
+#sidebar-nav a:hover:not(.font-medium) {
+  background-color: var(--color-primary-50) !important;
+  color: var(--color-primary-700) !important;
 }

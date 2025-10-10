@@ -1,11 +1,14 @@
 ---
-import MainLayout from '../layouts/MainLayout.astro';
+import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getSections } from '../utils/data';
 import { getTranslations } from '../i18n';
+import { generateColorCSSProperties } from '../utils/colors';
 
 import '../styles/search.css';
 
 const locale = Astro.currentLocale || 'de';
+// Generate fallback color palette for search page
+const searchColorStyle = generateColorCSSProperties('#521d3a');
 const t = getTranslations(locale as any);
 
 // Get the search query from URL parameters
@@ -22,9 +25,9 @@ try {
 }
 ---
 
-<MainLayout title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
+<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
   <!-- GitHub Primer styled search page -->
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={searchColorStyle}>
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-4">{t.translation.searchPage.title}</h1>
@@ -40,13 +43,17 @@ try {
             id="search-input"
             placeholder={t.translation.searchPage.placeholder}
             value={initialQuery}
-            class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:outline-none text-base"
+            style="--tw-ring-color: var(--color-primary-500, #0369a1); --tw-ring-offset-width: 0px;"
           />
         </div>
         <button 
           type="button" 
           id="search-button"
-          class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          class="px-6 py-3 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+          style="background-color: var(--color-primary-600, #0284c7); --tw-ring-color: var(--color-primary-500, #0369a1);"
+          onmouseover="this.style.backgroundColor = 'var(--color-primary-700, #0369a1)'"
+          onmouseout="this.style.backgroundColor = 'var(--color-primary-600, #0284c7)'"
         >
           Suchen
         </button>
@@ -63,7 +70,7 @@ try {
       </div>
     </div>
   </div>
-</MainLayout>
+</MainLayoutWithToC>
 
 <script define:vars={{ sections, t, initialQuery }} is:inline>
   // Search functionality with Strapi data
@@ -157,17 +164,17 @@ try {
       return `
         <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
           <h3 class="text-lg font-semibold mb-2">
-            <a href="${result.url}" class="text-blue-600 hover:text-blue-800 hover:underline">
+            <a href="${result.url}" class="hover:underline" style="color: var(--color-primary-600, #0284c7);">
               ${result.title}
             </a>
           </h3>
           <p class="text-gray-700 leading-relaxed mb-3">${excerpt}</p>
           <div class="flex items-center gap-3 text-sm">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: var(--color-primary-100, #e0f2fe); color: var(--color-primary-800, #075985);">
               ${result.type === 'section' ? 'Bereich' : 'Kapitel'}
             </span>
             <span class="text-gray-500">${result.section.title}</span>
-            <a href="${result.url}" class="inline-flex items-center text-blue-600 hover:text-blue-800 ml-auto">
+            <a href="${result.url}" class="inline-flex items-center ml-auto" style="color: var(--color-primary-600, #0284c7);">
               Lesen
               <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -214,4 +221,26 @@ try {
   if (initialQuery && initialQuery.trim()) {
     performSearch(initialQuery);
   }
+</script>
+
+<!-- Apply search page colors globally -->
+<script define:vars={{ searchColorCSS: searchColorStyle }}>
+  // Set search page color palette on document root for global access
+  document.addEventListener('DOMContentLoaded', function() {
+    if (searchColorCSS) {
+      // Parse the CSS properties and set them on document root
+      const colorProperties = searchColorCSS.split('\n');
+      colorProperties.forEach(property => {
+        if (property.trim() && property.includes(':')) {
+          const [key, value] = property.split(':');
+          if (key && value) {
+            document.documentElement.style.setProperty(
+              key.trim(),
+              value.replace(';', '').trim()
+            );
+          }
+        }
+      });
+    }
+  });
 </script>

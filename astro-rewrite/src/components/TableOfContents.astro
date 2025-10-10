@@ -1,6 +1,7 @@
 ---
 import type { SectionT } from '../utils/data';
 import { getSectionUrlForLocale, getAllSlugsForSection } from '../utils/slugMapping';
+import { generateColorCSSProperties } from '../utils/colors';
 
 interface Props {
   sections: SectionT[];
@@ -36,19 +37,10 @@ function getSectionUrl(section: SectionT, locale: string): string {
 }
 ---
 
-<nav class="w-72 h-screen sticky top-0 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar-nav">
+<nav class="w-72 h-screen bg-white border-r border-gray-200 overflow-y-auto sticky top-0 lg:block hidden" id="sidebar-nav">
   <!-- Header -->
-  <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+  <div class="p-4 border-b border-gray-200 bg-gray-50">
     <h3 class="text-sm font-semibold text-gray-900">Navigation</h3>
-    <button 
-      class="lg:hidden p-1 rounded hover:bg-gray-100" 
-      id="sidebar-close"
-      aria-label="Close navigation"
-    >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
   </div>
 
   <!-- Navigation List -->
@@ -60,9 +52,13 @@ function getSectionUrl(section: SectionT, locale: string): string {
           href={lang === 'de' ? '/' : `/${lang}/`}
           class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-              ? 'bg-blue-100 text-blue-900 font-medium border-l-4 border-blue-500' 
+              ? 'font-medium border-l-4' 
               : 'text-gray-700 hover:bg-gray-100'
           }`}
+          style={(currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
+            ? 'background-color: var(--color-primary-100, #e0f2fe); color: var(--color-primary-900, #0c4a6e); border-left-color: var(--color-primary-500, #0369a1);'
+            : ''
+          }
         >
           <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -77,14 +73,23 @@ function getSectionUrl(section: SectionT, locale: string): string {
         const isActivePage = currentPath === sectionPath || currentPath.startsWith(sectionPath);
         const isCurrentSection = isActivePage; // Only expand if we're actually on this section's page
         
+        // Generate color palette for this section
+        const sectionColorStyle = section.color_primary 
+          ? generateColorCSSProperties(section.color_primary)
+          : '';
+
         return (
-          <li>
+          <li style={sectionColorStyle}>
             <!-- Section header with link and toggle -->
-            <div class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors group ${
-              isActivePage
-                ? 'bg-blue-100 text-blue-900 font-medium border-l-4 border-blue-500'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}>
+            <div 
+              class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors group font-medium ${
+                isActivePage ? 'border-l-4' : 'hover:bg-gray-100'
+              }`}
+              style={isActivePage 
+                ? 'background-color: var(--color-primary-100); color: var(--color-primary-900); border-left-color: var(--color-primary-600);'
+                : 'color: #374151;'
+              }
+            >
               <!-- Section Link -->
               <a 
                 href={sectionPath}
@@ -145,9 +150,12 @@ function getSectionUrl(section: SectionT, locale: string): string {
                         <a 
                           href={`${sectionPath}${chapterHash}`}
                           class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                            isActiveChapter
-                              ? 'bg-blue-50 text-blue-800 font-medium border-l-4 border-blue-400'
-                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            isActiveChapter ? 'font-medium border-l-4' : ''
+                          }`}
+                          style={`${sectionColorStyle} ${
+                            isActiveChapter 
+                              ? 'background-color: var(--color-primary-50); color: var(--color-primary-800); border-left-color: var(--color-primary-400);'
+                              : 'color: #4b5563;'
                           }`}
                         >
                           <svg class="w-3 h-3 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -168,42 +176,78 @@ function getSectionUrl(section: SectionT, locale: string): string {
   </div>
 </nav>
 
-<!-- Mobile overlay -->
+<!-- Mobile/Tablet overlay -->
 <div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden" id="sidebar-overlay"></div>
 
-<!-- Mobile toggle button -->
-<button 
-  class="fixed top-20 left-4 z-50 lg:hidden bg-white border border-gray-300 rounded-md p-2 shadow-lg hover:bg-gray-50"
-  id="sidebar-toggle"
-  aria-label="Open navigation"
->
-  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-</button>
 
 <script is:inline>
   // Mobile sidebar functionality
   const sidebarToggle = document.getElementById('sidebar-toggle');
-  const sidebarClose = document.getElementById('sidebar-close');
   const sidebarNav = document.getElementById('sidebar-nav');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
 
   function openSidebar() {
-    sidebarNav?.classList.remove('hidden');
-    sidebarNav?.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50');
-    sidebarOverlay?.classList.remove('hidden');
+    // Only handle mobile behavior - on large screens, sidebar is always visible via CSS
+    if (window.innerWidth < 1024) {
+      // On medium and smaller screens, show as modal overlay
+      sidebarNav?.classList.remove('hidden', 'sticky', 'relative');
+      sidebarNav?.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50');
+      sidebarOverlay?.classList.remove('hidden');
+    }
   }
 
   function closeSidebar() {
-    sidebarNav?.classList.add('hidden');
-    sidebarNav?.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-50');
-    sidebarOverlay?.classList.add('hidden');
+    // Only handle mobile behavior - don't interfere with large screen CSS
+    if (window.innerWidth < 1024) {
+      // On small/medium screens, hide the modal and restore original classes
+      sidebarNav?.classList.add('hidden');
+      sidebarNav?.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-50');
+      sidebarOverlay?.classList.add('hidden');
+    }
   }
 
+  // Initialize sidebar visibility based on screen size
+  function initSidebarVisibility() {
+    if (window.innerWidth >= 1024) {
+      // Large screens: ensure sidebar is visible
+      sidebarNav?.classList.remove('hidden');
+      sidebarNav?.classList.add('lg:block');
+      sidebarOverlay?.classList.add('hidden');
+    } else {
+      // Small/medium screens: hide by default
+      sidebarNav?.classList.add('hidden');
+      sidebarOverlay?.classList.add('hidden');
+    }
+  }
+
+  // Initialize on load
+  initSidebarVisibility();
+  
+  // Handle window resize
+  window.addEventListener('resize', initSidebarVisibility);
+
   sidebarToggle?.addEventListener('click', openSidebar);
-  sidebarClose?.addEventListener('click', closeSidebar);
   sidebarOverlay?.addEventListener('click', closeSidebar);
+
+  // Listen for header sidebar toggle event (mobile only)
+  window.addEventListener('toggleSidebar', () => {
+    console.log('Toggle sidebar event received');
+    
+    // Only handle toggle on small/medium screens
+    if (window.innerWidth < 1024) {
+      console.log('Mobile toggle - checking if hidden:', sidebarNav?.classList.contains('hidden'));
+      
+      if (sidebarNav?.classList.contains('hidden')) {
+        console.log('Opening mobile sidebar');
+        openSidebar();
+      } else {
+        console.log('Closing mobile sidebar');
+        closeSidebar();
+      }
+    } else {
+      console.log('Large screen - sidebar should be visible via CSS');
+    }
+  });
 
   // Smooth scroll for anchor links
   document.querySelectorAll('a[href*="#"]').forEach((anchor) => {
@@ -248,10 +292,18 @@ function getSectionUrl(section: SectionT, locale: string): string {
       if (href && href.includes('#')) {
         const hash = href.split('#')[1];
         if (hash === activeChapter) {
-          link.classList.add('bg-blue-50', 'text-blue-800', 'font-medium', 'border-l-4', 'border-blue-400');
+          // Use CSS custom properties for dynamic colors
+          link.style.backgroundColor = 'var(--color-primary-50, #f0f9ff)';
+          link.style.color = 'var(--color-primary-800, #075985)';
+          link.style.borderLeft = '4px solid var(--color-primary-400, #38bdf8)';
+          link.classList.add('font-medium');
           link.classList.remove('text-gray-600', 'hover:bg-gray-50');
         } else {
-          link.classList.remove('bg-blue-50', 'text-blue-800', 'font-medium', 'border-l-4', 'border-blue-400');
+          // Reset to default styles
+          link.style.backgroundColor = '';
+          link.style.color = '';
+          link.style.borderLeft = '';
+          link.classList.remove('font-medium');
           link.classList.add('text-gray-600', 'hover:bg-gray-50');
         }
       }

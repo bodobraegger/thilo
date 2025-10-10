@@ -1,6 +1,7 @@
 ---
 import { getTranslations, type Locale } from '../i18n';
-import { getSectionUrlForLocale } from '../utils/slugMapping';
+import { generateColorCSSProperties } from '../utils/colors';
+import { fetchAllSections, getSectionUrlForLocaleFromCache, type AllSectionsData } from '../utils/sectionMappings';
 
 interface Props {
   locale?: Locale;
@@ -10,22 +11,33 @@ interface Props {
 const { locale = 'de', currentSection } = Astro.props;
 const t = getTranslations(locale);
 
+// Generate color CSS properties if we have a current section
+const sectionColorStyle = currentSection?.color_primary 
+  ? generateColorCSSProperties(currentSection.color_primary)
+  : '';
+
 // Get current URL to determine page type
 const url = Astro.url;
 const pathname = url.pathname;
+
+// Fetch ALL section data at build time
+const allSectionsData: AllSectionsData = await fetchAllSections();
 
 // Generate language alternatives for dropdown
 let languageAlternatives = [];
 
 if (currentSection) {
-  // For section pages, use section-based language switching
+  // For section pages, use pre-built section mapping
   for (const targetLocale of ['de', 'fr', 'it']) {
     if (targetLocale === locale) continue; // Skip current locale
     
-    const url = getSectionUrlForLocale(currentSection.id.toString(), targetLocale);
+    const url = getSectionUrlForLocaleFromCache(
+      currentSection.id.toString(), 
+      targetLocale, 
+      allSectionsData.sectionMappings
+    );
     languageAlternatives.push({ locale: targetLocale, url });
   }
-
 } else {
   // For other pages (index, search, etc.), determine equivalent URLs
   let basePath = pathname;
@@ -54,189 +66,237 @@ if (currentSection) {
     }
     languageAlternatives.push({ locale: targetLocale, url: targetUrl });
   }
-
 }
 ---
 
-<!-- GitHub Primer styled header -->
-<header class="bg-gray-900 text-white border-b border-gray-700 sticky top-0 z-40">
+<!-- Store all mapping data for JavaScript -->
+<meta name="language-alternatives" content={JSON.stringify(languageAlternatives)} />
+<meta name="chapter-mappings" content={JSON.stringify(allSectionsData.chapterMappings)} />
+<meta name="current-section-id" content={currentSection ? currentSection.id.toString() : ''} />
+
+<!-- Redesigned Header -->
+<header class="bg-primary text-white sticky top-0 z-40">
   <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
-      <!-- Logo and brand -->
-      <div class="flex items-center">
-        <a href={locale === 'de' ? '/' : `/${locale}/`} class="flex items-center space-x-3 text-white hover:text-gray-200 transition-colors">
-          <img src="/logo.svg" alt="Thilo Logo" class="h-8 w-8" />
-          <span class="text-xl font-semibold">Thilo</span>
-        </a>
-      </div>
-      
-      <!-- Desktop Navigation -->
-      <nav class="hidden md:flex items-center space-x-1">
-        <a 
-          href={locale === 'de' ? '/' : `/${locale}/`}
-          class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.homePage.title}
-        </a>
-        <a 
-          href={locale === 'de' ? '/search' : `/${locale}/search`}
-          class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.searchPage.title}
-        </a>
-        <a 
-          href={locale === 'de' ? '/impressum' : `/${locale}/impressum`}
-          class="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.header.imprint}
-        </a>
-      </nav>
-      
-      <!-- Right side actions -->
+      <!-- Left side - Sidebar toggle (md screens) + Logo -->
       <div class="flex items-center space-x-3">
-        <!-- Search component -->
-        <div class="relative">
-          <div id="search-input-container" class="max-lg:hidden absolute right-0 top-1/2 transform -translate-y-1/2">
-            <div class="flex items-center rounded-md focus-within:ring-2">
-              <input 
-                type="text" 
-                id="header-search-input"
-                placeholder={t.translation.searchPage.placeholder}
-                class="bg-transparent text-white placeholder-gray-400 px-3 py-2 w-64 text-sm focus:outline-none"
-              />
-              <button 
-                type="button"
-                id="search-close"
-                class="hidden p-2 text-gray-400 hover:text-white"
-                aria-label="Close search"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          <!-- Search button -->
-          <button 
-            type="button"
-            id="search-toggle"
-            class="p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-            aria-label="Search"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-        
-        <!-- Language selector -->
-        <div class="relative">
-          <select 
-            id="language-select" 
-            class="bg-gray-800 text-white border border-gray-600 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            data-current-locale={locale}
-            data-alternatives={JSON.stringify(languageAlternatives)}
-          >
-            <option value="de" selected={locale === 'de'}>DE</option>
-            <option value="fr" selected={locale === 'fr'}>FR</option>
-            <option value="it" selected={locale === 'it'}>IT</option>
-          </select>
-        </div>
-
-        <!-- Mobile menu button -->
+        <!-- Sidebar toggle button - visible on medium and small screens -->
         <button 
           type="button"
-          id="mobile-menu-toggle"
-          class="md:hidden p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-          aria-label="Open menu"
+          id="sidebar-toggle-header"
+          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          aria-label="Toggle sidebar"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
       </div>
+
+      <!-- Center - Search (desktop only) -->
+      <div class="hidden lg:flex flex-1 max-w-lg mx-8">
+        <div class="w-full">
+          <input 
+            type="text" 
+            id="header-search-input"
+            placeholder={t.translation.searchPage.placeholder}
+            class="w-full border rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-opacity-70 bg-white text-gray-700 border-gray-300 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      <!-- Right side - Search toggle (mobile) + Menu -->
+      <div class="flex items-center space-x-2">
+        <!-- Mobile search toggle -->
+        <button 
+          type="button"
+          id="search-toggle-mobile"
+          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          aria-label="Open search"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+
+        <!-- Menu dropdown -->
+        <div class="relative">
+          <button 
+            type="button"
+            id="menu-dropdown-toggle"
+            class="p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            aria-label="Open menu"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
+
+          <!-- Dropdown menu -->
+          <div 
+            id="menu-dropdown" 
+            class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+          >
+            <div class="px-4 py-2 border-b border-gray-200">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                {t.translation.header.language}
+              </p>
+              
+              <!-- Language Options -->
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="de"
+              >
+                <span class="mr-2">{locale === 'de' ? '✓' : ''}</span>
+                <span>Deutsch</span>
+              </button>
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="fr"
+              >
+                <span class="mr-2">{locale === 'fr' ? '✓' : ''}</span>
+                <span>Français</span>
+              </button>
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="it"
+              >
+                <span class="mr-2">{locale === 'it' ? '✓' : ''}</span>
+                <span>Italiano</span>
+              </button>
+              
+              <!-- Theme Section -->
+              <div class="border-t border-gray-200 mt-1">
+                <button 
+                  type="button"
+                  id="theme-toggle"
+                  class="w-full text-left block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <span class="flex items-center justify-between">
+                    <span>Theme</span>
+                    <span class="text-xs text-gray-500">Hell</span>
+                  </span>
+                </button>
+              </div>
+              
+              <!-- Impressum Section -->
+              <div class="border-t border-gray-200">
+                <a 
+                  href={locale === 'de' ? '/impressum' : `/${locale}/impressum`}
+                  class="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  {t.translation.header.imprint}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <!-- Mobile menu overlay -->
-  <div id="mobile-menu-overlay" class="md:hidden fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black bg-opacity-50" id="mobile-menu-backdrop"></div>
-    <div class="fixed top-0 right-0 w-64 h-full bg-gray-900 shadow-xl">
-      <div class="flex items-center justify-between p-4 border-b border-gray-700">
-        <span class="text-lg font-semibold text-white">Menu</span>
+  <!-- Mobile/Tablet Search Modal -->
+  <div id="mobile-search-modal" class="lg:hidden fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50" id="search-modal-backdrop"></div>
+    <div class="fixed top-0 left-0 right-0 shadow-xl border-b bg-white border-gray-200">
+      <div class="flex items-center p-4 border-b border-gray-200">
+        <div class="flex-1 mr-3">
+          <input 
+            type="text" 
+            id="mobile-search-input"
+            placeholder={t.translation.searchPage.placeholder}
+            class="w-full border rounded-md px-4 py-3 text-base focus:outline-none focus:ring-2 focus:border-transparent placeholder-opacity-70 bg-white text-gray-700 border-gray-300 focus:ring-blue-500"
+          />
+        </div>
         <button 
-          id="mobile-menu-close"
-          class="p-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
+          id="mobile-search-close"
+          class="p-2 rounded-md transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+          aria-label="Close search"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
-      <nav class="px-4 py-6 space-y-2">
-        <a 
-          href={locale === 'de' ? '/' : `/${locale}/`}
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.homePage.title}
-        </a>
-        <a 
-          href={locale === 'de' ? '/search' : `/${locale}/search`}
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.searchPage.title}
-        </a>
-        <a 
-          href={locale === 'de' ? '/impressum' : `/${locale}/impressum`}
-          class="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
-        >
-          {t.translation.header.imprint}
-        </a>
-      </nav>
+      <!-- Search suggestions could go here -->
+      <div class="p-4">
+        <p class="text-sm text-gray-500">Start typing to search...</p>
+      </div>
     </div>
   </div>
 </header>
 
 <script>
-  // Mobile menu functionality
-  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-  const mobileMenuClose = document.getElementById('mobile-menu-close');
-  const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
-  const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+  // Sidebar toggle functionality (for medium screens)
+  const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
+  
+  sidebarToggleHeader?.addEventListener('click', () => {
+    console.log('Header sidebar toggle clicked');
+    // This will be handled by the sidebar component
+    const sidebarToggleEvent = new CustomEvent('toggleSidebar');
+    window.dispatchEvent(sidebarToggleEvent);
+    console.log('Toggle event dispatched');
+  });
 
-  function openMobileMenu() {
-    mobileMenuOverlay?.classList.remove('hidden');
+  // Menu dropdown functionality
+  const menuDropdownToggle = document.getElementById('menu-dropdown-toggle');
+  const menuDropdown = document.getElementById('menu-dropdown');
+
+  function openMenuDropdown() {
+    menuDropdown?.classList.remove('hidden');
   }
 
-  function closeMobileMenu() {
-    mobileMenuOverlay?.classList.add('hidden');
+  function closeMenuDropdown() {
+    menuDropdown?.classList.add('hidden');
   }
 
-  mobileMenuToggle?.addEventListener('click', openMobileMenu);
-  mobileMenuClose?.addEventListener('click', closeMobileMenu);
-  mobileMenuBackdrop?.addEventListener('click', closeMobileMenu);
+  menuDropdownToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menuDropdown?.classList.contains('hidden')) {
+      openMenuDropdown();
+    } else {
+      closeMenuDropdown();
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
+      if (!menuDropdown.contains(e.target as Node) && !menuDropdownToggle?.contains(e.target as Node)) {
+        closeMenuDropdown();
+      }
+    }
+  });
+
+  // Mobile search modal functionality
+  const searchToggleMobile = document.getElementById('search-toggle-mobile');
+  const mobileSearchModal = document.getElementById('mobile-search-modal');
+  const mobileSearchClose = document.getElementById('mobile-search-close');
+  const searchModalBackdrop = document.getElementById('search-modal-backdrop');
+  const mobileSearchInput = document.getElementById('mobile-search-input') as HTMLInputElement | null;
+
+  function openMobileSearch() {
+    mobileSearchModal?.classList.remove('hidden');
+    setTimeout(() => mobileSearchInput?.focus(), 100);
+  }
+
+  function closeMobileSearch() {
+    mobileSearchModal?.classList.add('hidden');
+    if (mobileSearchInput) mobileSearchInput.value = '';
+  }
+
+  searchToggleMobile?.addEventListener('click', openMobileSearch);
+  mobileSearchClose?.addEventListener('click', closeMobileSearch);
+  searchModalBackdrop?.addEventListener('click', closeMobileSearch);
 
   // Search functionality
-  const searchToggle = document.getElementById('search-toggle');
-  const searchInputContainer = document.getElementById('search-input-container');
-  const searchInput = document.getElementById('header-search-input') as HTMLInputElement | null;
-  const searchClose = document.getElementById('search-close');
-
-  function openSearch() {
-    searchToggle?.classList.add('hidden');
-    searchInputContainer?.classList.remove('hidden');
-    searchInput?.focus();
-  }
-
-  function closeSearch() {
-    searchInputContainer?.classList.add('hidden');
-    searchToggle?.classList.remove('hidden');
-    if (searchInput) searchInput.value = '';
-  }
+  const desktopSearchInput = document.getElementById('header-search-input') as HTMLInputElement | null;
 
   function performSearch(query: string) {
-    const currentLocale = languageSelect?.dataset.currentLocale || 'de';
+    const currentLocale = document.documentElement.lang || 'de';
     const baseUrl = currentLocale === 'de' ? '/search' : `/${currentLocale}/search`;
     
     if (query.trim()) {
@@ -246,124 +306,122 @@ if (currentSection) {
     }
   }
 
-  searchToggle?.addEventListener('click', openSearch);
-  searchClose?.addEventListener('click', closeSearch);
-  
-  searchInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && searchInput.value) {
-      performSearch(searchInput.value);
-    } else if (e.key === 'Escape') {
-      closeSearch();
+  // Handle search on both desktop and mobile inputs
+  desktopSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && desktopSearchInput.value) {
+      performSearch(desktopSearchInput.value);
     }
   });
 
-  // Close search when clicking outside
-  document.addEventListener('click', (e) => {
-    const searchContainer = document.querySelector('#search-input-container');
-    const searchButton = document.querySelector('#search-toggle');
-    
-    if (searchContainer && !searchContainer.classList.contains('hidden')) {
-      if (!searchContainer.contains(e.target as Node) && !searchButton?.contains(e.target as Node)) {
-        closeSearch();
+  mobileSearchInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && mobileSearchInput.value) {
+      performSearch(mobileSearchInput.value);
+      closeMobileSearch();
+    } else if (e.key === 'Escape') {
+      closeMobileSearch();
+    }
+  });
+
+  // Escape key handler for search and menu
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (mobileSearchModal?.style?.display !== 'none') {
+        closeMobileSearch();
+      } else if (menuDropdown?.style?.display !== 'none') {
+        closeMenuDropdown();
       }
     }
   });
 
-  // Language switching functionality
-  const languageSelect = document.getElementById('language-select') as HTMLSelectElement | null;
+  // Theme toggle functionality (placeholder for future implementation)
+  const themeToggle = document.getElementById('theme-toggle');
   
-  languageSelect?.addEventListener('change', async (e) => {
-    const selectedLocale = (e.target as HTMLSelectElement).value;
-    const currentLocale = languageSelect.dataset.currentLocale;
-    const alternatives = languageSelect.dataset.alternatives ? JSON.parse(languageSelect.dataset.alternatives) : [];
-    
-    if (selectedLocale === currentLocale) {
-      return;
-    }
-    
-    const targetUrl = alternatives.find((alt: any) => alt.locale === selectedLocale)?.url;
-    
-    if (targetUrl) {
-      const currentHash = window.location.hash;
-      if (currentHash) {
-        try {
-          const mappedHash = await mapChapterAnchor(currentHash, currentLocale || 'de', selectedLocale);
-          window.location.href = targetUrl + (mappedHash ? `#${mappedHash}` : '');
-        } catch (error) {
-          window.location.href = targetUrl;
-        }
+  themeToggle?.addEventListener('click', () => {
+    // TODO: Implement theme switching in next step
+    console.log('Theme toggle clicked - to be implemented');
+    closeMenuDropdown();
+  });
+
+  // SIMPLIFIED Language switching functionality using pre-built static data
+  const languageOptions = document.querySelectorAll('.language-option');
+  
+  languageOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      const selectedLocale = (e.currentTarget as HTMLElement)?.dataset?.locale;
+      const currentLocale = document.documentElement.lang || 'de';
+      
+      if (selectedLocale === currentLocale) {
+        closeMenuDropdown();
+        return;
+      }
+      
+      // Get language alternatives from meta tag
+      const languageAltsData = document.querySelector('meta[name="language-alternatives"]')?.getAttribute('content');
+      const languageAlts = languageAltsData ? JSON.parse(languageAltsData) : [];
+      const targetAlt = languageAlts.find((alt: any) => alt.locale === selectedLocale);
+      
+      let targetUrl = '';
+      if (targetAlt) {
+        // Use proper section mapping for correct URLs
+        targetUrl = targetAlt.url;
       } else {
+        // Fallback to simple URL construction only if no mapping found
+        if (selectedLocale === 'de') {
+          targetUrl = window.location.pathname.replace(/^\/(fr|it)/, '') || '/';
+        } else {
+          const pathWithoutLocale = window.location.pathname.replace(/^\/(de|fr|it)/, '') || '/';
+          targetUrl = `/${selectedLocale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
+        }
+      }
+      
+      // Handle chapter anchors using pre-built mappings
+      const currentHash = window.location.hash;
+      console.log('🔄 Language switch attempt:', { currentHash, selectedLocale, targetUrl });
+      
+      if (currentHash && selectedLocale) {
+        const mappedHash = mapChapterAnchor(currentHash, currentLocale, selectedLocale);
+        const finalUrl = targetUrl + (mappedHash ? `#${mappedHash}` : currentHash);
+        console.log('🚀 Final navigation URL:', finalUrl);
+        window.location.href = finalUrl;
+      } else {
+        console.log('🚀 No hash, navigating to:', targetUrl);
         window.location.href = targetUrl;
       }
-    } else {
-      if (selectedLocale === 'de') {
-        window.location.href = '/';
-      } else {
-        window.location.href = `/${selectedLocale}/`;
-      }
-    }
+      
+      closeMenuDropdown();
+    });
   });
 
-  // Function to map chapter anchors between languages
-  async function mapChapterAnchor(currentHash: string, fromLocale: string, toLocale: string): Promise<string> {
+  // Simple function to map chapter anchors using pre-built static data
+  function mapChapterAnchor(currentHash: string, fromLocale: string, toLocale: string): string {
     const chapterSlug = currentHash.replace('#', '');
+    console.log('🔍 mapChapterAnchor:', { currentHash, chapterSlug, fromLocale, toLocale });
     
-    // Get current section slug from URL
-    const currentPath = window.location.pathname;
-    let sectionSlug = '';
+    // Get pre-built chapter mappings from meta tag
+    const chapterMappingsData = document.querySelector('meta[name="chapter-mappings"]')?.getAttribute('content');
+    const chapterMappings = chapterMappingsData ? JSON.parse(chapterMappingsData) : {};
+    console.log('📊 Available chapter mappings:', chapterMappings);
     
-    if (currentPath.startsWith('/fr/')) {
-      sectionSlug = currentPath.substring(4);
-    } else if (currentPath.startsWith('/it/')) {
-      sectionSlug = currentPath.substring(4);
-    } else {
-      sectionSlug = currentPath.substring(1);
+    // Look up the mapping: fromLocale_chapterSlug -> { toLocale: chapterSlug }
+    const mappingKey = `${fromLocale}_${chapterSlug}`;
+    console.log('🔑 Looking for mapping key:', mappingKey);
+    const mapping = chapterMappings[mappingKey];
+    console.log('📋 Found mapping:', mapping);
+    
+    if (mapping && mapping[toLocale]) {
+      const result = mapping[toLocale];
+      console.log('✅ Successful mapping result:', result);
+      return result;
     }
     
-    // Remove trailing slash
-    sectionSlug = sectionSlug.replace(/\/$/, '');
+    console.log('❌ No mapping found for key:', mappingKey);
+    console.log('🗂️ Available keys:', Object.keys(chapterMappings));
     
-    try {
-      // Fetch sections for both languages to find the chapter mapping
-      const [fromSections, toSections] = await Promise.all([
-        fetch(`https://api.thilo.scouts.ch/sections?_locale=${fromLocale}`).then(r => r.json()),
-        fetch(`https://api.thilo.scouts.ch/sections?_locale=${toLocale}`).then(r => r.json())
-      ]);
-      
-      // Helper function to generate slug (matching Astro's slugify utility)
-      function generateSlug(text: string): string {
-        return text.toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-          .replace(/[äöü]/g, (match: string) => ({ 'ä': 'ae', 'ö': 'oe', 'ü': 'ue' })[match] || match)
-          .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
-          .replace(/\s+/g, '-') // Replace spaces with hyphens
-          .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-          .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-      }
-      
-      // Find current section in source language
-      const fromSection = fromSections.find((s: any) => {
-        return generateSlug(s.title) === sectionSlug;
-      });
-      
-      if (!fromSection) return '';
-      
-      const toSection = toSections.find((s: any) => s.sorting === fromSection.sorting);
-      if (!toSection) return '';
-      
-      const fromChapter = fromSection.chapters?.find((c: any) => {
-        return generateSlug(c.title) === chapterSlug;
-      });
-      if (!fromChapter) return '';
-      
-      const toChapter = toSection.chapters?.find((c: any) => c.sorting === fromChapter.sorting);
-      if (!toChapter) return '';
-      
-      return generateSlug(toChapter.title);
-      
-    } catch (error) {
-      return '';
-    }
+    // Return empty string if no mapping found (will use original hash as fallback)
+    return '';
   }
 </script>
+
+{sectionColorStyle && (
+  <style set:html={sectionColorStyle}></style>
+)}

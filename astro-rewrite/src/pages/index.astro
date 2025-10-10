@@ -1,21 +1,26 @@
 ---
-import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
-import MarkdownRenderer from '../components/MarkdownRenderer.astro';
+import SectionPage from '../components/SectionPage.astro';
 import { getStartPage, getSections } from '../utils/data';
+import type { SectionT } from '../utils/data';
 
 const locale = Astro.currentLocale || 'de';
 
-let startPage;
-let sections;
-let error = null;
+// Fetch start page content from Strapi - let it fail if it doesn't exist
+const startPage = await getStartPage(locale);
+const sections = await getSections(locale);
 
-try {
-  startPage = await getStartPage(locale);
-  sections = await getSections(locale);
-} catch (e) {
-  console.error('Error loading data:', e);
-  error = e;
-}
+// Convert startPage to section-like object for SectionPage component
+const homepageSection: SectionT = {
+  id: startPage.id,
+  title: startPage.title,
+  content: startPage.content,
+  slug: 'homepage',
+  sorting: 0,
+  menu_name: startPage.menu_name,
+  locale: startPage.locale,
+  color_primary: '#521d3a',
+  chapters: []
+};
 
 
 export async function getStaticPaths() {
@@ -25,43 +30,4 @@ export async function getStaticPaths() {
 
 ---
 
-<MainLayoutWithToC title={startPage?.title || "Thilo - Scout Magazin"} lang={locale}>
-  {error ? (
-    <div class="content">
-      <div class="error-message">
-        <h1>Fehler beim Laden der Daten</h1>
-        <p>Die Inhalte konnten nicht geladen werden. Bitte versuchen Sie es später erneut.</p>
-      </div>
-    </div>
-  ) : (
-    <div class="content">
-      <div id="section-title" class="section-title section-1 mb-2">
-        <h1 class="bg-primary px-2">{startPage?.title || 'Thilo'}</h1>
-      </div>
-
-      <div class="section-body rounded p-2 color-bg-default">
-        <div class="section-description">
-          <MarkdownRenderer content={startPage?.content || ''} />
-        </div>
-      </div>
-
-      {sections && sections.length > 0 && (
-        <div class="sections-section">
-          <h2>Stufenbereiche</h2>
-          <div class="sections-grid">
-            {sections.map(section => (
-              <a href={`/${section.slug}`} class="section-card">
-                <div 
-                  class="section-color" 
-                  style={`background-color: ${section.color_primary || '#0066cc'}`}
-                ></div>
-                <h3>{section.title}</h3>
-                <p>{section.menu_name}</p>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )}
-</MainLayoutWithToC>
+<SectionPage section={homepageSection} locale={locale} />

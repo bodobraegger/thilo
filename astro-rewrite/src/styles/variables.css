@@ -1,8 +1,8 @@
 /* CSS Custom Properties (Variables) - Modern CSS replacement for SCSS variables */
 :root {
-  /* Colors matching the original React app */
-  --primary-color: #0066cc;
-  --primary-dark: #004499;
+  /* Colors - These will be overridden by dynamic colors from sections */
+  --primary-color: var(--color-primary-600, #0066cc);
+  --primary-dark: var(--color-primary-700, #004499);
   --secondary-color: #666;
   --accent-color: #ff6600;
   --success-color: #28a745;

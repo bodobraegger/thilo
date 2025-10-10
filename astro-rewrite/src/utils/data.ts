@@ -80,27 +80,20 @@ async function fetchFromStrapi<T>(endpoint: string, locale: string = 'de'): Prom
     return cached.data;
   }
 
-  try {
-    const url = `${BACKEND_URL}${endpoint}?_locale=${locale}`;
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${endpoint}: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Filter out unpublished content
-    const filteredData = Array.isArray(data) 
-      ? data.filter((item: any) => item.published_at !== null)
-      : data;
-    
-    dataCache.set(cacheKey, { data: filteredData, timestamp: Date.now() });
-    return filteredData;
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error);
-    throw error;
+  const url = `${BACKEND_URL}${endpoint}?_locale=${locale}`;
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${endpoint}: ${response.status} ${response.statusText}`);
   }
+  
+  const data = await response.json();
+  
+  // Handle Strapi v4 response format
+  const processedData = data.data || data;
+  
+  dataCache.set(cacheKey, { data: processedData, timestamp: Date.now() });
+  return processedData;
 }
 
 // Get start page data

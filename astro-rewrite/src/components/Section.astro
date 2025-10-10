@@ -1,6 +1,7 @@
 ---
 import MarkdownRenderer from './MarkdownRenderer.astro';
 import type { SectionT } from '../utils/data';
+import { generateColorCSSProperties } from '../utils/colors';
 
 export interface Props {
   section: SectionT;
@@ -10,12 +11,14 @@ const { section } = Astro.props;
 
 import '../styles/section.css';
 
+// Generate complete color palette from section colors
+const sectionColorStyle = generateColorCSSProperties(
+  section.color_primary || '#521d3a'
+);
+
 ---
 
-
-
-
-<section class="content">
+<section class="content" style={sectionColorStyle}>
 
   <div id="section-title" class={`section-title section-${section.sorting} mb-2`}>
     <h1 class="bg-primary px-2">
@@ -72,9 +75,42 @@ import '../styles/section.css';
 
 
 
-<script>
-  // Handle scroll to chapter functionality
+<script define:vars={{ sectionColorCSS: sectionColorStyle }}>
+  // Apply section colors immediately and on DOM ready
+  function applySectionColors() {
+    if (sectionColorCSS) {
+      // Use global function if available, otherwise apply directly
+      if (typeof window.updateThemeColors === 'function') {
+        window.updateThemeColors(sectionColorCSS);
+      } else {
+        // Fallback: Parse the CSS properties and set them on document root
+        const colorProperties = sectionColorCSS.split('\n');
+        colorProperties.forEach(function(property) {
+          if (property.trim() && property.includes(':')) {
+            const [key, value] = property.split(':');
+            if (key && value) {
+              const cleanKey = key.trim();
+              const cleanValue = value.replace(';', '').trim();
+              document.documentElement.style.setProperty(cleanKey, cleanValue);
+            }
+          }
+        });
+      }
+      
+      // Set a marker to indicate section colors are loaded
+      document.documentElement.setAttribute('data-section-colors-loaded', 'true');
+      document.documentElement.setAttribute('data-current-section-color', sectionColorCSS.split('\n')[0] || '');
+    }
+  }
+
+  // Apply colors immediately (for page loads)
+  applySectionColors();
+
+  // Also apply on DOM ready (for safety)
   document.addEventListener('DOMContentLoaded', function() {
+    // Re-apply colors to ensure they override any previous section colors
+    applySectionColors();
+
     // Check if there's a hash in the URL and scroll to it
     const hash = window.location.hash;
     if (hash) {
@@ -99,6 +135,13 @@ import '../styles/section.css';
 
       // Initially hide the button
       backToTopButton.style.display = 'none';
+    }
+  });
+
+  // Handle page visibility changes (for when returning to tab)
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      applySectionColors();
     }
   });
 </script>
