@@ -52,13 +52,9 @@ function getSectionUrl(section: SectionT, locale: string): string {
           href={lang === 'de' ? '/' : `/${lang}/`}
           class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-              ? 'font-medium border-l-4' 
+              ? 'nav-section-active font-medium' 
               : 'text-gray-700 hover:bg-gray-100'
           }`}
-          style={(currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-            ? 'background-color: var(--color-primary-100, #e0f2fe); color: var(--color-primary-900, #0c4a6e); border-left-color: var(--color-primary-500, #0369a1);'
-            : ''
-          }
         >
           <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -73,22 +69,13 @@ function getSectionUrl(section: SectionT, locale: string): string {
         const isActivePage = currentPath === sectionPath || currentPath.startsWith(sectionPath);
         const isCurrentSection = isActivePage; // Only expand if we're actually on this section's page
         
-        // Generate color palette for this section
-        const sectionColorStyle = section.color_primary 
-          ? generateColorCSSProperties(section.color_primary)
-          : '';
-
         return (
-          <li style={sectionColorStyle}>
+          <li>
             <!-- Section header with link and toggle -->
             <div 
               class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors group font-medium ${
-                isActivePage ? 'border-l-4' : 'hover:bg-gray-100'
+                isActivePage ? 'nav-active' : 'text-gray-700 hover:bg-gray-100'
               }`}
-              style={isActivePage 
-                ? 'background-color: var(--color-primary-25, #f8fafc); color: var(--color-primary-800); border-left-color: var(--color-primary-400);'
-                : 'color: #374151;'
-              }
             >
               <!-- Section Link -->
               <a 
@@ -150,12 +137,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
                         <a 
                           href={`${sectionPath}${chapterHash}`}
                           class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                            isActiveChapter ? 'font-medium border-l-4' : ''
-                          }`}
-                          style={`${sectionColorStyle} ${
-                            isActiveChapter 
-                              ? 'background-color: var(--color-primary-25, #f8fafc); color: var(--color-primary-700); border-left-color: var(--color-primary-400);'
-                              : 'color: #4b5563;'
+                            isActiveChapter ? 'nav-chapter-active font-medium' : 'text-gray-600'
                           }`}
                         >
                           <svg class="w-3 h-3 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -316,18 +298,29 @@ function getSectionUrl(section: SectionT, locale: string): string {
     });
   });
 
-  // Update active chapter based on scroll position
+  // Update active chapter based on scroll position - more tolerant, allows multiple active
   function updateActiveChapter() {
     const chapters = document.querySelectorAll('[id^="chapter-"], [id]');
-    const scrollPosition = window.scrollY + 100;
+    const viewportTop = window.scrollY;
+    const viewportBottom = window.scrollY + window.innerHeight;
+    const tolerance = 100; // pixels of tolerance
     
-    let activeChapter = '';
+    let activeChapters = new Set();
+    
     chapters.forEach((element) => {
       const rect = element.getBoundingClientRect();
       const elementTop = rect.top + window.scrollY;
+      const elementBottom = elementTop + rect.height;
       
-      if (elementTop <= scrollPosition) {
-        activeChapter = element.id;
+      // Check if element is visible in viewport with tolerance
+      const isVisible = (
+        (elementTop >= viewportTop - tolerance && elementTop <= viewportBottom + tolerance) ||
+        (elementBottom >= viewportTop - tolerance && elementBottom <= viewportBottom + tolerance) ||
+        (elementTop <= viewportTop + tolerance && elementBottom >= viewportBottom - tolerance)
+      );
+      
+      if (isVisible && element.id) {
+        activeChapters.add(element.id);
       }
     });
     
@@ -336,20 +329,14 @@ function getSectionUrl(section: SectionT, locale: string): string {
       const href = link.getAttribute('href');
       if (href && href.includes('#')) {
         const hash = href.split('#')[1];
-        if (hash === activeChapter) {
-          // Use CSS custom properties for dynamic colors
-          link.style.backgroundColor = 'var(--color-primary-50, #f0f9ff)';
-          link.style.color = 'var(--color-primary-800, #075985)';
-          link.style.borderLeft = '4px solid var(--color-primary-400, #38bdf8)';
-          link.classList.add('font-medium');
-          link.classList.remove('text-gray-600', 'hover:bg-gray-50');
+        if (activeChapters.has(hash)) {
+          // Add active class for visible chapters
+          link.classList.add('nav-active', 'font-medium');
+          link.classList.remove('text-gray-600');
         } else {
           // Reset to default styles
-          link.style.backgroundColor = '';
-          link.style.color = '';
-          link.style.borderLeft = '';
-          link.classList.remove('font-medium');
-          link.classList.add('text-gray-600', 'hover:bg-gray-50');
+          link.classList.remove('nav-active', 'font-medium');
+          link.classList.add('text-gray-600');
         }
       }
     });

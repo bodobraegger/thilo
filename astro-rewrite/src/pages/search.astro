@@ -27,7 +27,7 @@ try {
 
 <MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
   <!-- GitHub Primer styled search page -->
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={searchColorStyle}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 mb-4">{t.translation.searchPage.title}</h1>
@@ -43,17 +43,13 @@ try {
             id="search-input"
             placeholder={t.translation.searchPage.placeholder}
             value={initialQuery}
-            class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:outline-none text-base"
-            style="--tw-ring-color: var(--color-primary-500, #0369a1); --tw-ring-offset-width: 0px;"
+            class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none text-base"
           />
         </div>
         <button 
           type="button" 
           id="search-button"
-          class="px-6 py-3 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
-          style="background-color: var(--color-primary-600, #0284c7); --tw-ring-color: var(--color-primary-500, #0369a1);"
-          onmouseover="this.style.backgroundColor = 'var(--color-primary-700, #0369a1)'"
-          onmouseout="this.style.backgroundColor = 'var(--color-primary-600, #0284c7)'"
+          class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
         >
           Suchen
         </button>
@@ -164,17 +160,17 @@ try {
       return `
         <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
           <h3 class="text-lg font-semibold mb-2">
-            <a href="${result.url}" class="hover:underline" style="color: var(--color-primary-600, #0284c7);">
+            <a href="${result.url}" class="hover:underline text-primary-600">
               ${result.title}
             </a>
           </h3>
           <p class="text-gray-700 leading-relaxed mb-3">${excerpt}</p>
           <div class="flex items-center gap-3 text-sm">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: var(--color-primary-100, #e0f2fe); color: var(--color-primary-800, #075985);">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
               ${result.type === 'section' ? 'Bereich' : 'Kapitel'}
             </span>
             <span class="text-gray-500">${result.section.title}</span>
-            <a href="${result.url}" class="inline-flex items-center ml-auto" style="color: var(--color-primary-600, #0284c7);">
+            <a href="${result.url}" class="inline-flex items-center ml-auto text-primary-600">
               Lesen
               <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

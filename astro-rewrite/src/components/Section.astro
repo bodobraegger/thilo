@@ -11,14 +11,14 @@ const { section } = Astro.props;
 
 import '../styles/section.css';
 
-// Generate complete color palette from section colors
+// Generate complete color palette from section colors for :root application
 const sectionColorStyle = generateColorCSSProperties(
   section.color_primary || '#521d3a'
 );
 
 ---
 
-<section class="content" style={sectionColorStyle}>
+<section class="content">
 
   <div id="section-title" class={`section-title section-${section.sorting} mb-2`}>
     <h1 class="bg-primary px-2">
@@ -75,31 +75,26 @@ const sectionColorStyle = generateColorCSSProperties(
 
 
 
-<script define:vars={{ sectionColorCSS: sectionColorStyle }}>
-  // Apply section colors immediately and on DOM ready
+<script define:vars={{ sectionColorStyle }}>
+  // Apply section colors to :root instead of inline styles
   function applySectionColors() {
-    if (sectionColorCSS) {
-      // Use global function if available, otherwise apply directly
-      if (typeof window.updateThemeColors === 'function') {
-        window.updateThemeColors(sectionColorCSS);
-      } else {
-        // Fallback: Parse the CSS properties and set them on document root
-        const colorProperties = sectionColorCSS.split('\n');
-        colorProperties.forEach(function(property) {
-          if (property.trim() && property.includes(':')) {
-            const [key, value] = property.split(':');
-            if (key && value) {
-              const cleanKey = key.trim();
-              const cleanValue = value.replace(';', '').trim();
-              document.documentElement.style.setProperty(cleanKey, cleanValue);
-            }
+    if (sectionColorStyle) {
+      // Parse the CSS properties and set them on :root
+      const colorProperties = sectionColorStyle.split('\n');
+      colorProperties.forEach(function(property) {
+        if (property.trim() && property.includes(':')) {
+          const [key, value] = property.split(':');
+          if (key && value) {
+            const cleanKey = key.trim();
+            const cleanValue = value.replace(';', '').trim();
+            document.documentElement.style.setProperty(cleanKey, cleanValue);
           }
-        });
-      }
+        }
+      });
       
-      // Set a marker to indicate section colors are loaded
+      // Set markers  
       document.documentElement.setAttribute('data-section-colors-loaded', 'true');
-      document.documentElement.setAttribute('data-current-section-color', sectionColorCSS.split('\n')[0] || '');
+      document.documentElement.setAttribute('data-current-section-color', sectionColorStyle.split('\n')[0] || '');
     }
   }
 
@@ -145,3 +140,8 @@ const sectionColorStyle = generateColorCSSProperties(
     }
   });
 </script>
+
+<!-- Apply section colors globally via CSS instead of inline styles -->
+{sectionColorStyle && (
+  <style set:html={sectionColorStyle}></style>
+)}
