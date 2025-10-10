@@ -1,6 +1,5 @@
 ---
 import { getTranslations, type Locale } from '../i18n';
-import { generateColorCSSProperties } from '../utils/colors';
 import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
 
 interface Props {
@@ -11,10 +10,6 @@ interface Props {
 const { locale = 'de', currentSection } = Astro.props;
 const t = getTranslations(locale);
 
-// Generate color CSS properties if we have a current section
-const sectionColorStyle = currentSection?.color_primary 
-  ? generateColorCSSProperties(currentSection.color_primary)
-  : '';
 
 // Get current URL to determine page type
 const url = Astro.url;
@@ -74,6 +69,13 @@ if (currentSection) {
 <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
 <meta name="current-section-id" content={currentSection ? currentSection.id.toString() : ''} />
 <meta name="current-section-sorting" content={currentSection ? currentSection.sorting.toString() : ''} />
+
+<!-- Set section-specific color or use default -->
+<style>
+  :root {
+    --color-primary: {currentSection?.color_primary || '#521d3a'};
+  }
+</style>
 
 <!-- Redesigned Header -->
 <header class="bg-primary text-white sticky top-0 z-40">
@@ -473,7 +475,3 @@ if (currentSection) {
     window.location.href = fallbackUrl;
   }
 </script>
-
-{sectionColorStyle && (
-  <style set:html={sectionColorStyle}></style>
-)}

@@ -1,0 +1,37 @@
+/* Dynamic Primary Color System using CSS color-mix() */
+/* Only --color-primary needs to be set dynamically, all others derive from it */
+
+:root {
+  /* Base primary color (set dynamically by components) */
+  --color-primary: #521d3a; /* Default fallback */
+  
+  /* Light variations - mixing primary with white */
+  --color-primary-25: color-mix(in srgb, var(--color-primary) 2%, white 98%);
+  --color-primary-50: color-mix(in srgb, var(--color-primary) 5%, white 95%);
+  --color-primary-100: color-mix(in srgb, var(--color-primary) 10%, white 90%);
+  --color-primary-200: color-mix(in srgb, var(--color-primary) 20%, white 80%);
+  --color-primary-300: color-mix(in srgb, var(--color-primary) 30%, white 70%);
+  --color-primary-400: color-mix(in srgb, var(--color-primary) 60%, white 40%);
+  --color-primary-500: var(--color-primary);
+  
+  /* Dark variations - mixing primary with black */
+  --color-primary-600: color-mix(in srgb, var(--color-primary) 90%, black 10%);
+  --color-primary-700: color-mix(in srgb, var(--color-primary) 80%, black 20%);
+  --color-primary-800: color-mix(in srgb, var(--color-primary) 70%, black 30%);
+  --color-primary-900: color-mix(in srgb, var(--color-primary) 60%, black 40%);
+  --color-primary-950: color-mix(in srgb, var(--color-primary) 50%, black 50%);
+  
+  /* Interactive states */
+  --color-primary-hover: color-mix(in srgb, var(--color-primary) 85%, black 15%);
+  --color-primary-active: color-mix(in srgb, var(--color-primary) 75%, black 25%);
+  --color-primary-focus: var(--color-primary-300);
+  
+  /* Background and border variants */
+  --color-primary-bg: var(--color-primary-50);
+  --color-primary-border: var(--color-primary-200);
+  
+  /* Text variants */
+  --color-primary-text: var(--color-primary);
+  --color-primary-text-light: var(--color-primary-600);
+  --color-primary-text-muted: var(--color-primary-400);
+}

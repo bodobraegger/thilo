@@ -1,14 +1,11 @@
 ---
-import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
+import MainLayout from '../layouts/MainLayout.astro';
 import { getSections } from '../utils/data';
 import { getTranslations } from '../i18n';
-import { generateColorCSSProperties } from '../utils/colors';
 
 import '../styles/search.css';
 
 const locale = Astro.currentLocale || 'de';
-// Generate fallback color palette for search page
-const searchColorStyle = generateColorCSSProperties('#521d3a');
 const t = getTranslations(locale as any);
 
 // Get the search query from URL parameters
@@ -25,7 +22,7 @@ try {
 }
 ---
 
-<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
+<MainLayout title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
   <!-- GitHub Primer styled search page -->
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
@@ -66,7 +63,7 @@ try {
       </div>
     </div>
   </div>
-</MainLayoutWithToC>
+</MainLayout>
 
 <script define:vars={{ sections, t, initialQuery }} is:inline>
   // Search functionality with Strapi data
@@ -219,24 +216,9 @@ try {
   }
 </script>
 
-<!-- Apply search page colors globally -->
-<script define:vars={{ searchColorCSS: searchColorStyle }}>
-  // Set search page color palette on document root for global access
-  document.addEventListener('DOMContentLoaded', function() {
-    if (searchColorCSS) {
-      // Parse the CSS properties and set them on document root
-      const colorProperties = searchColorCSS.split('\n');
-      colorProperties.forEach(property => {
-        if (property.trim() && property.includes(':')) {
-          const [key, value] = property.split(':');
-          if (key && value) {
-            document.documentElement.style.setProperty(
-              key.trim(),
-              value.replace(';', '').trim()
-            );
-          }
-        }
-      });
-    }
-  });
-</script>
+<!-- Set search page primary color -->
+<style>
+  :root {
+    --color-primary: #521d3a;
+  }
+</style>

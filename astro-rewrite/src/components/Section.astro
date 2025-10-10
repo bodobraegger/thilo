@@ -1,7 +1,6 @@
 ---
 import MarkdownRenderer from './MarkdownRenderer.astro';
 import type { SectionT } from '../utils/data';
-import { generateColorCSSProperties } from '../utils/colors';
 
 export interface Props {
   section: SectionT;
@@ -11,10 +10,8 @@ const { section } = Astro.props;
 
 import '../styles/section.css';
 
-// Generate complete color palette from section colors for :root application
-const sectionColorStyle = generateColorCSSProperties(
-  section.color_primary || '#521d3a'
-);
+// Get section color for CSS variable
+const sectionColor = section.color_primary || '#521d3a';
 
 ---
 
@@ -75,37 +72,8 @@ const sectionColorStyle = generateColorCSSProperties(
 
 
 
-<script define:vars={{ sectionColorStyle }}>
-  // Apply section colors to :root instead of inline styles
-  function applySectionColors() {
-    if (sectionColorStyle) {
-      // Parse the CSS properties and set them on :root
-      const colorProperties = sectionColorStyle.split('\n');
-      colorProperties.forEach(function(property) {
-        if (property.trim() && property.includes(':')) {
-          const [key, value] = property.split(':');
-          if (key && value) {
-            const cleanKey = key.trim();
-            const cleanValue = value.replace(';', '').trim();
-            document.documentElement.style.setProperty(cleanKey, cleanValue);
-          }
-        }
-      });
-      
-      // Set markers  
-      document.documentElement.setAttribute('data-section-colors-loaded', 'true');
-      document.documentElement.setAttribute('data-current-section-color', sectionColorStyle.split('\n')[0] || '');
-    }
-  }
-
-  // Apply colors immediately (for page loads)
-  applySectionColors();
-
-  // Also apply on DOM ready (for safety)
+<script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Re-apply colors to ensure they override any previous section colors
-    applySectionColors();
-
     // Check if there's a hash in the URL and scroll to it
     const hash = window.location.hash;
     if (hash) {
@@ -132,16 +100,11 @@ const sectionColorStyle = generateColorCSSProperties(
       backToTopButton.style.display = 'none';
     }
   });
-
-  // Handle page visibility changes (for when returning to tab)
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) {
-      applySectionColors();
-    }
-  });
 </script>
 
-<!-- Apply section colors globally via CSS instead of inline styles -->
-{sectionColorStyle && (
-  <style set:html={sectionColorStyle}></style>
-)}
+<!-- Set section primary color -->
+<style define:vars={{ sectionColor }}>
+  :root {
+    --color-primary: var(--sectionColor);
+  }
+</style>
