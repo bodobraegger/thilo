@@ -331,11 +331,11 @@ function getSectionUrl(section: SectionT, locale: string): string {
         const hash = href.split('#')[1];
         if (activeChapters.has(hash)) {
           // Add active class for visible chapters
-          link.classList.add('nav-active', 'font-medium');
+          link.classList.add('nav-chapter-active');
           link.classList.remove('text-gray-600');
         } else {
           // Reset to default styles
-          link.classList.remove('nav-active', 'font-medium');
+          link.classList.remove('nav-chapter-active');
           link.classList.add('text-gray-600');
         }
       }

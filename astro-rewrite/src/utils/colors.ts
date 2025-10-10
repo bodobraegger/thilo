@@ -66,11 +66,11 @@ export function generateColorPalette(baseColor: string): Record<string, string> 
   const isLight = hsl.l > 50;
   
   return {
-    // Tailwind-style primary color scale (50-950)
-    'primary-50': hslToHex(hsl.h, Math.max(hsl.s - 40, 5), Math.min(hsl.l + 45, 98)),
-    'primary-100': hslToHex(hsl.h, Math.max(hsl.s - 30, 10), Math.min(hsl.l + 35, 95)),
-    'primary-200': hslToHex(hsl.h, Math.max(hsl.s - 20, 15), Math.min(hsl.l + 25, 90)),
-    'primary-300': hslToHex(hsl.h, Math.max(hsl.s - 10, 20), Math.min(hsl.l + 15, 80)),
+    // Tailwind-style primary color scale (50-950) - same saturation but much closer to white
+    'primary-50':  hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 70, 98)),
+    'primary-100': hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 60, 96)),
+    'primary-200': hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 50, 93)),
+    'primary-300': hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 40, 89)),
     'primary-400': isLight ? baseColor : hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 8, 70)),
     'primary-500': isLight ? hslToHex(hsl.h, Math.min(hsl.s + 5, 100), Math.max(hsl.l - 5, 40)) : hslToHex(hsl.h, hsl.s, hsl.l),
     'primary-600': isLight ? hslToHex(hsl.h, Math.min(hsl.s + 10, 100), Math.max(hsl.l - 15, 25)) : baseColor,

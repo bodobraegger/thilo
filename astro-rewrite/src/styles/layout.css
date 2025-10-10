@@ -113,21 +113,19 @@
 
 /* Navigation-specific utilities */
 .nav-active {
-  background-color: var(--color-primary-25, #f8fafc) !important;
-  color: var(--color-primary-700) !important;
+  background-color: var(--color-primary-100, #f8fafc) !important;
+  color: var(--color-primary-900) !important;
   border-left: 4px solid var(--color-primary-400) !important;
 }
 
 .nav-section-active {
-  background-color: var(--color-primary-100, #e0f2fe) !important;
+  background-color: var(--color-primary-500, #e0f2fe) !important;
   color: var(--color-primary-900, #0c4a6e) !important;
-  border-left: 4px solid var(--color-primary-500, #0369a1) !important;
 }
 
 .nav-chapter-active {
-  background-color: var(--color-primary-25, #f8fafc) !important;
-  color: var(--color-primary-700) !important;
-  border-left: 4px solid var(--color-primary-400) !important;
+  background-color: var(--color-primary-50, #f8fafc) !important;
+  color: var(--color-primary-900) !important;
 }
 
 /* Border utilities */
