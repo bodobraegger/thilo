@@ -86,7 +86,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
                 isActivePage ? 'border-l-4' : 'hover:bg-gray-100'
               }`}
               style={isActivePage 
-                ? 'background-color: var(--color-primary-100); color: var(--color-primary-900); border-left-color: var(--color-primary-600);'
+                ? 'background-color: var(--color-primary-25, #f8fafc); color: var(--color-primary-800); border-left-color: var(--color-primary-400);'
                 : 'color: #374151;'
               }
             >
@@ -154,7 +154,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
                           }`}
                           style={`${sectionColorStyle} ${
                             isActiveChapter 
-                              ? 'background-color: var(--color-primary-50); color: var(--color-primary-800); border-left-color: var(--color-primary-400);'
+                              ? 'background-color: var(--color-primary-25, #f8fafc); color: var(--color-primary-700); border-left-color: var(--color-primary-400);'
                               : 'color: #4b5563;'
                           }`}
                         >
@@ -186,6 +186,43 @@ function getSectionUrl(section: SectionT, locale: string): string {
   const sidebarNav = document.getElementById('sidebar-nav');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
 
+  function scrollToCurrentInToC() {
+    // Find the currently active chapter/section in the ToC
+    const currentHash = window.location.hash;
+    const currentPath = window.location.pathname;
+    
+    let activeLink = null;
+    
+    // First, try to find active link by hash if present
+    if (currentHash) {
+      const hashWithoutHash = currentHash.slice(1);
+      activeLink = sidebarNav?.querySelector(`a[href*="#${hashWithoutHash}"]`);
+    }
+    
+    // If no hash match, try to find active link by current path
+    if (!activeLink) {
+      activeLink = sidebarNav?.querySelector(`a[href="${currentPath}"], a[href*="${currentPath}"]`);
+    }
+    
+    // If we found an active link, scroll it into view in the ToC
+    if (activeLink && sidebarNav) {
+      // Use setTimeout to ensure the sidebar is fully rendered first
+      setTimeout(() => {
+        const linkRect = activeLink.getBoundingClientRect();
+        const sidebarRect = sidebarNav.getBoundingClientRect();
+        
+        // Calculate the position to scroll to (center the active item if possible)
+        const scrollTop = activeLink.offsetTop - (sidebarNav.clientHeight / 2) + (activeLink.clientHeight / 2);
+        
+        // Scroll the sidebar to show the active item
+        sidebarNav.scrollTo({
+          top: Math.max(0, scrollTop),
+          behavior: 'smooth'
+        });
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }
+
   function openSidebar() {
     // Only handle mobile behavior - on large screens, sidebar is always visible via CSS
     if (window.innerWidth < 1024) {
@@ -194,6 +231,9 @@ function getSectionUrl(section: SectionT, locale: string): string {
       sidebarNav?.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50');
       sidebarOverlay?.classList.remove('hidden');
     }
+    
+    // Scroll to current active section/chapter in ToC
+    scrollToCurrentInToC();
   }
 
   function closeSidebar() {
@@ -222,6 +262,11 @@ function getSectionUrl(section: SectionT, locale: string): string {
 
   // Initialize on load
   initSidebarVisibility();
+  
+  // Scroll to current position on page load (for both desktop and mobile)
+  setTimeout(() => {
+    scrollToCurrentInToC();
+  }, 200);
   
   // Handle window resize
   window.addEventListener('resize', initSidebarVisibility);
