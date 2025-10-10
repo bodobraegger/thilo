@@ -1,11 +1,5 @@
-// Utility to fetch and process all section data at build time
+// Simple utility to fetch all section data at build time (like React app)
 import { slugify } from './slugify';
-
-export interface ChapterMapping {
-  [fromLocaleChapter: string]: {
-    [toLocale: string]: string;
-  };
-}
 
 export interface SectionData {
   id: number;
@@ -21,11 +15,10 @@ export interface SectionData {
   }>;
 }
 
-export interface AllSectionsData {
+export interface SimpleSectionsData {
   sections: {
     [locale: string]: SectionData[];
   };
-  chapterMappings: ChapterMapping;
   sectionMappings: {
     [sectionId: string]: {
       [locale: string]: {
@@ -37,12 +30,12 @@ export interface AllSectionsData {
   };
 }
 
-// Fetch all sections for all locales at build time
-export async function fetchAllSections(): Promise<AllSectionsData> {
+// Simple function to fetch all sections (like React app)
+export async function fetchAllSections(): Promise<SimpleSectionsData> {
   const locales = ['de', 'fr', 'it'];
   const sections: { [locale: string]: SectionData[] } = {};
   
-  console.log('🔄 Fetching all sections for all locales at build time...');
+  console.log('🔄 Fetching all sections for all locales...');
   
   // Fetch sections for each locale
   for (const locale of locales) {
@@ -53,7 +46,7 @@ export async function fetchAllSections(): Promise<AllSectionsData> {
       }
       const data = await response.json();
       
-      // Process sections and add generated slugs
+      // Process sections and add generated slugs (same as React app)
       sections[locale] = data.map((section: any) => ({
         id: section.id,
         title: section.title,
@@ -68,37 +61,32 @@ export async function fetchAllSections(): Promise<AllSectionsData> {
         })) || []
       }));
       
-      const sectionsWithChapters = sections[locale].filter(s => s.chapters && s.chapters.length > 0);
-      console.log(`✅ Fetched ${sections[locale].length} sections for ${locale} (${sectionsWithChapters.length} with chapters)`);
+      console.log(`✅ Fetched ${sections[locale].length} sections for ${locale}`);
     } catch (error) {
       console.error(`❌ Failed to fetch sections for ${locale}:`, error);
       sections[locale] = [];
     }
   }
   
-  // Build comprehensive chapter mappings
-  const chapterMappings: ChapterMapping = {};
+  // Build simple section mappings by sorting (like React app)
+  const sectionMappings: SimpleSectionsData['sectionMappings'] = {};
   
-  // Build section mappings (section ID to locale data)
-  const sectionMappings: AllSectionsData['sectionMappings'] = {};
-  
-  // Group sections by ID across locales
-  const sectionGroups: { [sectionId: string]: SectionData[] } = {};
+  // Group sections by sorting across locales (like React app uses sorting to match)
+  const sectionsBySort: { [sorting: number]: SectionData[] } = {};
   
   for (const locale of locales) {
     for (const section of sections[locale]) {
-      if (!sectionGroups[section.id]) {
-        sectionGroups[section.id] = [];
+      if (!sectionsBySort[section.sorting]) {
+        sectionsBySort[section.sorting] = [];
       }
-      sectionGroups[section.id].push(section);
+      sectionsBySort[section.sorting].push(section);
     }
   }
   
-  // Build mappings for each section group
-  for (const [sectionId, sectionGroup] of Object.entries(sectionGroups)) {
-    console.log(`🔄 Processing section group ${sectionId}:`, sectionGroup.map(s => `${s.locale}:${s.title}`));
-    
-    // Build section mapping
+  // Build mappings for each sorting group
+  for (const [sorting, sectionGroup] of Object.entries(sectionsBySort)) {
+    // Use first section's ID as key (they should all have same ID anyway)
+    const sectionId = sectionGroup[0]?.id.toString() || sorting;
     sectionMappings[sectionId] = {};
     
     for (const section of sectionGroup) {
@@ -112,45 +100,12 @@ export async function fetchAllSections(): Promise<AllSectionsData> {
         url
       };
     }
-    
-    // Build chapter mappings for this section group (always, not just when length > 1)
-    console.log(`📊 Section group has ${sectionGroup.length} locales`);
-    
-    // Create chapter mappings between all locale pairs
-    for (const fromSection of sectionGroup) {
-      console.log(`📖 Processing chapters for ${fromSection.locale}:${fromSection.title}`, fromSection.chapters?.length || 0, 'chapters');
-      
-      for (const fromChapter of fromSection.chapters || []) {
-        const fromKey = `${fromSection.locale}_${fromChapter.slug}`;
-        
-        if (!chapterMappings[fromKey]) {
-          chapterMappings[fromKey] = {};
-        }
-        
-        // Find equivalent chapters in other locales by sorting
-        for (const toSection of sectionGroup) {
-          if (fromSection.locale === toSection.locale) continue;
-          
-          const toChapter = toSection.chapters?.find(c => c.sorting === fromChapter.sorting);
-          if (toChapter) {
-            chapterMappings[fromKey][toSection.locale] = toChapter.slug;
-            console.log(`✅ Mapped: ${fromKey} → ${toSection.locale}:${toChapter.slug}`);
-          } else {
-            console.log(`❌ No chapter found in ${toSection.locale} with sorting ${fromChapter.sorting}`);
-          }
-        }
-      }
-    }
   }
   
-  console.log('✅ Built comprehensive mappings:', {
-    sectionsCount: Object.keys(sectionMappings).length,
-    chapterMappingsCount: Object.keys(chapterMappings).length
-  });
+  console.log(`✅ Built section mappings for ${Object.keys(sectionMappings).length} sections`);
   
   return {
     sections,
-    chapterMappings,
     sectionMappings
   };
 }
@@ -159,7 +114,7 @@ export async function fetchAllSections(): Promise<AllSectionsData> {
 export function getSectionUrlForLocaleFromCache(
   sectionId: string, 
   targetLocale: string, 
-  sectionMappings: AllSectionsData['sectionMappings']
+  sectionMappings: SimpleSectionsData['sectionMappings']
 ): string {
   const mapping = sectionMappings[sectionId];
   if (mapping && mapping[targetLocale]) {

@@ -1,7 +1,7 @@
 ---
 import { getTranslations, type Locale } from '../i18n';
 import { generateColorCSSProperties } from '../utils/colors';
-import { fetchAllSections, getSectionUrlForLocaleFromCache, type AllSectionsData } from '../utils/sectionMappings';
+import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
 
 interface Props {
   locale?: Locale;
@@ -21,7 +21,7 @@ const url = Astro.url;
 const pathname = url.pathname;
 
 // Fetch ALL section data at build time
-const allSectionsData: AllSectionsData = await fetchAllSections();
+const allSectionsData: SimpleSectionsData = await fetchAllSections();
 
 // Generate language alternatives for dropdown
 let languageAlternatives = [];
@@ -69,10 +69,11 @@ if (currentSection) {
 }
 ---
 
-<!-- Store all mapping data for JavaScript -->
+<!-- Store all sections data for JavaScript (like React app) -->
 <meta name="language-alternatives" content={JSON.stringify(languageAlternatives)} />
-<meta name="chapter-mappings" content={JSON.stringify(allSectionsData.chapterMappings)} />
+<meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
 <meta name="current-section-id" content={currentSection ? currentSection.id.toString() : ''} />
+<meta name="current-section-sorting" content={currentSection ? currentSection.sorting.toString() : ''} />
 
 <!-- Redesigned Header -->
 <header class="bg-primary text-white sticky top-0 z-40">
@@ -139,7 +140,7 @@ if (currentSection) {
           >
             <div class="px-4 py-2 border-b border-gray-200">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                {t.translation.header.language}
+                Language
               </p>
               
               <!-- Language Options -->
@@ -342,7 +343,7 @@ if (currentSection) {
     closeMenuDropdown();
   });
 
-  // SIMPLIFIED Language switching functionality using pre-built static data
+  // SIMPLE Language switching (exactly like React app)
   const languageOptions = document.querySelectorAll('.language-option');
   
   languageOptions.forEach(option => {
@@ -355,70 +356,80 @@ if (currentSection) {
         return;
       }
       
-      // Get language alternatives from meta tag
-      const languageAltsData = document.querySelector('meta[name="language-alternatives"]')?.getAttribute('content');
-      const languageAlts = languageAltsData ? JSON.parse(languageAltsData) : [];
-      const targetAlt = languageAlts.find((alt: any) => alt.locale === selectedLocale);
-      
-      let targetUrl = '';
-      if (targetAlt) {
-        // Use proper section mapping for correct URLs
-        targetUrl = targetAlt.url;
-      } else {
-        // Fallback to simple URL construction only if no mapping found
-        if (selectedLocale === 'de') {
-          targetUrl = window.location.pathname.replace(/^\/(fr|it)/, '') || '/';
-        } else {
-          const pathWithoutLocale = window.location.pathname.replace(/^\/(de|fr|it)/, '') || '/';
-          targetUrl = `/${selectedLocale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
-        }
-      }
-      
-      // Handle chapter anchors using pre-built mappings
-      const currentHash = window.location.hash;
-      console.log('🔄 Language switch attempt:', { currentHash, selectedLocale, targetUrl });
-      
-      if (currentHash && selectedLocale) {
-        const mappedHash = mapChapterAnchor(currentHash, currentLocale, selectedLocale);
-        const finalUrl = targetUrl + (mappedHash ? `#${mappedHash}` : currentHash);
-        console.log('🚀 Final navigation URL:', finalUrl);
-        window.location.href = finalUrl;
-      } else {
-        console.log('🚀 No hash, navigating to:', targetUrl);
-        window.location.href = targetUrl;
-      }
-      
+      handleLanguageChange(selectedLocale);
       closeMenuDropdown();
     });
   });
 
-  // Simple function to map chapter anchors using pre-built static data
-  function mapChapterAnchor(currentHash: string, fromLocale: string, toLocale: string): string {
-    const chapterSlug = currentHash.replace('#', '');
-    console.log('🔍 mapChapterAnchor:', { currentHash, chapterSlug, fromLocale, toLocale });
+  // Language change handler with smart chapter number mapping
+  function handleLanguageChange(targetLocale: string) {
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash;
     
-    // Get pre-built chapter mappings from meta tag
-    const chapterMappingsData = document.querySelector('meta[name="chapter-mappings"]')?.getAttribute('content');
-    const chapterMappings = chapterMappingsData ? JSON.parse(chapterMappingsData) : {};
-    console.log('📊 Available chapter mappings:', chapterMappings);
+    // Get current section slug from path
+    let path = currentPath.replace(/^\//, ''); // Remove leading slash
+    if (path.startsWith('fr/')) path = path.substring(3);
+    if (path.startsWith('it/')) path = path.substring(3);
     
-    // Look up the mapping: fromLocale_chapterSlug -> { toLocale: chapterSlug }
-    const mappingKey = `${fromLocale}_${chapterSlug}`;
-    console.log('🔑 Looking for mapping key:', mappingKey);
-    const mapping = chapterMappings[mappingKey];
-    console.log('📋 Found mapping:', mapping);
-    
-    if (mapping && mapping[toLocale]) {
-      const result = mapping[toLocale];
-      console.log('✅ Successful mapping result:', result);
-      return result;
+    // Handle impressum page
+    if (path === 'impressum') {
+      const targetUrl = targetLocale === 'de' ? '/impressum' : `/${targetLocale}/impressum`;
+      window.location.href = targetUrl;
+      return;
     }
     
-    console.log('❌ No mapping found for key:', mappingKey);
-    console.log('🗂️ Available keys:', Object.keys(chapterMappings));
+    // Get all sections from meta tag
+    const allSectionsData = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
+    if (!allSectionsData) {
+      // Fallback: navigate to start page
+      const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+      window.location.href = fallbackUrl;
+      return;
+    }
     
-    // Return empty string if no mapping found (will use original hash as fallback)
-    return '';
+    const allSections = JSON.parse(allSectionsData);
+    const currentSections = allSections[document.documentElement.lang || 'de'] || [];
+    const targetSections = allSections[targetLocale] || [];
+    
+    // Find current section by slug
+    const currentSection = currentSections.find((s: any) => s.slug === path);
+    
+    if (currentSection) {
+      // Find equivalent section by sorting
+      const targetSection = targetSections.find((s: any) => s.sorting === currentSection.sorting);
+      
+      if (targetSection) {
+        const baseTargetUrl = (targetLocale === 'de' ? '/' : `/${targetLocale}/`) + targetSection.slug;
+        
+        // Smart chapter hash mapping by position/number
+        if (currentHash && currentSection.chapters && targetSection.chapters) {
+          const currentChapterSlug = currentHash.replace('#', '');
+          
+          // Find current chapter by slug
+          const currentChapterIndex = currentSection.chapters.findIndex((c: any) => c.slug === currentChapterSlug);
+          
+          if (currentChapterIndex >= 0 && currentChapterIndex < targetSection.chapters.length) {
+            // Map to same chapter position in target language
+            const targetChapter = targetSection.chapters[currentChapterIndex];
+            const targetHash = `#${targetChapter.slug}`;
+            
+            console.log(`🔄 Chapter mapping: ${currentHash} → ${targetHash} (position ${currentChapterIndex})`);
+            window.location.href = baseTargetUrl + targetHash;
+            return;
+          } else {
+            console.log(`❌ Chapter position ${currentChapterIndex} not found in target section`);
+          }
+        }
+        
+        // No hash or chapter mapping failed - just go to section
+        window.location.href = baseTargetUrl;
+        return;
+      }
+    }
+    
+    // Fallback: navigate to start page
+    const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+    window.location.href = fallbackUrl;
   }
 </script>
 
