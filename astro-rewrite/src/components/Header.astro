@@ -64,19 +64,6 @@ if (currentSection) {
 }
 ---
 
-<!-- Store all sections data for JavaScript (like React app) -->
-<meta name="language-alternatives" content={JSON.stringify(languageAlternatives)} />
-<meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
-<meta name="current-section-id" content={currentSection ? currentSection.id.toString() : ''} />
-<meta name="current-section-sorting" content={currentSection ? currentSection.sorting.toString() : ''} />
-
-<!-- Set section-specific color or use default -->
-<style>
-  :root {
-    --color-primary: {currentSection?.color_primary || '#521d3a'};
-  }
-</style>
-
 <!-- Redesigned Header -->
 <header class="bg-primary text-white sticky top-0 z-40">
   <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">

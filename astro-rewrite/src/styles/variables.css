@@ -1,15 +1,6 @@
 /* CSS Custom Properties (Variables) - Modern CSS replacement for SCSS variables */
 :root {
   /* Colors - These will be overridden by dynamic colors from sections */
-  --primary-color: var(--color-primary-600, #0066cc);
-  --primary-dark: var(--color-primary-700, #004499);
-  --secondary-color: #666;
-  --accent-color: #ff6600;
-  --success-color: #28a745;
-  --warning-color: #ffc107;
-  --danger-color: #dc3545;
-  --info-color: #17a2b8;
-
   --text-color: #212529;
   --text-secondary: #6c757d;
   --text-muted: #868e96;

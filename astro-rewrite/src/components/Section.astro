@@ -72,7 +72,7 @@ const sectionColor = section.color_primary || '#521d3a';
 
 
 
-<script>
+<script define:vars={{sectionColor}}>
   document.addEventListener('DOMContentLoaded', function() {
     // Check if there's a hash in the URL and scroll to it
     const hash = window.location.hash;
@@ -99,12 +99,12 @@ const sectionColor = section.color_primary || '#521d3a';
       // Initially hide the button
       backToTopButton.style.display = 'none';
     }
+
+    // Set section primary color as CSS variable
+    const sectionElement = document.querySelector('section.content');
+    if (sectionElement) {
+      // set it on :root as well for global access
+      document.documentElement.style.setProperty('--color-primary', sectionColor);
+    }
   });
 </script>
-
-<!-- Set section primary color -->
-<style define:vars={{ sectionColor }}>
-  :root {
-    --color-primary: var(--sectionColor);
-  }
-</style>

@@ -51,7 +51,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
           href={lang === 'de' ? '/' : `/${lang}/`}
           class={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-              ? 'nav-section-active font-medium' 
+              ? 'nav-active font-medium' 
               : 'text-gray-700 hover:bg-gray-100'
           }`}
         >
