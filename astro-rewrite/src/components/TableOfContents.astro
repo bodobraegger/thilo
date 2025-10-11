@@ -104,7 +104,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
                   </svg>
                 )}
                 
-                <span class="flex-1 min-w-0 truncate">{section.menu_name}</span>
+                <span class="flex-1 min-w-0 truncate" style={section.color_primary ? `color: ${section.color_primary}` : ''}>{section.menu_name}</span>
               </a>
               
               <!-- Chapter toggle button (outside the link) -->
