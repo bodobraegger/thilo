@@ -1,5 +1,5 @@
 ---
-import MainLayout from '../layouts/MainLayout.astro';
+import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getSections } from '../utils/data';
 import { getTranslations } from '../i18n';
 
@@ -22,7 +22,7 @@ try {
 }
 ---
 
-<MainLayout title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
+<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale}>
   <!-- GitHub Primer styled search page -->
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
@@ -63,7 +63,7 @@ try {
       </div>
     </div>
   </div>
-</MainLayout>
+</MainLayoutWithToC>
 
 <script define:vars={{ sections, t, initialQuery }} is:inline>
   // Search functionality with Strapi data

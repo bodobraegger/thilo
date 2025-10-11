@@ -30,7 +30,13 @@
       "backToTop": "Nach oben"
     },
     "footer": {
-      "copyright": "© 2023 Pfadibewegung Schweiz"
+      "copyright": "© 2023 Pfadibewegung Schweiz",
+      "prevButton": "Vorheriges Kapitel",
+      "nextButton": "Nächstes Kapitel",
+      "homeButton": "Zur Übersicht",
+      "backToBeginning": "Zurück zum Anfang",
+      "lastChapter": "Letztes Kapitel",
+      "firstChapter": "Erstes Kapitel"
     },
     "language": {
       "de": "Deutsch",

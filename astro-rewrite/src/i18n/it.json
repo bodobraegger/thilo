@@ -30,7 +30,13 @@
       "backToTop": "Torna in alto"
     },
     "footer": {
-      "copyright": "© 2023 Movimento Scout Svizzero"
+      "copyright": "© 2023 Movimento Scout Svizzero",
+      "prevButton": "Capitolo precedente",
+      "nextButton": "Capitolo successivo",
+      "homeButton": "Home",
+      "backToBeginning": "Torna all'inizio",
+      "lastChapter": "Ultimo capitolo",
+      "firstChapter": "Primo capitolo"
     },
     "language": {
       "de": "Deutsch",

@@ -7,22 +7,18 @@ import "../styles/footer.css";
 export interface Props {
     locale?: Locale;
     currentSection?: any;
+    sections?: any[];
 }
 
-const { locale = "de", currentSection } = Astro.props;
+
+const { locale = "de", currentSection, sections = [] } = Astro.props;
+
 const t = getTranslations(locale);
 
-// Get all sections from API using utility
-import { getSections } from "../utils/data";
-import type { SectionT } from "../utils/data";
-let sections: SectionT[] = [];
-try {
-    sections = await getSections(locale);
-} catch (e) {
-    sections = [];
-}
-const currentSectionSlug = currentSection ? currentSection.slug : null;
+// Slug of the current section
+const currentSectionSlug = currentSection ? currentSection.slug : '';
 
+// Find previous and next sections
 let prevSection = null,
     nextSection = null;
 if (sections && currentSectionSlug) {
@@ -37,64 +33,87 @@ if (sections && currentSectionSlug) {
     prevSection = sections[sections.length - 1];
 }
 
+console.log({ currentSectionSlug, prevSection, nextSection });
+
+// Slugs for navigation
 const prevSlug = prevSection ? String(prevSection.slug) : "";
 const nextSlug = nextSection ? String(nextSection.slug) : "";
 
-function getSectionUrl(slug: string) {
+console.log(prevSlug, nextSlug);
+
+// Function to get section URL
+const getSectionUrl = (slug: string) => {
     if (!slug) return locale === "de" ? "/" : `/${locale}/`;
     return locale === "de" ? `/${slug}` : `/${locale}/${slug}`;
-}
+};
 
 // Fallback navigation button texts (could be localized in translation files)
-const prevButtonText =
-    {
-        de: "Vorheriges Kapitel",
-        fr: "Chapitre précédent",
-        it: "Capitolo precedente",
-    }[locale] || "Previous";
-const nextButtonText =
-    {
-        de: "Nächstes Kapitel",
-        fr: "Chapitre suivant",
-        it: "Capitolo successivo",
-    }[locale] || "Next";
-const homeButtonText =
-    {
-        de: "Zur Übersicht",
-        fr: "Accueil",
-        it: "Home",
-    }[locale] || "Home";
+const prevButtonText = t.translation.footer.prevButton;
+const nextButtonText = t.translation.footer.nextButton;
+const homeButtonText = t.translation.footer.homeButton;
+const backToBeginningText = t.translation.footer.backToBeginning;
+const lastChapterText = t.translation.footer.lastChapter;
+const firstChapterText = t.translation.footer.firstChapter;
+
+// Determine left button
+let leftButton = null;
+if (!currentSectionSlug) {
+  // Index page
+  leftButton = { text: lastChapterText, subtitle: prevSection ? prevSection.title : '', href: getSectionUrl(prevSlug), icon: 'arrow-left' };
+} else if (sections[0] && sections[0].slug === currentSectionSlug) {
+  // First section
+  leftButton = { text: backToBeginningText, subtitle: homeButtonText, href: locale === "de" ? "/" : `/${locale}/`, icon: 'home' };
+} else if (prevSection) {
+  // Other sections with prev
+  leftButton = { text: prevButtonText, subtitle: prevSection.title, href: getSectionUrl(prevSlug), icon: 'arrow-left' };
+}
+
+
+// Determine right button
+let rightButton = null;
+if (!currentSectionSlug) {
+  // Index page
+  rightButton = { text: firstChapterText, subtitle: nextSection ? nextSection.title : '', href: getSectionUrl(nextSlug), icon: 'arrow-right' };
+} else if (!nextSection) {
+  // Last section
+  rightButton = { text: backToBeginningText, subtitle: homeButtonText, href: locale === "de" ? "/" : `/${locale}/`, icon: 'home' };
+} else {
+  // Other sections with next
+  rightButton = { text: nextButtonText, subtitle: nextSection.title, href: getSectionUrl(nextSlug), icon: 'arrow-right' };
+}
 ---
 
 
-<footer data-container="footer" class="mb-3">
+<footer class="mb-3">
   <nav class="footer-nav flex justify-between items-center mt-6">
-    {prevSection && (
+    {leftButton && (
       <a
-        href={getSectionUrl(prevSlug)}
+        href={leftButton.href}
         class="btn-footer"
       >
-        <svg aria-hidden="true" focusable="false" class="octicon octicon-arrow-left" viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
-          <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
+        <svg aria-hidden="true" focusable="false" class={`octicon octicon-${leftButton.icon}`} viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+          {leftButton.icon === 'arrow-left' && <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />}
+          {leftButton.icon === 'home' && <path d="M2.5 7.25a4.75 4.75 0 0 1 9.5 0 .75.75 0 0 0 1.5 0 6.25 6.25 0 1 0-6.25 6.25H12v2.146c0 .223.27.335.427.177l2.896-2.896a.25.25 0 0 0 0-.354l-2.896-2.896a.25.25 0 0 0-.427.177V12H7.25A4.75 4.75 0 0 1 2.5 7.25Z"></path>}
         </svg>
         <div class="label">
-          <span>{prevButtonText || "Previous chapter"}</span>
-          <span><i>{prevSection.title}</i></span>
+          <span>{leftButton.text}</span>
+          <span><i>{leftButton.subtitle}</i></span>
         </div>
       </a>
     )}
 
-    {nextSection && (
+    {rightButton && (
       <a
-        href={getSectionUrl(nextSlug)}
+        href={rightButton.href}
         class="btn-footer"
       >
         <div class="label">
-          <span>{nextButtonText || "Next chapter"}</span>
-          <span class="footer-btn-title"><i>{nextSection.title}</i></span>
+          <span>{rightButton.text}</span>
+          <span class="footer-btn-title"><i>{rightButton.subtitle}</i></span>
         </div>
-        <svg aria-hidden="true" focusable="false" class="octicon octicon-arrow-right" viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
-          <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06Z" />
+        <svg aria-hidden="true" focusable="false" class={`octicon octicon-${rightButton.icon}`} viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+          {rightButton.icon === 'arrow-right' && <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06Z" />}
+          {rightButton.icon === 'home' && <path d="M2.5 7.25a4.75 4.75 0 0 1 9.5 0 .75.75 0 0 0 1.5 0 6.25 6.25 0 1 0-6.25 6.25H12v2.146c0 .223.27.335.427.177l2.896-2.896a.25.25 0 0 0 0-.354l-2.896-2.896a.25.25 0 0 0-.427.177V12H7.25A4.75 4.75 0 0 1 2.5 7.25Z"></path>}
         </svg>
       </a>
     )}
