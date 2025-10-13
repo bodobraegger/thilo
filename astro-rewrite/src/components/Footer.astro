@@ -33,13 +33,9 @@ if (sections && currentSectionSlug) {
     prevSection = sections[sections.length - 1];
 }
 
-console.log({ currentSectionSlug, prevSection, nextSection });
-
 // Slugs for navigation
 const prevSlug = prevSection ? String(prevSection.slug) : "";
 const nextSlug = nextSection ? String(nextSection.slug) : "";
-
-console.log(prevSlug, nextSlug);
 
 // Function to get section URL
 const getSectionUrl = (slug: string) => {
