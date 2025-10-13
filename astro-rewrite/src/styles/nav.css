@@ -107,3 +107,7 @@ nav.header-nav {
   background-color: var(--color-primary-50) !important;
   color: var(--color-primary-700) !important;
 }
+
+#sidebar-overlay {
+  backdrop-filter: blur(1px);
+}
