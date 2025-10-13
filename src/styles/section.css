@@ -54,6 +54,8 @@ section {
       flex-grow: 1;
       height: fit-content;
       align-self: center;
+      font-weight: bold;
+      font-size: 32px;
     }
     .icon {
       align-self:center; 
@@ -66,13 +68,14 @@ section {
     margin-top: 20px;
     clear: both;
   
-    &-title {
         h2 {
         display: flex;
         align-items: center;
         border-bottom: 1px solid;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 16px;
       }
-    }
     
     .md-img {
       display: inline-block;

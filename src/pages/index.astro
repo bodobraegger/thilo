@@ -7,7 +7,6 @@ const locale = Astro.currentLocale || 'de';
 
 // Fetch start page content from Strapi - let it fail if it doesn't exist
 const startPage = await getStartPage(locale);
-const sections = await getSections(locale);
 
 // Convert startPage to section-like object for SectionPage component
 const homepageSection: SectionT = {

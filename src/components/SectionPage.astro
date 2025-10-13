@@ -1,9 +1,11 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import Section from './Section.astro';
+import type { SectionT } from "../utils/data";
+
 
 interface Props {
-  section: any;
+  section: SectionT;
   locale: string;
 }
 

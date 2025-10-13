@@ -14,5 +14,5 @@ export default defineConfig({
       prefixDefaultLocale: false
     }
   },
-  // CSS preprocessing removed - using Tailwind CSS
+  outDir: "build"
 });

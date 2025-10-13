@@ -2,45 +2,47 @@
   "translation": {
     "target": {
       "role": {
-        "LL": "Responsable d'Entrepôt",
-        "C": "Entraîneur",
-        "AL": "Chef de Service"
+        "LL": "Chef de camp",
+        "C": "Coach",
+        "AL": "Chef de groupe"
       }
     },
     "header": {
-      "imprint": "Imprimer",
+      "imprint": "Mentions légales",
       "theme_auto_name": "Sync",
-      "theme_light_name": "Light",
-      "theme_dark_name": "Dark"
+      "theme_light_name": "Clair",
+      "theme_dark_name": "Sombre"
     },
     "homePage": {
-      "title": "Home"
+      "title": "Accueil"
     },
     "startPage": {
       "menuName": ""
     },
-    "sidebar": {
-      "home": "Home"
-    },
     "searchPage": {
-      "tooltip": "Rechercher",
-      "searchPlaceholder": "Rechercher Chapitres",
-      "noResults": "Aucun résultat trouvé. Veuillez essayer avec un autre terme de recherche.",
-      "noKeyword": "Veuillez entrer un terme de recherche d'au moins {{amountOfCharacters}} caractères pour commencer la recherche."
+      "title": "Rechercher",
+      "description": "Rechercher dans tous les contenus",
+      "placeholder": "Entrer un terme de recherche...",
+      "noResults": "Aucun résultat trouvé",
+      "results": "Résultats"
     },
-    "languagePicker": {
-      "tooltip": "Choisir la Langue"
-    },
-    "scrollButton": {
-      "tooltip": "Remonter en Haut"
+    "section": {
+      "backToTop": "Retour en haut"
     },
     "footer": {
-      "prevButtonText": "Chapitre Précédent",
-      "nextButtonText": "Chapitre Suivant",
-      "homeButtonText": "Retour au Début"
+      "copyright": "© 2023 Mouvement Scout de Suisse",
+      "prevButton": "Chapitre précédent",
+      "nextButton": "Chapitre suivant",
+      "homeButton": "Accueil",
+      "backToBeginning": "Retour au début",
+      "lastChapter": "Dernier chapitre",
+      "firstChapter": "Premier chapitre"
     },
-    "sideBarNav": {
-      "title": "Thilo Online"
+    "language": {
+      "de": "Deutsch",
+      "fr": "Français", 
+      "it": "Italiano",
+      "en": "English"
     }
   }
 }
