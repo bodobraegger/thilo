@@ -39,16 +39,8 @@ section {
   p + ul, p + ol {
     margin-top: -4px;
   }
-  
-  .inverted {
-    filter: invert(1);
-    > * {
-      filter: invert(1);
-    }
-  }
   strong {
     color: var(--color-primary);
-    filter: brightness(--lightness);
   }
   .md-img {
     display: block;
