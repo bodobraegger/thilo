@@ -1,6 +1,8 @@
 ---
-import MarkdownRenderer from "./MarkdownRenderer.astro";
+import MarkdownRenderer from "./MarkdownRenderer.tsx";
 import type { SectionT } from "../utils/data";
+
+import quiz from "../styles/quiz.css";
 
 export interface Props {
     section: SectionT;
@@ -35,7 +37,7 @@ const sectionColor = section.color_primary || "#521d3a";
         section.content && (
             <div class="section-body rounded p-3 color-bg-default">
                 <div class="section-description">
-                    <MarkdownRenderer content={section.content} />
+                    <MarkdownRenderer content={section.content} client:load />
                 </div>
             </div>
         )
@@ -49,7 +51,7 @@ const sectionColor = section.color_primary || "#521d3a";
                         <div id={chapter.slug} class="chapter">
                             <h2>{chapter.title}</h2>
                             <div class="chapter-content">
-                                <MarkdownRenderer content={chapter.content} />
+                                <MarkdownRenderer content={chapter.content} client:load />
                             </div>
                             {chapter.targets && chapter.targets.length > 0 && (
                                 <div class="targets">
@@ -63,6 +65,7 @@ const sectionColor = section.color_primary || "#521d3a";
                                                 <h4>{target.title}</h4>
                                                 <MarkdownRenderer
                                                     content={target.content}
+                                                    client:load
                                                 />
                                             </div>
                                         ))}

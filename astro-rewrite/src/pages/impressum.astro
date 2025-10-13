@@ -1,7 +1,7 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../i18n';
-import MarkdownRenderer from '../components/MarkdownRenderer.astro';
+import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 
 const locale = Astro.currentLocale || 'de';
 const t = getTranslations(locale as any);
@@ -47,7 +47,7 @@ console.log('Final impressum data:', impressumData); // Debug log
     <div class="section-body rounded p-2 color-bg-default">
       <div class="impressum-content">
         {impressumData ? (
-          <MarkdownRenderer content={impressumData.content || ''} />
+          <MarkdownRenderer content={impressumData.content || ''} client:load />
         ) : (
           <p>Impressum content could not be loaded.</p>
         )}
