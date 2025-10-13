@@ -9,9 +9,10 @@ export interface Props {
   title: string;
   lang?: string;
   currentSection?: any;
+  useFooter?: boolean;
 }
 
-const { title, lang = 'de', currentSection } = Astro.props;
+const { title, lang = 'de', currentSection, useFooter=true } = Astro.props;
 
 let sections: any[] = [];
 try {
@@ -36,7 +37,9 @@ try {
     <!-- Main Content -->
     <main class="flex-1 p-6 overflow-x-hidden">
       <slot />
-      <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+      {useFooter &&
+        <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+      }
     </main>
   </div>
 
