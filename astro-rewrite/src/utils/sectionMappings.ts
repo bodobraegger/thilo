@@ -35,8 +35,6 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
   const locales = ['de', 'fr', 'it'];
   const sections: { [locale: string]: SectionData[] } = {};
   
-  console.log('🔄 Fetching all sections for all locales...');
-  
   // Fetch sections for each locale
   for (const locale of locales) {
     try {
@@ -60,8 +58,6 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
           sorting: chapter.sorting
         })) || []
       }));
-      
-      console.log(`Fetched ${sections[locale].length} sections for ${locale}`);
     } catch (error) {
       console.error(`❌ Failed to fetch sections for ${locale}:`, error);
       sections[locale] = [];
@@ -101,8 +97,6 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
       };
     }
   }
-  
-  console.log(`Built section mappings for ${Object.keys(sectionMappings).length} sections`);
   
   return {
     sections,
