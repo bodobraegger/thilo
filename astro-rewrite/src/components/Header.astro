@@ -408,8 +408,8 @@ if (currentSection) {
       return;
     }
     
-    // Get all sections from meta tag
-    const allSectionsData = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
+    // Get all sections from localStorage (set by BaseLayout)
+    const allSectionsData = localStorage.getItem('allSectionsData');
     if (!allSectionsData) {
       // Fallback: navigate to start page
       const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
@@ -417,7 +417,7 @@ if (currentSection) {
       return;
     }
     
-    const allSections = JSON.parse(allSectionsData);
+    const allSections = JSON.parse(allSectionsData).sections;
     const currentSections = allSections[document.documentElement.lang || 'de'] || [];
     const targetSections = allSections[targetLocale] || [];
     
@@ -431,23 +431,26 @@ if (currentSection) {
       if (targetSection) {
         const baseTargetUrl = (targetLocale === 'de' ? '/' : `/${targetLocale}/`) + targetSection.slug;
         
-        // Smart chapter hash mapping by position/number
+        // Smart chapter hash mapping by sorting (not position)
         if (currentHash && currentSection.chapters && targetSection.chapters) {
           const currentChapterSlug = currentHash.replace('#', '');
           
           // Find current chapter by slug
-          const currentChapterIndex = currentSection.chapters.findIndex((c: any) => c.slug === currentChapterSlug);
+          const currentChapter = currentSection.chapters.find((c: any) => c.slug === currentChapterSlug);
           
-          if (currentChapterIndex >= 0 && currentChapterIndex < targetSection.chapters.length) {
-            // Map to same chapter position in target language
-            const targetChapter = targetSection.chapters[currentChapterIndex];
-            const targetHash = `#${targetChapter.slug}`;
+          if (currentChapter && currentChapter.sorting !== undefined) {
+            // Find target chapter with same sorting
+            const targetChapter = targetSection.chapters.find((c: any) => c.sorting === currentChapter.sorting);
             
-            console.log(`Chapter mapping: ${currentHash} → ${targetHash} (position ${currentChapterIndex})`);
-            window.location.href = baseTargetUrl + targetHash;
-            return;
-          } else {
-            console.log(`Chapter position ${currentChapterIndex} not found in target section`);
+            if (targetChapter) {
+              const targetHash = `#${targetChapter.slug}`;
+              
+              console.log(`Chapter mapping: ${currentHash} → ${targetHash} (sorting ${currentChapter.sorting})`);
+              window.location.href = baseTargetUrl + targetHash;
+              return;
+            } else {
+              console.log(`No chapter with sorting ${currentChapter.sorting} found in target section`);
+            }
           }
         }
         
@@ -457,8 +460,25 @@ if (currentSection) {
       }
     }
     
-    // Fallback: navigate to start page
-    const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
-    window.location.href = fallbackUrl;
+    // Handle non-section pages
+    let targetUrl;
+    if (path === '' || path === 'index') {
+      // Index page
+      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+    } else if (path === 'search') {
+      // Search page
+      targetUrl = targetLocale === 'de' ? '/search' : `/${targetLocale}/search`;
+    } else {
+      // Unknown page, fallback to start page
+      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+    }
+    
+    // Preserve query parameters
+    const currentSearch = window.location.search;
+    if (currentSearch) {
+      targetUrl += currentSearch;
+    }
+    
+    window.location.href = targetUrl;
   }
 </script>
