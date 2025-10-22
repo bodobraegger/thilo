@@ -1,0 +1,70 @@
+---
+export interface Props {
+  title: string;
+  lang?: string;
+  allSectionsData?: any;
+}
+
+const { title, lang = 'de', allSectionsData } = Astro.props;
+
+import '../styles/global.css';
+import '../styles/colors.css';
+import '../styles/layout.css';
+
+---
+
+<!DOCTYPE html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Thilo - Scout Magazin" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    {allSectionsData && (
+      <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
+    )}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<script>
+  // Global color management utility
+  (window as any).updateThemeColors = function(colorCSS: string) {
+    if (colorCSS && typeof colorCSS === 'string') {
+      const colorProperties = colorCSS.split('\n');
+      colorProperties.forEach((property: string) => {
+        if (property.trim() && property.includes(':')) {
+          const [key, value] = property.split(':');
+          if (key && value) {
+            const cleanKey = key.trim();
+            const cleanValue = value.replace(';', '').trim();
+            document.documentElement.style.setProperty(cleanKey, cleanValue);
+          }
+        }
+      });
+    }
+  };
+
+  // Ensure colors are properly inherited on page navigation
+  document.addEventListener('astro:page-load', function() {
+    // This event fires on Astro page transitions
+    // Re-apply any stored color settings
+    const sectionElement = document.querySelector('section.content[style*="--color-primary"]') as HTMLElement;
+    if (sectionElement && sectionElement.style) {
+      // Extract and reapply colors from section to document root
+      const sectionStyle = sectionElement.style.cssText;
+      const colorProps = sectionStyle.match(/--color-[^;]+;/g);
+      if (colorProps) {
+        colorProps.forEach((prop: string) => {
+          const [key, value] = prop.replace(';', '').split(':');
+          if (key && value) {
+            document.documentElement.style.setProperty(key.trim(), value.trim());
+          }
+        });
+      }
+    }
+  });
+</script>

@@ -1,0 +1,413 @@
+---
+import type { SectionT } from '../utils/data';
+import { getTranslations } from '../i18n';
+import { getSectionUrlForLocale, getAllSlugsForSection } from '../utils/slugMapping';
+
+import '../styles/nav.css';
+
+interface Props {
+  sections: SectionT[];
+  currentSection?: SectionT;
+  lang?: string;
+}
+
+const { sections, currentSection, lang = 'de' } = Astro.props;
+const currentPath = Astro.url.pathname;
+const currentHash = Astro.url.hash;
+
+const t = getTranslations(lang as 'de' | 'fr' | 'it');
+
+
+// Helper function to generate section URL based on language
+function getSectionUrl(section: SectionT, locale: string): string {
+  // Get all slug variants for this section using section ID
+  const slugVariants = getAllSlugsForSection(section.id.toString());
+  const localeSlug = slugVariants.find(s => s.locale === locale)?.slug;
+  
+  if (localeSlug) {
+    // Use custom mapping
+    if (locale === 'de') {
+      return `/${localeSlug}`;
+    } else {
+      return `/${locale}/${localeSlug}`;
+    }
+  } else {
+    // Fallback to section.slug
+    if (locale === 'de') {
+      return `/${section.slug}`;
+    } else {
+      return `/${locale}/${section.slug}`;
+    }
+  }
+}
+---
+
+<nav class="w-72 lg:h-[calc(100vh-52px)] lg:top-16 bg-white border-r border-gray-200 overflow-y-auto sticky  lg:block hidden" id="sidebar-nav">
+  <!-- Header on mobile only: Close button and 'Table of Contents' -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden h-[52px]">
+    <h2 class="text-lg font-semibold">Navigation</h2>
+    <button id="sidebar-toggle" class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500" aria-label="Close Table of Contents">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation List -->
+  <div class="p-2">
+    <ul class="space-y-0.5">
+      <!-- Home Link -->
+      <li>
+        <a 
+          href={lang === 'de' ? '/' : `/${lang}/`}
+          class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors ${
+            (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
+              ? 'active font-medium' 
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>{t.translation.homePage.title}</span>
+        </a>
+      </li>
+
+      <!-- Sections -->
+      {sections.map((section: SectionT) => {
+        const sectionPath = getSectionUrl(section, lang);
+        const isActivePage = currentPath === sectionPath || currentPath.startsWith(sectionPath);
+        const isCurrentSection = isActivePage; // Only expand if we're actually on this section's page
+        
+        return (
+          <li>
+            <!-- Section header with link and toggle -->
+            <div 
+              class={`section flex items-center px-3 py-1 text-sm rounded-md transition-colors group font-medium ${
+                isActivePage ? 'active' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <!-- Section Link -->
+              <a 
+                href={sectionPath}
+                class="flex items-center flex-1 min-w-0"
+                style={section.color_primary ? `--section-color: ${section.color_primary}` : ''}
+              >
+                <!-- Section Icon -->
+                {section.icon ? (
+                  <img 
+                    src={section.icon.url} 
+                    alt="icon" 
+                    class="w-4 h-4 mr-3 flex-shrink-0"
+                  />
+                ) : (
+                  <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                )}
+                
+                <span class="flex-1 min-w-0 truncate" style={section.color_primary ? `color: ${section.color_primary}` : ''}>{section.menu_name}</span>
+              </a>
+              
+              <!-- Chapter toggle button (outside the link) -->
+              {section.chapters && section.chapters.length > 0 && (
+                <button 
+                  class="w-6 h-6 ml-2 flex items-center justify-center transform transition-transform hover:bg-gray-200 rounded chapter-toggle"
+                  data-section={section.slug}
+                  aria-label="Toggle chapters"
+                >
+                  <svg 
+                    class={`w-3 h-3 transition-transform ${isCurrentSection ? 'rotate-90' : ''}`}
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <!-- Chapters submenu (expandable) -->
+            {section.chapters && section.chapters.length > 0 && (
+              <ul 
+                class={`mt-1 ml-4 border-l-2 border-gray-200 pl-4 chapters-list transition-all duration-200 ${
+                  isCurrentSection ? '' : 'hidden'
+                }`}
+                data-chapters={section.slug}>
+                {section.chapters
+                  .sort((a, b) => (a.sorting || 0) - (b.sorting || 0))
+                  .map((chapter) => {
+                    const chapterHash = `#${chapter.slug}`;
+                    const isActiveChapter = currentHash === chapterHash;
+                    
+                    return (
+                      <li>
+                        <a 
+                          href={`${sectionPath}${chapterHash}`}
+                          class={`chapter flex items-center lg:px-3 lg:py-2 px-2 py-1 text-sm rounded-md transition-colors ${
+                            isActiveChapter ? 'active font-medium' : 'text-gray-600'
+                          }`}
+                        >
+                            <svg focusable="false" class="octicon octicon-bookmark h-3 mr-1" viewBox="0 0 16 16" width="16" height="16">
+                            <path class="bookmark-outline" d="M3 2.75C3 1.784 3.784 1 4.75 1h6.5C12.216 1 13 1.784 13 2.75v11.5a.75.75 0 0 1-1.227.579L8 11.722l-3.773 3.107A.751.751 0 0 1 3 14.25V2.75Z" fill="none" stroke="currentColor" stroke-width="1.2"/>
+                            <path class="bookmark-fill" d="M4.75 1C3.784 1 3 1.784 3 2.75v11.5a.75.75 0 0 0 1.227.579L8 11.722l3.773 3.107A.75.75 0 0 0 13 14.25V2.75C13 1.784 12.216 1 11.25 1h-6.5Z" fill="currentColor" opacity="0"/>
+                            </svg>
+                          <span class="flex-1 min-w-0 truncate">{chapter.title}</span>
+                        </a>
+                      </li>
+                    );
+                  })
+                }
+              </ul>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</nav>
+
+<!-- Mobile/Tablet overlay -->
+<div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden" id="sidebar-overlay"></div>
+
+
+<script is:inline>
+  // Mobile sidebar functionality
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebarNav = document.getElementById('sidebar-nav');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+  function scrollToCurrentInToC() {
+    // Find the currently active chapter/section in the ToC
+    const currentHash = window.location.hash;
+    const currentPath = window.location.pathname;
+    
+    let activeLink = null;
+    
+    // First, try to find active link by hash if present
+    if (currentHash) {
+      const hashWithoutHash = currentHash.slice(1);
+      activeLink = sidebarNav?.querySelector(`a[href*="#${hashWithoutHash}"]`);
+    }
+    
+    // If no hash match, try to find active link by current path
+    if (!activeLink) {
+      activeLink = sidebarNav?.querySelector(`a[href="${currentPath}"], a[href*="${currentPath}"]`);
+    }
+    
+    // If we found an active link, scroll it into view in the ToC
+    if (activeLink && sidebarNav) {
+      // Use setTimeout to ensure the sidebar is fully rendered first
+      setTimeout(() => {
+        const linkRect = activeLink.getBoundingClientRect();
+        const sidebarRect = sidebarNav.getBoundingClientRect();
+        
+        // Calculate the position to scroll to (center the active item if possible)
+        const scrollTop = activeLink.offsetTop - (sidebarNav.clientHeight / 2) + (activeLink.clientHeight / 2);
+        
+        // Scroll the sidebar to show the active item
+        sidebarNav.scrollTo({
+          top: Math.max(0, scrollTop),
+          behavior: 'smooth'
+        });
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }
+
+  function openSidebar() {
+    // Only handle mobile behavior - on large screens, sidebar is always visible via CSS
+    if (window.innerWidth < 1024) {
+      // On medium and smaller screens, show as modal overlay
+      sidebarNav?.classList.remove('hidden', 'sticky', 'relative');
+      sidebarNav?.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50');
+      sidebarOverlay?.classList.remove('hidden');
+    }
+    else {
+      // On large screens, ensure sidebar is sticky/relative
+      sidebarNav?.classList.remove('hidden', 'fixed', 'inset-y-0', 'left-0', 'z-50');
+      sidebarNav?.classList.add('sticky', 'top-16', 'relative');
+    }
+    
+    // Scroll to current active section/chapter in ToC
+    scrollToCurrentInToC();
+  }
+
+  function closeSidebar() {
+    // Only handle mobile behavior - don't interfere with large screen CSS
+    if (window.innerWidth < 1024) {
+      // On small/medium screens, hide the modal and restore original classes
+      sidebarNav?.classList.add('hidden', 'sticky', 'relative');
+      sidebarNav?.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-50');
+      sidebarOverlay?.classList.add('hidden');
+    }
+  }
+
+  // Initialize sidebar visibility based on screen size
+  function initSidebarVisibility() {
+    if (window.innerWidth >= 1024) {
+      // Large screens: ensure sidebar is visible
+      sidebarOverlay?.classList.add('hidden');
+    } else {
+      // Small/medium screens: hide by default
+      sidebarOverlay?.classList.add('hidden');
+    }
+  }
+
+  // Initialize on load
+  initSidebarVisibility();
+  
+  // Scroll to current position on page load (for both desktop and mobile)
+  setTimeout(() => {
+    scrollToCurrentInToC();
+  }, 200);
+  
+  // Handle window resize
+  window.addEventListener('resize', initSidebarVisibility);
+
+  sidebarToggle?.addEventListener('click', closeSidebar);
+  sidebarOverlay?.addEventListener('click', closeSidebar);
+
+  // Listen for header sidebar toggle event (mobile only)
+  window.addEventListener('toggleSidebar', () => {
+    console.log('Toggle sidebar event received');
+    
+    // Only handle toggle on small/medium screens
+    if (window.innerWidth < 1024) {
+      console.log('Mobile toggle - checking if hidden:', sidebarNav?.classList.contains('hidden'));
+      
+      if (sidebarNav?.classList.contains('hidden')) {
+        console.log('Opening mobile sidebar');
+        openSidebar();
+      } else {
+        console.log('Closing mobile sidebar');
+        closeSidebar();
+      }
+    } else {
+      console.log('Large screen - sidebar should be visible via CSS');
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    // On resize, if we switch to large screen, ensure sidebar is visible
+    closeSidebar(); // Close mobile modal if open
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href*="#"]').forEach((anchor) => {
+    anchor.addEventListener('click', function (e) {
+      const href = this.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const targetId = href.slice(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          // Close mobile sidebar after navigation
+          if (window.innerWidth < 1024) {
+            closeSidebar();
+          }
+        }
+      }
+    });
+  });
+
+  // Update active chapter based on scroll position - always one active, closest to viewport top
+  function updateActiveChapter() {
+    const viewportTop = window.scrollY;
+    
+    let activeChapterId = null;
+    let minDistance = Infinity;
+    
+    // Find the chapter link closest to the top of the viewport (always select one)
+    document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach((link) => {
+      const href = link.getAttribute('href');
+      const hash = href.split('#')[1];
+      const element = document.getElementById(hash);
+      
+      if (element) {
+        const elementTop = element.offsetTop; // Use offsetTop for better accuracy
+        
+        // Calculate distance from viewport top (no visibility check, always find closest)
+        const distanceFromTop = Math.abs(elementTop - viewportTop);
+        if (distanceFromTop < minDistance) {
+          minDistance = distanceFromTop;
+          activeChapterId = hash;
+        }
+      }
+    });
+    
+    // Update active states in navigation - only one active at a time
+    document.querySelectorAll('#sidebar-nav a').forEach((link) => {
+      const href = link.getAttribute('href');
+      if (href && href.includes('#')) {
+        const hash = href.split('#')[1];
+        if (hash === activeChapterId) {
+          // Add active class for the single active chapter
+          link.classList.add('active');
+          link.classList.remove('text-gray-600');
+        } else {
+          // Reset to default styles
+          link.classList.remove('active');
+          link.classList.add('text-gray-600');
+        }
+      }
+    });
+  }
+
+  // Throttled scroll handler
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        updateActiveChapter();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+
+  // Handle escape key for mobile
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeSidebar();
+    }
+  });
+
+  // Chapter toggle functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.chapter-toggle').forEach((toggle) => {
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Chapter toggle clicked!');
+        
+        const button = e.currentTarget;
+        const sectionSlug = button.getAttribute('data-section');
+        const chaptersList = document.querySelector(`[data-chapters="${sectionSlug}"]`);
+        const arrow = button.querySelector('svg');
+        
+        console.log('Section slug:', sectionSlug);
+        console.log('Chapters list:', chaptersList);
+        console.log('Arrow:', arrow);
+        
+        if (chaptersList && arrow) {
+          const isHidden = chaptersList.classList.contains('hidden');
+          console.log('Is hidden:', isHidden);
+          
+          if (isHidden) {
+            chaptersList.classList.remove('hidden');
+            arrow.style.transform = 'rotate(90deg)';
+          } else {
+            chaptersList.classList.add('hidden');
+            arrow.style.transform = 'rotate(0deg)';
+          }
+        }
+      });
+    });
+  });
+</script>

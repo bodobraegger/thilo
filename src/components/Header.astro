@@ -1,0 +1,484 @@
+---
+import { getTranslations, type Locale } from '../i18n';
+import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
+
+interface Props {
+  locale?: Locale;
+  currentSection?: any;
+}
+
+const { locale = 'de', currentSection } = Astro.props;
+const t = getTranslations(locale);
+
+
+// Get current URL to determine page type
+const url = Astro.url;
+const pathname = url.pathname;
+
+// Fetch ALL section data at build time
+const allSectionsData: SimpleSectionsData = await fetchAllSections();
+
+// Generate language alternatives for dropdown
+let languageAlternatives = [];
+
+if (currentSection) {
+  // For section pages, use pre-built section mapping
+  for (const targetLocale of ['de', 'fr', 'it']) {
+    if (targetLocale === locale) continue; // Skip current locale
+    
+    const url = getSectionUrlForLocaleFromCache(
+      currentSection.id.toString(), 
+      targetLocale, 
+      allSectionsData.sectionMappings
+    );
+    languageAlternatives.push({ locale: targetLocale, url });
+  }
+} else {
+  // For other pages (index, search, etc.), determine equivalent URLs
+  let basePath = pathname;
+  
+  // Remove locale prefix if present
+  if (pathname.startsWith('/fr/')) {
+    basePath = pathname.substring(3) || '/';
+  } else if (pathname.startsWith('/it/')) {
+    basePath = pathname.substring(3) || '/';
+  }
+  
+  // Ensure basePath starts with /
+  if (!basePath.startsWith('/')) {
+    basePath = '/' + basePath;
+  }
+  
+  // Generate URLs for all locales
+  for (const targetLocale of ['de', 'fr', 'it']) {
+    if (targetLocale === locale) continue; // Skip current locale
+    
+    let targetUrl;
+    if (targetLocale === 'de') {
+      targetUrl = basePath === '/' ? '/' : basePath;
+    } else {
+      targetUrl = basePath === '/' ? `/${targetLocale}/` : `/${targetLocale}${basePath}`;
+    }
+    languageAlternatives.push({ locale: targetLocale, url: targetUrl });
+  }
+}
+---
+
+<!-- Redesigned Header -->
+<header>
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <!-- Left side - Sidebar toggle (md screens) + Logo -->
+      <div class="flex items-center space-x-3">
+        <!-- Sidebar toggle button - visible on medium and small screens -->
+        <button 
+          type="button"
+          id="sidebar-toggle-header"
+          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          aria-label="Toggle sidebar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Center - Empty space -->
+      <div class="flex-1"></div>
+
+      <!-- Right side - Search/Menu buttons -->
+      <div class="flex items-center space-x-2">
+        <!-- Desktop Search (always visible on larger screens) -->
+        <div class="hidden lg:block relative">
+          <input 
+            type="text" 
+            id="desktop-search-input"
+            placeholder={t.translation.searchPage.placeholder}
+            class="w-64 rounded-md pl-4 pr-10 h-8 text-sm focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500"
+          />
+          <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Mobile Search Expanded (shows in header on right side) -->
+        <div id="mobile-search-expanded" class="hidden lg:hidden relative">
+          <input 
+            type="text" 
+            id="mobile-search-input"
+            placeholder={t.translation.searchPage.placeholder}
+            class="w-48 rounded-md pl-4 pr-10 py-1.5 text-sm focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500"
+          />
+          <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+
+        <!-- Mobile Search Button (collapsed state) -->
+        <button 
+          type="button"
+          id="search-expand-button"
+          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          aria-label="Open search"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+
+        <!-- Menu dropdown -->
+        <div class="relative">
+          <!-- Close search button (replaces menu button when search is open) -->
+          <button 
+            type="button"
+            id="search-close-button"
+            class="hidden lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            aria-label="Close search"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <!-- Menu dropdown toggle -->
+          <button 
+            type="button"
+            id="menu-dropdown-toggle"
+            class="p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+            aria-label="Open menu"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+            </svg>
+          </button>
+
+          <!-- Dropdown menu -->
+          <div 
+            id="menu-dropdown" 
+            class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+          >
+            <div class="px-4 py-2 border-b border-gray-200">
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                Language
+              </p>
+              
+              <!-- Language Options -->
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="de"
+              >
+                <span class="mr-2">{locale === 'de' ? '✓' : ''}</span>
+                <span>Deutsch</span>
+              </button>
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="fr"
+              >
+                <span class="mr-2">{locale === 'fr' ? '✓' : ''}</span>
+                <span>Français</span>
+              </button>
+              <button 
+                type="button"
+                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
+                data-locale="it"
+              >
+                <span class="mr-2">{locale === 'it' ? '✓' : ''}</span>
+                <span>Italiano</span>
+              </button>
+              
+              <!-- Theme Section -->
+              <div class="border-t border-gray-200 mt-1">
+                <button 
+                  type="button"
+                  id="theme-toggle"
+                  class="w-full text-left block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <span class="flex items-center justify-between">
+                    <span>Theme</span>
+                    <span class="text-xs text-gray-500">Hell</span>
+                  </span>
+                </button>
+              </div>
+              
+              <!-- Impressum Section -->
+              <div class="border-t border-gray-200">
+                <a 
+                  href={locale === 'de' ? '/impressum' : `/${locale}/impressum`}
+                  class="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  {t.translation.header.imprint}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Sidebar toggle functionality (for medium screens)
+  const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
+  
+  sidebarToggleHeader?.addEventListener('click', () => {
+    console.log('Header sidebar toggle clicked');
+    // This will be handled by the sidebar component
+    const sidebarToggleEvent = new CustomEvent('toggleSidebar');
+    window.dispatchEvent(sidebarToggleEvent);
+    console.log('Toggle event dispatched');
+  });
+
+  // Menu dropdown functionality
+  const menuDropdownToggle = document.getElementById('menu-dropdown-toggle');
+  const menuDropdown = document.getElementById('menu-dropdown');
+
+  function openMenuDropdown() {
+    menuDropdown?.classList.remove('hidden');
+  }
+
+  function closeMenuDropdown() {
+    menuDropdown?.classList.add('hidden');
+  }
+
+  menuDropdownToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menuDropdown?.classList.contains('hidden')) {
+      openMenuDropdown();
+    } else {
+      closeMenuDropdown();
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
+      if (!menuDropdown.contains(e.target as Node) && !menuDropdownToggle?.contains(e.target as Node)) {
+        closeMenuDropdown();
+      }
+    }
+  });
+
+  // Search functionality
+  const searchExpandButton = document.getElementById('search-expand-button');
+  const searchCloseButton = document.getElementById('search-close-button');
+  const desktopSearchInput = document.getElementById('desktop-search-input') as HTMLInputElement | null;
+  const mobileSearchExpanded = document.getElementById('mobile-search-expanded');
+  const mobileSearchInput = document.getElementById('mobile-search-input') as HTMLInputElement | null;
+
+  function openMobileSearch() {
+    // Hide search button and menu button
+    searchExpandButton?.classList.add('hidden');
+    menuDropdownToggle?.classList.add('hidden');
+    
+    // Show search input and close button
+    mobileSearchExpanded?.classList.remove('hidden');
+    searchCloseButton?.classList.remove('hidden');
+    
+    setTimeout(() => mobileSearchInput?.focus(), 100);
+  }
+
+  function closeMobileSearch() {
+    // Show search button and menu button
+    searchExpandButton?.classList.remove('hidden');
+    menuDropdownToggle?.classList.remove('hidden');
+    
+    // Hide search input and close button
+    mobileSearchExpanded?.classList.add('hidden');
+    searchCloseButton?.classList.add('hidden');
+    
+    if (mobileSearchInput) mobileSearchInput.value = '';
+  }
+
+  function performSearch(query: string) {
+    const currentLocale = document.documentElement.lang || 'de';
+    const baseUrl = currentLocale === 'de' ? '/search' : `/${currentLocale}/search`;
+    
+    if (query.trim()) {
+      window.location.href = `${baseUrl}?q=${encodeURIComponent(query.trim())}`;
+    } else {
+      window.location.href = baseUrl;
+    }
+  }
+
+  // Event listeners
+  searchExpandButton?.addEventListener('click', openMobileSearch);
+  searchCloseButton?.addEventListener('click', closeMobileSearch);
+
+  // Desktop search (always visible on large screens)
+  desktopSearchInput?.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && desktopSearchInput.value) {
+      performSearch(desktopSearchInput.value);
+    }
+  });
+
+  // Mobile search
+  mobileSearchInput?.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' && mobileSearchInput.value) {
+      performSearch(mobileSearchInput.value);
+      closeMobileSearch();
+    } else if (e.key === 'Escape') {
+      closeMobileSearch();
+    }
+  });
+
+  // Escape key handler for search and menu
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (!mobileSearchExpanded?.classList.contains('hidden')) {
+        closeMobileSearch();
+      } else if (!menuDropdown?.classList.contains('hidden')) {
+        closeMenuDropdown();
+      }
+    }
+  });
+
+  // Click outside handler for search
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    
+    // Check if search is expanded and click is outside search elements
+    if (mobileSearchExpanded && !mobileSearchExpanded.classList.contains('hidden')) {
+      if (!mobileSearchExpanded.contains(target) && 
+          !searchExpandButton?.contains(target) && 
+          !searchCloseButton?.contains(target)) {
+        closeMobileSearch();
+      }
+    }
+  });
+
+  // Responsive breakpoint handler - close search when going from mobile to desktop
+  function handleResponsiveChange() {
+    const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
+    
+    if (isLargeScreen && mobileSearchExpanded && !mobileSearchExpanded.classList.contains('hidden')) {
+      closeMobileSearch();
+    }
+  }
+
+  // Listen for window resize
+  window.addEventListener('resize', handleResponsiveChange);
+  
+  // Initial check on page load
+  handleResponsiveChange();
+
+  // Theme toggle functionality (placeholder for future implementation)
+  const themeToggle = document.getElementById('theme-toggle');
+  
+  themeToggle?.addEventListener('click', () => {
+    // TODO: Implement theme switching in next step
+    console.log('Theme toggle clicked - to be implemented');
+    closeMenuDropdown();
+  });
+
+  // SIMPLE Language switching (exactly like React app)
+  const languageOptions = document.querySelectorAll('.language-option');
+  
+  languageOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      const selectedLocale = (e.currentTarget as HTMLElement)?.dataset?.locale;
+      const currentLocale = document.documentElement.lang || 'de';
+      
+      if (selectedLocale === currentLocale || !selectedLocale) {
+        closeMenuDropdown();
+        return;
+      }
+      
+      handleLanguageChange(selectedLocale);
+      closeMenuDropdown();
+    });
+  });
+
+  // Language change handler with smart chapter number mapping
+  function handleLanguageChange(targetLocale: string) {
+    const currentPath = window.location.pathname;
+    const currentHash = window.location.hash;
+    
+    // Get current section slug from path
+    let path = currentPath.replace(/^\//, ''); // Remove leading slash
+    if (path.startsWith('fr/')) path = path.substring(3);
+    if (path.startsWith('it/')) path = path.substring(3);
+    
+    // Handle impressum page
+    if (path === 'impressum') {
+      const targetUrl = targetLocale === 'de' ? '/impressum' : `/${targetLocale}/impressum`;
+      window.location.href = targetUrl;
+      return;
+    }
+    
+    // Get all sections from localStorage (set by BaseLayout)
+    const allSectionsData = localStorage.getItem('allSectionsData');
+    if (!allSectionsData) {
+      // Fallback: navigate to start page
+      const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+      window.location.href = fallbackUrl;
+      return;
+    }
+    
+    const allSections = JSON.parse(allSectionsData).sections;
+    const currentSections = allSections[document.documentElement.lang || 'de'] || [];
+    const targetSections = allSections[targetLocale] || [];
+    
+    // Find current section by slug
+    const currentSection = currentSections.find((s: any) => s.slug === path);
+    
+    if (currentSection) {
+      // Find equivalent section by sorting
+      const targetSection = targetSections.find((s: any) => s.sorting === currentSection.sorting);
+      
+      if (targetSection) {
+        const baseTargetUrl = (targetLocale === 'de' ? '/' : `/${targetLocale}/`) + targetSection.slug;
+        
+        // Smart chapter hash mapping by sorting (not position)
+        if (currentHash && currentSection.chapters && targetSection.chapters) {
+          const currentChapterSlug = currentHash.replace('#', '');
+          
+          // Find current chapter by slug
+          const currentChapter = currentSection.chapters.find((c: any) => c.slug === currentChapterSlug);
+          
+          if (currentChapter && currentChapter.sorting !== undefined) {
+            // Find target chapter with same sorting
+            const targetChapter = targetSection.chapters.find((c: any) => c.sorting === currentChapter.sorting);
+            
+            if (targetChapter) {
+              const targetHash = `#${targetChapter.slug}`;
+              
+              console.log(`Chapter mapping: ${currentHash} → ${targetHash} (sorting ${currentChapter.sorting})`);
+              window.location.href = baseTargetUrl + targetHash;
+              return;
+            } else {
+              console.log(`No chapter with sorting ${currentChapter.sorting} found in target section`);
+            }
+          }
+        }
+        
+        // No hash or chapter mapping failed - just go to section
+        window.location.href = baseTargetUrl;
+        return;
+      }
+    }
+    
+    // Handle non-section pages
+    let targetUrl;
+    if (path === '' || path === 'index') {
+      // Index page
+      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+    } else if (path === 'search') {
+      // Search page
+      targetUrl = targetLocale === 'de' ? '/search' : `/${targetLocale}/search`;
+    } else {
+      // Unknown page, fallback to start page
+      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+    }
+    
+    // Preserve query parameters
+    const currentSearch = window.location.search;
+    if (currentSearch) {
+      targetUrl += currentSearch;
+    }
+    
+    window.location.href = targetUrl;
+  }
+</script>

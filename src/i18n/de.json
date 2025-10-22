@@ -19,33 +19,30 @@
     "startPage": {
       "menuName": ""
     },
-    "sidebar": {
-      "home": "Home"
-    },
     "searchPage": {
       "title": "Suchen",
-      "tooltip": "Suchen",
-      "searchPlaceholder": "Kapitel durchsuchen",
-      "noResults": "Keine Resultate gefunden. Bitte versuche es mit einem anderen Suchbegriff.",
-      "noKeyword": "Bitte gib einen Suchbegriff mit mindestens {{amountOfCharacters}} Zeichen ein, um die Suche zu starten. "
+      "description": "Durchsuche alle Inhalte",
+      "placeholder": "Suchbegriff eingeben...",
+      "noResults": "Keine Ergebnisse gefunden",
+      "results": "Ergebnisse"
     },
-    "languagePicker": {
-      "tooltip": "Sprache wählen"
-    },
-    "scrollButton": {
-      "tooltip": "Nach Oben Scrollen"
+    "section": {
+      "backToTop": "Nach oben"
     },
     "footer": {
-      "prevButtonText": "Vorheriges Kapitel",
-      "nextButtonText": "Nächstes Kapitel",
-      "homeButtonText": "Zurück zum Start"
+      "copyright": "© 2023 Pfadibewegung Schweiz",
+      "prevButton": "Vorheriges Kapitel",
+      "nextButton": "Nächstes Kapitel",
+      "homeButton": "Zur Übersicht",
+      "backToBeginning": "Zurück zum Anfang",
+      "lastChapter": "Letztes Kapitel",
+      "firstChapter": "Erstes Kapitel"
     },
-    "sideBarNav": {
-      "title": "Thilo Online"
-    },
-    "noMatch": {
-      "title": "Seite nicht gefunden",
-      "body": "Die Seite unter diesem Link exisitert nicht (mehr)."
+    "language": {
+      "de": "Deutsch",
+      "fr": "Français", 
+      "it": "Italiano",
+      "en": "English"
     }
   }
 }

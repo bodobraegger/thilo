@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-
 # testing
 /coverage
 
@@ -29,3 +28,12 @@ Digital-Export
 
 # Strapi Exports
 exports
+
+
+astro-rewrite/node_modules
+astro-rewrite/.pnp
+astro-rewrite/.pnp.js
+astro-rewrite/coverage
+astro-rewrite/build
+astro-rewrite/dist
+astro-rewrite/.astro

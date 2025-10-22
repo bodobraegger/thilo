@@ -1,0 +1,146 @@
+/* Layout and container styles */
+
+/* Ensure color variables cascade properly */
+:root {
+  /* Default fallback colors that can be overridden */
+  --color-primary: #521d3a;
+  /* color-primary-light is now generated dynamically from color-primary */
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+/* Basic utility classes */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.color-bg-default {
+  background-color: var(--background-color) !important;
+}
+
+.rounded {
+  border-radius: var(--border-radius-md) !important;
+}
+
+/* Spacing utilities */
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mt-3 { margin-top: var(--spacing-lg); }
+
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+.mb-3 { margin-bottom: var(--spacing-lg); }
+.mb-4 { margin-bottom: var(--spacing-lg) !important; }
+
+.p-1 { padding: var(--spacing-sm); }
+.p-2 { padding: var(--spacing-sm) !important; }
+.p-3 { padding: var(--spacing-md) !important; }
+
+.px-2 {
+  padding-left: var(--spacing-sm) !important;
+  padding-right: var(--spacing-sm) !important;
+}
+
+/* Dynamic Primary Color Utilities - Tailwind Style */
+/* Background colors */
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-primary-50 { background-color: var(--color-primary-50) !important; }
+.bg-primary-100 { background-color: var(--color-primary-100) !important; }
+.bg-primary-200 { background-color: var(--color-primary-200) !important; }
+.bg-primary-300 { background-color: var(--color-primary-300) !important; }
+.bg-primary-400 { background-color: var(--color-primary-400) !important; }
+.bg-primary-500 { background-color: var(--color-primary-500) !important; }
+.bg-primary-600 { background-color: var(--color-primary-600) !important; }
+.bg-primary-700 { background-color: var(--color-primary-700) !important; }
+.bg-primary-800 { background-color: var(--color-primary-800) !important; }
+.bg-primary-900 { background-color: var(--color-primary-900) !important; }
+.bg-primary-950 { background-color: var(--color-primary-950) !important; }
+.bg-primary-light { background-color: var(--color-primary-light) !important; }
+.bg-primary-muted { background-color: var(--color-primary-muted) !important; }
+
+/* Text colors */
+.text-primary { color: var(--color-primary) !important; }
+.text-primary-50 { color: var(--color-primary-50) !important; }
+.text-primary-100 { color: var(--color-primary-100) !important; }
+.text-primary-200 { color: var(--color-primary-200) !important; }
+.text-primary-300 { color: var(--color-primary-300) !important; }
+.text-primary-400 { color: var(--color-primary-400) !important; }
+.text-primary-500 { color: var(--color-primary-500) !important; }
+.text-primary-600 { color: var(--color-primary-600) !important; }
+.text-primary-700 { color: var(--color-primary-700) !important; }
+.text-primary-800 { color: var(--color-primary-800) !important; }
+.text-primary-900 { color: var(--color-primary-900) !important; }
+.text-primary-950 { color: var(--color-primary-950) !important; }
+.text-primary-light { color: var(--color-primary-light) !important; }
+.text-primary-muted { color: var(--color-primary-text-muted) !important; }
+
+/* Border colors */
+.border-primary { border-color: var(--color-primary) !important; }
+.border-primary-50 { border-color: var(--color-primary-50) !important; }
+.border-primary-100 { border-color: var(--color-primary-100) !important; }
+.border-primary-200 { border-color: var(--color-primary-200) !important; }
+.border-primary-300 { border-color: var(--color-primary-300) !important; }
+.border-primary-400 { border-color: var(--color-primary-400) !important; }
+.border-primary-500 { border-color: var(--color-primary-500) !important; }
+.border-primary-600 { border-color: var(--color-primary-600) !important; }
+.border-primary-700 { border-color: var(--color-primary-700) !important; }
+.border-primary-800 { border-color: var(--color-primary-800) !important; }
+.border-primary-900 { border-color: var(--color-primary-900) !important; }
+.border-primary-950 { border-color: var(--color-primary-950) !important; }
+
+/* Interactive state utilities */
+.hover\:bg-primary-hover:hover { background-color: var(--color-primary-hover) !important; }
+.hover\:bg-primary-50:hover { background-color: var(--color-primary-50) !important; }
+.hover\:bg-primary-100:hover { background-color: var(--color-primary-100) !important; }
+.hover\:text-primary-700:hover { color: var(--color-primary-700) !important; }
+.hover\:text-primary-800:hover { color: var(--color-primary-800) !important; }
+
+.active\:bg-primary-active:active { background-color: var(--color-primary-active) !important; }
+.focus\:ring-primary-focus:focus { box-shadow: 0 0 0 2px var(--color-primary-focus) !important; }
+.focus\:border-primary:focus { border-color: var(--color-primary) !important; }
+
+/* Navigation-specific utilities */
+nav {
+  .active {
+    background-color: var(--color-primary-100, #f8fafc);
+    color: var(--color-primary-900);
+    &.section {
+      border-left: 4px solid var(--color-primary-400);
+    }
+    &.chapter {
+      background-color: var(--color-primary-50, #f8fafc);
+    }
+    .bookmark-fill {
+      fill: var(--color-primary-500);
+      stroke: var(--color-primary-500);
+      opacity: 1;
+    }
+  }
+}
+
+/* Border utilities */
+.border-l-primary-400 { border-left-color: var(--color-primary-400) !important; }
+.border-l-primary-500 { border-left-color: var(--color-primary-500) !important; }
+.border-l-4 { border-left-width: 4px !important; }
+
+/* Focus ring utilities */
+.focus\:ring-primary-500:focus { 
+  --tw-ring-color: var(--color-primary-500) !important;
+  box-shadow: 0 0 0 2px var(--color-primary-500) !important;
+}
+
+/* Legacy compatibility */
+.fg-primary { color: var(--color-primary) !important; }
+.bg-secondary { background-color: var(--color-primary-light) !important; }

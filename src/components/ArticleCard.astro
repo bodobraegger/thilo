@@ -1,0 +1,41 @@
+---
+import type { Article } from '../utils/data';
+
+export interface Props {
+  article: Article;
+  showFullContent?: boolean;
+}
+
+const { article, showFullContent = false } = Astro.props;
+
+// Format date function
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+---
+
+<article class="article-card">
+  <div class="article-content">
+    <div class="article-meta">
+      <span class="article-date">{formatDate(article.published_at)}</span>
+    </div>
+    
+    <h2 class="article-title">
+      <a href={`/articles/${article.id}`}>{article.title}</a>
+    </h2>
+    
+    <p class="article-excerpt">
+      {showFullContent ? article.content : article.content.substring(0, 200) + '...'}
+    </p>
+    
+    {!showFullContent && (
+      <a href={`/articles/${article.id}`} class="read-more">
+        Weiterlesen →
+      </a>
+    )}
+  </div>
+</article>

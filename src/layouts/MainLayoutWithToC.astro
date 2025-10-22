@@ -1,0 +1,50 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import { getSections } from '../utils/data';
+import { fetchAllSections } from '../utils/sectionMappings';
+
+export interface Props {
+  title: string;
+  lang?: string;
+  currentSection?: any;
+  useFooter?: boolean;
+}
+
+const { title, lang = 'de', currentSection, useFooter=true } = Astro.props;
+
+let sections: any[] = [];
+let allSectionsData: any = null;
+try {
+  sections = await getSections(lang);
+  allSectionsData = await fetchAllSections();
+} catch (e) {
+  console.error('Error loading sections:', e);
+  sections = [];
+  allSectionsData = { sections: {}, sectionMappings: {} };
+}
+---
+
+<BaseLayout title={title} lang={lang} allSectionsData={allSectionsData}>
+  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} />
+  
+  <div class="flex min-h-[calc(100vh-52px)]">
+    <!-- Table of Contents Sidebar -->
+    <TableOfContents 
+      sections={sections} 
+      currentSection={currentSection}
+      lang={lang}
+    />
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-x-hidden">
+      <slot />
+      {useFooter &&
+        <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+      }
+    </main>
+  </div>
+
+</BaseLayout>

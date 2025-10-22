@@ -1,0 +1,151 @@
+.quiz-container {
+  display: block;
+  padding: 10px;
+  background-color: var(--background-light);
+  border-radius: var(--border-radius-md);
+  --color-correct: #28a745;
+  --color-incorrect: #dc3545;
+  --color-neutral: #6c757d;
+  --background-correct: #d4edda;
+  --background-incorrect: #f8d7da;
+  --background-neutral: #e2e3e5;
+  --border-correct: #c3e6cb;
+  --border-incorrect: #f5c6cb;
+  --border-neutral: #d6d8db;
+}
+
+.react-quiz-container {
+  margin: unset;
+  font-family: unset;
+  font-weight: unset;
+  font-size: var(--font-size-base);
+  width: unset !important;
+  max-width: fit-content;
+}
+
+.react-quiz-container .questionWrapperBody > :nth-child(2) {
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.react-quiz-container h2 {
+  color: var(--color-primary);
+  margin-bottom: 0.5em;
+}
+
+.react-quiz-container .quiz-synopsis {
+  all: unset !important;
+}
+
+.react-quiz-container img {
+  max-width: 80%;
+  align-self: center;
+}
+
+.react-quiz-container .btn {
+  font-weight: unset !important;
+  font-size: unset !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-md) !important;
+  padding: var(--spacing-sm) !important;
+}
+
+.react-quiz-container .btn:enabled {
+  border-color: var(--color-primary-400);
+}
+
+.react-quiz-container .btn:enabled:hover {
+  background-color: var(--color-primary-50);
+}
+
+.react-quiz-container .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.react-quiz-container .btn img {
+  max-width: 250px;
+}
+
+.react-quiz-container .btn:not(.incorrect):not(.correct) {
+  color: var(--text-color) !important;
+  background-color: var(--background-color) !important;
+}
+
+.react-quiz-container .answerBtn {
+  min-width: 52px;
+  width: unset !important;
+}
+
+.react-quiz-container .answerBtn > span {
+  font-size: unset;
+}
+
+.react-quiz-container .correct {
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.6;
+  border: 1px solid var(--border-incorrect) !important;
+  border-radius: var(--border-radius-md) !important;
+  color: var(--color-correct) !important;
+  background-color: var(--background-correct) !important;
+  border-color: var(--border-correct) !important;
+}
+
+.react-quiz-container .incorrect {
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.6;
+  border: 1px solid var(--border-correct) !important;
+  border-radius: var(--border-radius-md) !important;
+  color: var(--color-incorrect) !important;
+  background-color: var(--background-incorrect) !important;
+  border-color: var(--border-incorrect) !important;
+}
+
+.react-quiz-container .tag-container *:not(.number-of-selection) {
+  display: none;
+}
+
+.react-quiz-container .tag-container .number-of-selection {
+  border: 1px solid var(--border-correct) !important;
+  border-radius: var(--border-radius-md) !important;
+  color: var(--color-correct) !important;
+  background-color: var(--background-correct) !important;
+  border-color: var(--border-correct) !important;
+  margin: unset !important;
+  cursor: default;
+}
+
+.react-quiz-container .quiz-result-filter {
+  color: var(--text-color) !important;
+  background-color: var(--background-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-md) !important;
+}
+
+.react-quiz-container .quiz-result-filter * {
+  border: none !important;
+}
+
+.react-quiz-container .result-answer-wrapper {
+  color: var(--text-color) !important;
+  background-color: var(--background-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-md) !important;
+}
+
+.react-quiz-container .result-answer-wrapper h3 {
+  color: var(--text-color) !important;
+}
+
+.react-quiz-container .result-answer-wrapper *:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.react-quiz-container .result-answer-wrapper .explanation {
+  color: var(--text-color) !important;
+  margin: unset !important;
+  border: unset !important;
+}
