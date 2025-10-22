@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { sections, currentSection, lang = 'de' } = Astro.props;
-const currentPath = Astro.url.pathname;
+const currentPath = Astro.url.pathname.replace(import.meta.env.BASE_URL, '') || '/';
 const currentHash = Astro.url.hash;
 
 const t = getTranslations(lang as 'de' | 'fr' | 'it');
