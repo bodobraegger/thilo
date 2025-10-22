@@ -50,10 +50,11 @@ jobs:
         working-directory: ${{ env.BUILD_PATH }}
 
       - name: Build with Astro
+        # ensure trailing slash is added to base path!
         run: |
           pnpm astro build \
             --site "${{ steps.pages.outputs.origin }}" \
-            --base "${{ steps.pages.outputs.base_path }}"
+            --base "${{ steps.pages.outputs.base_path }}/" 
         working-directory: ${{ env.BUILD_PATH }}
 
       - name: Upload artifact
