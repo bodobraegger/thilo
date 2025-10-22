@@ -27,16 +27,16 @@ function getSectionUrl(section: SectionT, locale: string): string {
   if (localeSlug) {
     // Use custom mapping
     if (locale === 'de') {
-      return `/${localeSlug}`;
+      return localeSlug;
     } else {
-      return `/${locale}/${localeSlug}`;
+      return `${locale}/${localeSlug}`;
     }
   } else {
     // Fallback to section.slug
     if (locale === 'de') {
-      return `/${section.slug}`;
+      return section.slug;
     } else {
-      return `/${locale}/${section.slug}`;
+      return `${locale}/${section.slug}`;
     }
   }
 }
@@ -59,7 +59,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
       <!-- Home Link -->
       <li>
         <a 
-          href={lang === 'de' ? '/' : `/${lang}/`}
+          href={lang === 'de' ? "./" : `${lang}/`}
           class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
               ? 'active font-medium' 

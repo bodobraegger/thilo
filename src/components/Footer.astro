@@ -39,8 +39,8 @@ const nextSlug = nextSection ? String(nextSection.slug) : "";
 
 // Function to get section URL
 const getSectionUrl = (slug: string) => {
-    if (!slug) return locale === "de" ? "/" : `/${locale}/`;
-    return locale === "de" ? `/${slug}` : `/${locale}/${slug}`;
+    if (!slug) return locale === "de" ? "./" : `${locale}/`;
+    return locale === "de" ? slug : `${locale}/${slug}`;
 };
 
 // Fallback navigation button texts (could be localized in translation files)
