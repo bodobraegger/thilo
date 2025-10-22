@@ -14,5 +14,5 @@ export default defineConfig({
       prefixDefaultLocale: false
     }
   },
-  outDir: "build"
+  outDir: "dist"
 });
