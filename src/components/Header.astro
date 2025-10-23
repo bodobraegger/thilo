@@ -409,7 +409,10 @@ if (currentSection) {
     }
     
     // Get all sections from localStorage (set by BaseLayout)
-    const allSectionsData = localStorage.getItem('allSectionsData');
+    const allSectionsData = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
+
+    console.log('All sections data:', allSectionsData);
+
     if (!allSectionsData) {
       // Fallback: navigate to start page
       const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
@@ -417,7 +420,7 @@ if (currentSection) {
       return;
     }
     
-    const allSections = JSON.parse(allSectionsData).sections;
+    const allSections = JSON.parse(allSectionsData);
     const currentSections = allSections[document.documentElement.lang || 'de'] || [];
     const targetSections = allSections[targetLocale] || [];
     
