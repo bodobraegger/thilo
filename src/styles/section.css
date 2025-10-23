@@ -33,6 +33,15 @@ section {
   img {
     max-width: 100%;
   }
+  .md-img-wrap {
+    display: inline-block;
+    margin-bottom: 8px;
+    img {
+      margin-bottom: 4px;
+    }
+    font-style: italic;
+    font-size: smaller;
+  }
   
   ul, ol {
     padding-left: 1em;
