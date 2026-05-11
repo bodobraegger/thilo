@@ -102,7 +102,7 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
       .trim();
   };
 
-  const highlightText = (text: string, searchQuery: string) => {
+  const highlightText = (text: string, searchQuery: string, color: string) => {
     if (!searchQuery.trim()) return text;
     
     const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
@@ -110,7 +110,7 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
     
     return parts.map((part, index) => 
       regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 px-1 rounded">{part}</mark>
+        <mark key={index} className="px-1 rounded" style={{backgroundColor: color}}>{part}</mark>
       ) : (
         part
       )
@@ -193,11 +193,11 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
                 >
                   <h3 className="text-lg font-semibold mb-2">
                     <Link href={result.url} className="hover:underline" style={{ color: sectionColor }}>
-                      {highlightText(result.title, query)}
+                      {highlightText(result.title, query, `color-mix(in srgb, ${sectionColor} 20%, white)`)}
                     </Link>
                   </h3>
                   <p className="text-gray-700 leading-relaxed mb-3">
-                    {highlightText(excerpt, query)}
+                    {highlightText(excerpt, query, `color-mix(in srgb, ${sectionColor} 20%, white)`)}
                   </p>
                   <div className="flex items-center gap-3 text-sm">
                     <span 
