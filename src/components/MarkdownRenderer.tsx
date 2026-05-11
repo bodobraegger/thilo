@@ -103,7 +103,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
     }
 
     imgTag += ' />';
-    return imgTag;
+
+    let wrappedTag = `<span class="md-img-wrap">${imgTag} <caption>${finalAltText}</caption></span>`;
+
+    return wrappedTag;
   };
 
   // Parse the content and identify quiz links
