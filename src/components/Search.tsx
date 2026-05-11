@@ -84,6 +84,69 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
       .trim();
   };
 
+  const highlightText = (text: string, searchQuery: string) => {
+    if (!searchQuery.trim()) return text;
+    
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <mark key={index} className="bg-yellow-200 px-1 rounded">{part}</mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  const getExcerpt = (text: string, searchQuery: string, maxLength: number = 200) => {
+    const cleanText = stripMarkdown(text);
+    const lowercaseText = cleanText.toLowerCase();
+    const lowercaseQuery = searchQuery.toLowerCase();
+    const queryIndex = lowercaseText.indexOf(lowercaseQuery);
+
+    if (queryIndex === -1) {
+      // Query not found in text, return start of text
+      return cleanText.length > maxLength 
+        ? cleanText.substring(0, maxLength) + '...' 
+        : cleanText;
+    }
+
+    // Calculate excerpt bounds to center the search term
+    const contextLength = Math.floor((maxLength - searchQuery.length) / 2);
+    let start = Math.max(0, queryIndex - contextLength);
+    let end = Math.min(cleanText.length, queryIndex + searchQuery.length + contextLength);
+
+    // Adjust to not cut words
+    if (start > 0) {
+      const spaceIndex = cleanText.lastIndexOf(' ', start);
+      if (spaceIndex > 0 && start - spaceIndex < 20) {
+        start = spaceIndex + 1;
+      }
+    }
+
+    if (end < cleanText.length) {
+      const spaceIndex = cleanText.indexOf(' ', end);
+      if (spaceIndex > 0 && spaceIndex - end < 20) {
+        end = spaceIndex;
+      }
+    }
+
+    const excerpt = cleanText.substring(start, end);
+    return (start > 0 ? '...' : '') + excerpt + (end < cleanText.length ? '...' : '');
+  };
+
+  // Get base path to respect subpage hosting (e.g., /thilo/)
+  const getBasePath = () => {
+    if (typeof window === 'undefined') return '';
+    const path = window.location.pathname;
+    // Extract base path if site is hosted on a subpage
+    const match = path.match(/^(\/[^\/]+)\//);
+    return match ? match[1] : '';
+  };
+
+  const basePath = getBasePath();
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -108,19 +171,19 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
         ) : (
           <div className="space-y-4">
             {results.map((result, idx) => {
-              const cleanContent = stripMarkdown(result.content);
-              const excerpt = cleanContent.length > 200 
-                ? cleanContent.substring(0, 200) + '...' 
-                : cleanContent;
+              const excerpt = getExcerpt(result.content, query);
+              const fullUrl = `${basePath}${result.url}`;
 
               return (
                 <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <h3 className="text-lg font-semibold mb-2">
-                    <a href={result.url} className="hover:underline text-primary-600">
-                      {result.title}
+                    <a href={fullUrl} className="hover:underline text-primary-600">
+                      {highlightText(result.title, query)}
                     </a>
                   </h3>
-                  <p className="text-gray-700 leading-relaxed mb-3">{excerpt}</p>
+                  <p className="text-gray-700 leading-relaxed mb-3">
+                    {highlightText(excerpt, query)}
+                  </p>
                   <div className="flex items-center gap-3 text-sm">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                       {result.type === 'section' ? 'Bereich' : 'Kapitel'}

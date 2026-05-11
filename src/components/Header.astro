@@ -294,7 +294,17 @@ if (currentSection) {
 
   function performSearch(query: string) {
     const currentLocale = document.documentElement.lang || 'de';
-    const baseUrl = currentLocale === 'de' ? '/search' : `/${currentLocale}/search`;
+    
+    // Get base path to respect subpage hosting (e.g., /thilo/)
+    const getBasePath = () => {
+      const path = window.location.pathname;
+      // Extract base path if site is hosted on a subpage
+      const match = path.match(/^(\/[^\/]+)\//);
+      return match ? match[1] : '';
+    };
+    
+    const basePath = getBasePath();
+    const baseUrl = currentLocale === 'de' ? `${basePath}/search` : `${basePath}/${currentLocale}/search`;
     
     if (query.trim()) {
       window.location.href = `${baseUrl}?q=${encodeURIComponent(query.trim())}`;
