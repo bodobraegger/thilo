@@ -11,14 +11,16 @@ export interface Props {
   lang?: string;
   currentSection?: any;
   useFooter?: boolean;
+  sections?: any[];
 }
 
-const { title, lang = 'de', currentSection, useFooter=true } = Astro.props;
+const { title, lang = 'de', currentSection, useFooter=true, sections: providedSections } = Astro.props;
 
 let sections: any[] = [];
 let allSectionsData: any = null;
 try {
-  sections = await getSections(lang);
+  // Use provided sections if available, otherwise fetch
+  sections = providedSections || await getSections(lang);
   allSectionsData = await fetchAllSections();
 } catch (e) {
   console.error('Error loading sections:', e);

@@ -1,18 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { getSections, type SectionT } from '../utils/data';
+import { calculateRelevance, getLocalizedUrl, highlightText, type SearchResult } from './Search';
 
 interface HeaderSearchProps {
   locale: string;
   placeholder: string;
   isMobile?: boolean;
-}
-
-interface SearchResult {
-  type: 'section' | 'chapter';
-  title: string;
-  url: string;
-  section: SectionT;
-  relevance: number;
 }
 
 export default function HeaderSearch({ locale, placeholder, isMobile = false }: HeaderSearchProps) {
@@ -37,45 +30,6 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
     fetchSections();
   }, [locale]);
 
-  // Calculate relevance score (same as main search)
-  const calculateRelevance = (text: string, title: string, searchQuery: string, isTitle: boolean): number => {
-    if (!text && !title) return 0;
-    
-    const lowerText = text?.toLowerCase() || '';
-    const lowerTitle = title?.toLowerCase() || '';
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    const targetText = isTitle ? lowerTitle : lowerText;
-    
-    if (!targetText.includes(lowerQuery)) return 0;
-    
-    let score = 0;
-    
-    if (targetText === lowerQuery) score += 1000;
-    if (lowerTitle === lowerQuery) score += 800;
-    if (lowerTitle.includes(lowerQuery)) score += 500;
-    
-    const titleWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-    if (titleWordBoundaryRegex.test(lowerTitle)) score += 400;
-    if (lowerTitle.startsWith(lowerQuery)) score += 300;
-    
-    const contentWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-    if (contentWordBoundaryRegex.test(lowerText)) score += 200;
-    if (lowerText.startsWith(lowerQuery)) score += 150;
-    if (lowerTitle.includes(lowerQuery) && score < 300) score += 100;
-    if (lowerText.includes(lowerQuery) && score < 100) score += 50;
-    
-    const position = targetText.indexOf(lowerQuery);
-    if (position !== -1) {
-      const positionBoost = Math.max(0, 50 - position);
-      score += positionBoost;
-    }
-    
-    const lengthPenalty = Math.min(50, targetText.length / 100);
-    score -= lengthPenalty;
-    
-    return score;
-  };
-
   // Perform search when query changes
   useEffect(() => {
     if (!query.trim() || sections.length === 0) {
@@ -84,12 +38,6 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
     }
 
     const searchResults: SearchResult[] = [];
-
-    const getLocalizedUrl = (slug: string, hash?: string) => {
-      const basePath = locale === 'de' ? '' : `/${locale}`;
-      const hashPart = hash ? `#${hash}` : '';
-      return `${basePath}/${slug}${hashPart}`;
-    };
 
     sections.forEach(section => {
       const titleRelevance = calculateRelevance(section.content || '', section.title || '', query, true);
@@ -100,7 +48,8 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
         searchResults.push({
           type: 'section',
           title: section.title,
-          url: getLocalizedUrl(section.slug || ''),
+          content: section.content,
+          url: getLocalizedUrl(locale, section.slug || ''),
           section,
           relevance: maxRelevance
         });
@@ -115,8 +64,10 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
           searchResults.push({
             type: 'chapter',
             title: chapter.title,
-            url: getLocalizedUrl(section.slug || '', chapter.slug),
+            content: chapter.content,
+            url: getLocalizedUrl(locale, section.slug || '', chapter.slug),
             section,
+            chapter,
             relevance: chapterMaxRelevance
           });
         }
@@ -191,21 +142,6 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
     }, 200);
   };
 
-  const highlightText = (text: string, searchQuery: string) => {
-    if (!searchQuery.trim()) return text;
-    
-    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
-      regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 px-0.5 rounded">{part}</mark>
-      ) : (
-        part
-      )
-    );
-  };
-
   return (
     <div className={`relative ${isMobile ? 'w-full' : 'w-64'}`}>
       <input
@@ -264,7 +200,7 @@ export default function HeaderSearch({ locale, placeholder, isMobile = false }: 
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 truncate text-sm" style={{ color: sectionColor }}>
-                            {highlightText(result.title, query)}
+                            {highlightText(result.title, query, `color-mix(in srgb, ${sectionColor} 30%, white)`)}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span 

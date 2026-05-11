@@ -13,6 +13,6 @@ const initialQuery = url.searchParams.get('q') || '';
 const sections = await getSections(locale);
 ---
 
-<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false}>
+<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false} sections={sections}>
   <SearchComponent client:only="react" initialQuery={initialQuery} locale={locale} initialSections={sections} />
 </MainLayoutWithToC>
