@@ -24,12 +24,12 @@ yarn-error.log*
 
 Digital-Export
 
-.env
-
 # Strapi Exports
 exports
 
 
+
+/.astro
 astro-rewrite/node_modules
 astro-rewrite/.pnp
 astro-rewrite/.pnp.js
