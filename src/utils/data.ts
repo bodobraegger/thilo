@@ -70,7 +70,7 @@ export interface Article {
 
 // Fetch data from Strapi with caching
 const dataCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache (was 5 minutes)
 
 async function fetchFromStrapi<T>(endpoint: string, locale: string = 'de'): Promise<T> {
   const cacheKey = `${endpoint}-${locale}`;

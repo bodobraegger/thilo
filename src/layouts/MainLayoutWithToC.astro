@@ -19,9 +19,19 @@ const { title, lang = 'de', currentSection, useFooter=true, sections: providedSe
 let sections: any[] = [];
 let allSectionsData: any = null;
 try {
-  // Use provided sections if available, otherwise fetch
-  sections = providedSections || await getSections(lang);
+  // Fetch all sections data once (includes all locales)
   allSectionsData = await fetchAllSections();
+  
+  // Use provided sections if available, otherwise extract from allSectionsData
+  if (providedSections) {
+    sections = providedSections;
+  } else if (allSectionsData.sections[lang]) {
+    // Convert SimpleSectionsData format to SectionT format
+    sections = allSectionsData.sections[lang];
+  } else {
+    // Fallback to getSections if needed
+    sections = await getSections(lang);
+  }
 } catch (e) {
   console.error('Error loading sections:', e);
   sections = [];

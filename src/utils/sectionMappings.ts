@@ -30,13 +30,23 @@ export interface SimpleSectionsData {
   };
 }
 
+// Cache for fetchAllSections - important for dev server performance
+let cachedAllSections: SimpleSectionsData | null = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 60 * 1000; // 1 minute cache in dev
+
 // Simple function to fetch all sections (like React app)
 export async function fetchAllSections(): Promise<SimpleSectionsData> {
+  // Return cached data if available and fresh
+  if (cachedAllSections && Date.now() - cacheTimestamp < CACHE_DURATION) {
+    return cachedAllSections;
+  }
+
   const locales = ['de', 'fr', 'it'];
   const sections: { [locale: string]: SectionData[] } = {};
   
-  // Fetch sections for each locale
-  for (const locale of locales) {
+  // Fetch sections for all locales IN PARALLEL
+  const fetchPromises = locales.map(async (locale) => {
     try {
       const response = await fetch(`https://api.thilo.scouts.ch/sections?_locale=${locale}`);
       if (!response.ok) {
@@ -45,23 +55,34 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
       const data = await response.json();
       
       // Process sections and add generated slugs (same as React app)
-      sections[locale] = data.map((section: any) => ({
-        id: section.id,
-        title: section.title,
-        slug: slugify(section.title),
+      return {
         locale,
-        sorting: section.sorting,
-        chapters: section.chapters?.map((chapter: any) => ({
-          id: chapter.id,
-          title: chapter.title,
-          slug: slugify(chapter.title),
-          sorting: chapter.sorting
-        })) || []
-      }));
+        sections: data.map((section: any) => ({
+          id: section.id,
+          title: section.title,
+          slug: slugify(section.title),
+          locale,
+          sorting: section.sorting,
+          chapters: section.chapters?.map((chapter: any) => ({
+            id: chapter.id,
+            title: chapter.title,
+            slug: slugify(chapter.title),
+            sorting: chapter.sorting
+          })) || []
+        }))
+      };
     } catch (error) {
       console.error(`❌ Failed to fetch sections for ${locale}:`, error);
-      sections[locale] = [];
+      return { locale, sections: [] };
     }
+  });
+
+  // Wait for all fetches to complete in parallel
+  const results = await Promise.all(fetchPromises);
+  
+  // Populate sections object
+  for (const result of results) {
+    sections[result.locale] = result.sections;
   }
   
   // Build simple section mappings by sorting (like React app)
@@ -98,10 +119,16 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
     }
   }
   
-  return {
+  const result = {
     sections,
     sectionMappings
   };
+
+  // Cache the result
+  cachedAllSections = result;
+  cacheTimestamp = Date.now();
+
+  return result;
 }
 
 // Get section URL for a specific locale (using cached data)
