@@ -1,6 +1,16 @@
 ---
-import SearchBase from "../search.astro";
+import MainLayoutWithToC from '../../layouts/MainLayoutWithToC.astro';
+import { getTranslations } from '../../i18n';
+import SearchComponent from '../../components/Search.tsx';
+
 export { getStaticPaths } from "../index.astro";
+
+const locale = Astro.currentLocale || 'de';
+const t = getTranslations(locale as any);
+const url = new URL(Astro.request.url);
+const initialQuery = url.searchParams.get('q') || '';
 ---
 
-<SearchBase />
+<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false}>
+  <SearchComponent client:load initialQuery={initialQuery} locale={locale} />
+</MainLayoutWithToC>
