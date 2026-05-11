@@ -1,11 +1,15 @@
 import { getSections } from './data';
 import { getAllSlugsForSection } from './slugMapping';
+import { fetchAllSections } from './sectionMappings';
 
 export async function generateSectionPaths(locales: string[], includeLocaleParam = false) {
   const paths: Array<{
     params: { lang?: string; slug: string };
-    props: { section: any; locale: string };
+    props: { section: any; locale: string; allSectionsData: any };
   }> = [];
+  
+  // Fetch all sections data ONCE for all locales at build time
+  const allSectionsData = await fetchAllSections();
   
   for (const locale of locales) {
     try {
@@ -26,7 +30,7 @@ export async function generateSectionPaths(locales: string[], includeLocaleParam
             
           paths.push({
             params,
-            props: { section, locale }
+            props: { section, locale, allSectionsData }
           });
         }
       }

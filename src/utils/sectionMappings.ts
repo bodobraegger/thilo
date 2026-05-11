@@ -7,6 +7,17 @@ export interface SectionData {
   slug: string;
   locale: string;
   sorting: number;
+  menu_name?: string;
+  color_primary?: string;
+  color_primary_light?: string;
+  icon?: {
+    id: number;
+    name: string;
+    url: string;
+    alternativeText?: string;
+    width?: number;
+    height?: number;
+  };
   chapters?: Array<{
     id: number;
     title: string;
@@ -30,16 +41,16 @@ export interface SimpleSectionsData {
   };
 }
 
-// Cache for fetchAllSections - important for dev server performance
-let cachedAllSections: SimpleSectionsData | null = null;
-let cacheTimestamp = 0;
-const CACHE_DURATION = 60 * 1000; // 1 minute cache in dev
+// Dev-only cache to avoid slow repeated fetches
+const isDev = import.meta.env.DEV;
+let devCache: SimpleSectionsData | null = null;
 
 // Simple function to fetch all sections (like React app)
+// PWA service worker handles caching with stale-while-revalidate
 export async function fetchAllSections(): Promise<SimpleSectionsData> {
-  // Return cached data if available and fresh
-  if (cachedAllSections && Date.now() - cacheTimestamp < CACHE_DURATION) {
-    return cachedAllSections;
+  // In dev mode, use simple cache to avoid repeated slow fetches
+  if (isDev && devCache) {
+    return devCache;
   }
 
   const locales = ['de', 'fr', 'it'];
@@ -63,6 +74,10 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
           slug: slugify(section.title),
           locale,
           sorting: section.sorting,
+          menu_name: section.menu_name,
+          color_primary: section.color_primary,
+          color_primary_light: section.color_primary_light,
+          icon: section.icon,
           chapters: section.chapters?.map((chapter: any) => ({
             id: chapter.id,
             title: chapter.title,
@@ -124,9 +139,10 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
     sectionMappings
   };
 
-  // Cache the result
-  cachedAllSections = result;
-  cacheTimestamp = Date.now();
+  // Cache in dev mode
+  if (isDev) {
+    devCache = result;
+  }
 
   return result;
 }

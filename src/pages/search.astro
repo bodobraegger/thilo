@@ -1,18 +1,26 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../i18n';
-import { getSections } from '../utils/data';
+import { fetchAllSections } from '../utils/sectionMappings';
 import SearchComponent from '../components/Search.tsx';
 
-const locale = Astro.currentLocale || 'de';
-const t = getTranslations(locale as any);
+// Fetch at build/render time (not in getStaticPaths for non-dynamic routes)
+const allSectionsData = await fetchAllSections();
+const sections = allSectionsData.sections['de'];
+
+const locale = 'de';
+const t = getTranslations(locale);
 const url = new URL(Astro.request.url);
 const initialQuery = url.searchParams.get('q') || '';
-
-// Pre-fetch sections data server-side
-const sections = await getSections(locale);
 ---
 
-<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false} sections={sections}>
+<MainLayoutWithToC 
+  title={t.translation.searchPage.title + " - Thilo"} 
+  lang={locale} 
+  currentSection={null} 
+  useFooter={false} 
+  sections={sections}
+  allSectionsData={allSectionsData}
+>
   <SearchComponent client:only="react" initialQuery={initialQuery} locale={locale} initialSections={sections} />
 </MainLayoutWithToC>

@@ -1,8 +1,12 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
+import { fetchAllSections } from '../utils/sectionMappings';
+
+// Fetch at build/render time for non-dynamic routes
+const allSectionsData = await fetchAllSections();
 ---
 
-<MainLayoutWithToC title="Seite nicht gefunden - Thilo">
+<MainLayoutWithToC title="Seite nicht gefunden - Thilo" allSectionsData={allSectionsData}>
   <div class="error-page">
     <div class="error-content">
       <h1>404</h1>

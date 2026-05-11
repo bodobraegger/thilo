@@ -1,14 +1,13 @@
 ---
 import SectionPage from '../components/SectionPage.astro';
-import { getStartPage, getSections } from '../utils/data';
+import { getStartPage } from '../utils/data';
+import { fetchAllSections } from '../utils/sectionMappings';
 import type { SectionT } from '../utils/data';
 
-const locale = Astro.currentLocale || 'de';
-
-// Fetch start page content from Strapi - let it fail if it doesn't exist
+const allSectionsData = await fetchAllSections();
+const locale = 'de';
 const startPage = await getStartPage(locale);
 
-// Convert startPage to section-like object for SectionPage component
 const homepageSection: SectionT = {
   id: startPage.id,
   title: startPage.title,
@@ -19,13 +18,6 @@ const homepageSection: SectionT = {
   color_primary: '#521d3a',
   chapters: []
 };
-
-
-export async function getStaticPaths() {
-  const locales = ['en', 'de', 'fr', 'it'];
-  return locales.map(lang => ({ params: { lang } }));
-}
-
 ---
 
-<SectionPage section={homepageSection} locale={locale} />
+<SectionPage section={homepageSection} locale={locale} allSectionsData={allSectionsData} />

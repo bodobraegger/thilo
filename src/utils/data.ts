@@ -68,18 +68,8 @@ export interface Article {
   updated_at: string;
 }
 
-// Fetch data from Strapi with caching
-const dataCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache (was 5 minutes)
-
+// Fetch data from Strapi - no runtime cache, relies on PWA service worker
 async function fetchFromStrapi<T>(endpoint: string, locale: string = 'de'): Promise<T> {
-  const cacheKey = `${endpoint}-${locale}`;
-  const cached = dataCache.get(cacheKey);
-  
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
-  }
-
   const url = `${BACKEND_URL}${endpoint}?_locale=${locale}`;
   const response = await fetch(url);
   
@@ -90,10 +80,7 @@ async function fetchFromStrapi<T>(endpoint: string, locale: string = 'de'): Prom
   const data = await response.json();
   
   // Handle Strapi v4 response format
-  const processedData = data.data || data;
-  
-  dataCache.set(cacheKey, { data: processedData, timestamp: Date.now() });
-  return processedData;
+  return data.data || data;
 }
 
 // Get start page data

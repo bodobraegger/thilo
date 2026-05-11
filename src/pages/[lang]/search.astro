@@ -1,20 +1,38 @@
 ---
 import MainLayoutWithToC from '../../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../../i18n';
-import { getSections } from '../../utils/data';
+import { fetchAllSections } from '../../utils/sectionMappings';
 import SearchComponent from '../../components/Search.tsx';
 
-export { getStaticPaths } from "../index.astro";
+export async function getStaticPaths() {
+  const allSectionsData = await fetchAllSections();
+  const locales = ['fr', 'it'];
+  
+  return locales.map(lang => ({
+    params: { lang },
+    props: { 
+      sections: allSectionsData.sections[lang],
+      allSectionsData 
+    }
+  }));
+}
 
-const locale = Astro.currentLocale || 'de';
+const { lang } = Astro.params;
+const locale = lang || 'de';
 const t = getTranslations(locale as any);
 const url = new URL(Astro.request.url);
 const initialQuery = url.searchParams.get('q') || '';
 
-// Pre-fetch sections data server-side
-const sections = await getSections(locale);
+const { sections, allSectionsData } = Astro.props;
 ---
 
-<MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false} sections={sections}>
+<MainLayoutWithToC 
+  title={t.translation.searchPage.title + " - Thilo"} 
+  lang={locale} 
+  currentSection={null} 
+  useFooter={false} 
+  sections={sections}
+  allSectionsData={allSectionsData}
+>
   <SearchComponent client:only="react" initialQuery={initialQuery} locale={locale} initialSections={sections} />
 </MainLayoutWithToC>

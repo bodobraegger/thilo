@@ -12,35 +12,25 @@ export interface Props {
   currentSection?: any;
   useFooter?: boolean;
   sections?: any[];
+  allSectionsData?: any;
 }
 
-const { title, lang = 'de', currentSection, useFooter=true, sections: providedSections } = Astro.props;
+const { title, lang = 'de', currentSection, useFooter=true, sections: providedSections, allSectionsData: providedAllSectionsData } = Astro.props;
 
 let sections: any[] = [];
 let allSectionsData: any = null;
-try {
-  // Fetch all sections data once (includes all locales)
-  allSectionsData = await fetchAllSections();
-  
-  // Use provided sections if available, otherwise extract from allSectionsData
-  if (providedSections) {
-    sections = providedSections;
-  } else if (allSectionsData.sections[lang]) {
-    // Convert SimpleSectionsData format to SectionT format
-    sections = allSectionsData.sections[lang];
-  } else {
-    // Fallback to getSections if needed
-    sections = await getSections(lang);
-  }
-} catch (e) {
-  console.error('Error loading sections:', e);
-  sections = [];
-  allSectionsData = { sections: {}, sectionMappings: {} };
+
+// All data must come from getStaticPaths - no runtime fetching
+if (!providedAllSectionsData) {
+  throw new Error('allSectionsData must be passed to MainLayoutWithToC from getStaticPaths()');
 }
+
+allSectionsData = providedAllSectionsData;
+sections = providedSections || allSectionsData.sections[lang] || [];
 ---
 
 <BaseLayout title={title} lang={lang} allSectionsData={allSectionsData}>
-  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} />
+  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} allSectionsData={allSectionsData} />
   
   <div class="flex min-h-[calc(100vh-52px)]">
     <!-- Table of Contents Sidebar -->

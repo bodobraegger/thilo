@@ -1,8 +1,39 @@
 ---
-// @ts-nocheck
-import IndexBase from "../index.astro";
-export { getStaticPaths } from "../index.astro";
+import SectionPage from '../../components/SectionPage.astro';
+import { getStartPage } from '../../utils/data';
+import { fetchAllSections } from '../../utils/sectionMappings';
+import type { SectionT } from '../../utils/data';
+
+export async function getStaticPaths() {
+  const allSectionsData = await fetchAllSections();
+  const locales = ['fr', 'it'];
+  
+  const paths = [];
+  for (const locale of locales) {
+    const startPage = await getStartPage(locale);
+    
+    const homepageSection: SectionT = {
+      id: startPage.id,
+      title: startPage.title,
+      content: startPage.content,
+      sorting: 0,
+      menu_name: startPage.menu_name,
+      locale: startPage.locale,
+      color_primary: '#521d3a',
+      chapters: []
+    };
+    
+    paths.push({
+      params: { lang: locale },
+      props: { homepageSection, allSectionsData, locale }
+    });
+  }
+  
+  return paths;
+}
+
+const { homepageSection, allSectionsData, locale } = Astro.props;
 
 ---
 
-<IndexBase/>
+<SectionPage section={homepageSection} locale={locale} allSectionsData={allSectionsData} />

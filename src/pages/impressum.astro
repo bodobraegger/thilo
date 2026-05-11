@@ -1,10 +1,8 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../i18n';
+import { fetchAllSections } from '../utils/sectionMappings';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
-
-const locale = Astro.currentLocale || 'de';
-const t = getTranslations(locale as any);
 
 // Fetch impressum content from Strapi
 async function fetchImpressum(locale: string) {
@@ -17,7 +15,6 @@ async function fetchImpressum(locale: string) {
     }
     
     const data = await response.json();
-    console.log('Impressum data:', data); // Debug log
     
     // Handle both single object and data.data.attributes structure
     if (data?.data?.attributes) {
@@ -34,11 +31,18 @@ async function fetchImpressum(locale: string) {
   }
 }
 
+// Fetch at build/render time for non-dynamic routes
+const allSectionsData = await fetchAllSections();
+const locale = 'de';
 const impressumData = await fetchImpressum(locale);
-console.log('Final impressum data:', impressumData); // Debug log
+const t = getTranslations(locale as any);
 ---
 
-<MainLayoutWithToC title={impressumData?.title ? impressumData.title + " - Thilo" : t.translation.header.imprint + " - Thilo"} lang={locale}>
+<MainLayoutWithToC 
+  title={impressumData?.title ? impressumData.title + " - Thilo" : t.translation.header.imprint + " - Thilo"} 
+  lang={locale}
+  allSectionsData={allSectionsData}
+>
   <div class="content">
     <div class="section-title mb-2">
       <h1 class="bg-primary px-2">{impressumData?.title || t.translation.header.imprint}</h1>

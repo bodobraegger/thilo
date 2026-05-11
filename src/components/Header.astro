@@ -7,9 +7,10 @@ import HeaderSearch from './HeaderSearch.tsx';
 interface Props {
   locale?: Locale;
   currentSection?: any;
+  allSectionsData?: any;
 }
 
-const { locale = 'de', currentSection } = Astro.props;
+const { locale = 'de', currentSection, allSectionsData: providedAllSectionsData } = Astro.props;
 const t = getTranslations(locale);
 
 
@@ -17,8 +18,8 @@ const t = getTranslations(locale);
 const url = Astro.url;
 const pathname = url.pathname;
 
-// Fetch ALL section data at build time
-const allSectionsData: SimpleSectionsData = await fetchAllSections();
+// Fetch ALL section data at build time (or use provided data)
+const allSectionsData: SimpleSectionsData = providedAllSectionsData || await fetchAllSections();
 
 // Generate language alternatives for dropdown
 let languageAlternatives = [];

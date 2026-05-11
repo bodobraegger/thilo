@@ -6,7 +6,7 @@ export async function getStaticPaths() {
   return generateSectionPaths(['de'], false); // German only, no locale param
 }
 
-const { section, locale } = Astro.props;
+const { section, locale, allSectionsData } = Astro.props;
 ---
 
-<SectionPage section={section} locale={locale} />
+<SectionPage section={section} locale={locale} allSectionsData={allSectionsData} />

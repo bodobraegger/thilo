@@ -7,15 +7,17 @@ import type { SectionT } from "../utils/data";
 interface Props {
   section: SectionT;
   locale: string;
+  allSectionsData?: any;
 }
 
-const { section, locale } = Astro.props;
-
-if (!section) {
-  return Astro.redirect('/404');
-}
+const { section, locale, allSectionsData } = Astro.props;
 ---
 
-<MainLayoutWithToC title={section.title} lang={locale} currentSection={section}>
+<MainLayoutWithToC 
+  title={section.title} 
+  lang={locale} 
+  currentSection={section}
+  allSectionsData={allSectionsData}
+>
   <Section section={section} />
 </MainLayoutWithToC>
