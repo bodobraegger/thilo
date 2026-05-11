@@ -24,8 +24,6 @@ yarn-error.log*
 
 Digital-Export
 
-.env
-
 # Strapi Exports
 exports
 

@@ -15,6 +15,7 @@ html {
   color: var(--text-color);
   background-color: var(--background-color);
   scroll-behavior: smooth;
+  scroll-padding-top: 52px;
 }
 
 body {

@@ -2,6 +2,7 @@
 import type { SectionT } from '../utils/data';
 import { getTranslations } from '../i18n';
 import { getSectionUrlForLocale, getAllSlugsForSection } from '../utils/slugMapping';
+import AstroLink from './AstroLink.astro';
 
 import '../styles/nav.css';
 
@@ -58,8 +59,8 @@ function getSectionUrl(section: SectionT, locale: string): string {
     <ul class="space-y-0.5">
       <!-- Home Link -->
       <li>
-        <a 
-          href={lang === 'de' ? "./" : `${lang}/`}
+        <AstroLink 
+          href={lang === 'de' ? '/' : `/${lang}/`}
           class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
               ? 'active font-medium' 
@@ -70,7 +71,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           <span>{t.translation.homePage.title}</span>
-        </a>
+        </AstroLink>
       </li>
 
       <!-- Sections -->
@@ -112,7 +113,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
               <!-- Chapter toggle button (outside the link) -->
               {section.chapters && section.chapters.length > 0 && (
                 <button 
-                  class="w-6 h-6 ml-2 flex items-center justify-center transform transition-transform hover:bg-gray-200 rounded chapter-toggle"
+                  class="w-6 h-6 ml-2 flex items-center justify-center transform transition-transform rounded chapter-toggle"
                   data-section={section.slug}
                   aria-label="Toggle chapters"
                 >
