@@ -37,6 +37,80 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
     fetchSections();
   }, [locale]);
 
+  // Calculate relevance score for search results (higher is more relevant)
+  const calculateRelevance = (text: string, title: string, searchQuery: string, isTitle: boolean): number => {
+    if (!text && !title) return 0;
+    
+    const lowerText = text?.toLowerCase() || '';
+    const lowerTitle = title?.toLowerCase() || '';
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    const targetText = isTitle ? lowerTitle : lowerText;
+    
+    if (!targetText.includes(lowerQuery)) return 0;
+    
+    let score = 0;
+    
+    // Exact match (highest priority)
+    if (targetText === lowerQuery) {
+      score += 1000;
+    }
+    
+    // Exact match in title (very high priority)
+    if (lowerTitle === lowerQuery) {
+      score += 800;
+    }
+    
+    // Title contains exact match as whole phrase
+    if (lowerTitle.includes(lowerQuery)) {
+      score += 500;
+    }
+    
+    // Whole word match in title
+    const titleWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (titleWordBoundaryRegex.test(lowerTitle)) {
+      score += 400;
+    }
+    
+    // Starts with query in title
+    if (lowerTitle.startsWith(lowerQuery)) {
+      score += 300;
+    }
+    
+    // Whole word match in content
+    const contentWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    if (contentWordBoundaryRegex.test(lowerText)) {
+      score += 200;
+    }
+    
+    // Starts with query in content
+    if (lowerText.startsWith(lowerQuery)) {
+      score += 150;
+    }
+    
+    // Partial match in title (contains substring)
+    if (lowerTitle.includes(lowerQuery) && score < 300) {
+      score += 100;
+    }
+    
+    // Partial match in content
+    if (lowerText.includes(lowerQuery) && score < 100) {
+      score += 50;
+    }
+    
+    // Boost score based on position (earlier matches are better)
+    const position = targetText.indexOf(lowerQuery);
+    if (position !== -1) {
+      const positionBoost = Math.max(0, 50 - position);
+      score += positionBoost;
+    }
+    
+    // Boost for shorter text (more focused matches)
+    const lengthPenalty = Math.min(50, targetText.length / 100);
+    score -= lengthPenalty;
+    
+    return score;
+  };
+
   // Perform search
   useEffect(() => {
     if (!query.trim() || sections.length === 0) {
@@ -55,31 +129,42 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
     };
 
     sections.forEach(section => {
-      if (section.title?.toLowerCase().includes(lowercaseQuery) || 
-          section.content?.toLowerCase().includes(lowercaseQuery)) {
+      const titleRelevance = calculateRelevance(section.content || '', section.title || '', query, true);
+      const contentRelevance = calculateRelevance(section.content || '', section.title || '', query, false);
+      const maxRelevance = Math.max(titleRelevance, contentRelevance);
+      
+      if (maxRelevance > 0) {
         searchResults.push({
           type: 'section',
           title: section.title,
           content: section.content,
           url: getLocalizedUrl(section.slug || ''),
-          section
+          section,
+          relevance: maxRelevance
         });
       }
 
       section.chapters?.forEach(chapter => {
-        if (chapter.title?.toLowerCase().includes(lowercaseQuery) || 
-            chapter.content?.toLowerCase().includes(lowercaseQuery)) {
+        const chapterTitleRelevance = calculateRelevance(chapter.content || '', chapter.title || '', query, true);
+        const chapterContentRelevance = calculateRelevance(chapter.content || '', chapter.title || '', query, false);
+        const chapterMaxRelevance = Math.max(chapterTitleRelevance, chapterContentRelevance);
+        
+        if (chapterMaxRelevance > 0) {
           searchResults.push({
             type: 'chapter',
             title: chapter.title,
             content: chapter.content,
             url: getLocalizedUrl(section.slug || '', chapter.slug),
             section,
-            chapter
+            chapter,
+            relevance: chapterMaxRelevance
           });
         }
       });
     });
+
+    // Sort by relevance score (highest first)
+    searchResults.sort((a, b) => b.relevance - a.relevance);
 
     setResults(searchResults);
   }, [query, sections, locale]);
