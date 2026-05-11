@@ -5,13 +5,16 @@ import Link from './Link';
 interface SearchProps {
   initialQuery?: string;
   locale: string;
+  initialSections?: SectionT[];
 }
 
-export default function SearchComponent({ initialQuery = '', locale }: SearchProps) {
+export default function SearchComponent({ initialQuery = '', locale, initialSections = [] }: SearchProps) {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<any[]>([]);
-  const [sections, setSections] = useState<SectionT[]>([]);
+  const [sections, setSections] = useState<SectionT[]>(initialSections);
   const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   // Sync with URL params on mount (for client-side navigation)
   useEffect(() => {
@@ -24,18 +27,26 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
     }
   }, []);
 
-  // Fetch sections on mount
+  // Fetch sections on mount only if not provided
   useEffect(() => {
+    // Skip if we already have sections from server
+    if (initialSections && initialSections.length > 0) {
+      return;
+    }
+
     async function fetchSections() {
+      setLoading(true);
       try {
         const data = await getSections(locale);
         setSections(data);
       } catch (error) {
         console.error('Failed to fetch sections:', error);
+      } finally {
+        setLoading(false);
       }
     }
     fetchSections();
-  }, [locale]);
+  }, [locale, initialSections]);
 
   // Calculate relevance score for search results (higher is more relevant)
   const calculateRelevance = (text: string, title: string, searchQuery: string, isTitle: boolean): number => {
@@ -239,20 +250,149 @@ export default function SearchComponent({ initialQuery = '', locale }: SearchPro
     return (start > 0 ? '...' : '') + excerpt + (end < cleanText.length ? '...' : '');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showDropdown || results.length === 0) {
+      if (e.key === 'Enter') {
+        // Navigate to search page with query
+        const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
+        window.location.href = searchUrl;
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < results.length) {
+          // Navigate to selected result
+          window.location.href = results[selectedIndex].url;
+        } else {
+          // Navigate to search page with query
+          const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
+          window.location.href = searchUrl;
+        }
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  const handleResultClick = (url: string) => {
+    setShowDropdown(false);
+    window.location.href = url;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    setShowDropdown(newQuery.trim().length > 0);
+    setSelectedIndex(-1);
+  };
+
+  const handleInputFocus = () => {
+    if (query.trim().length > 0) {
+      setShowDropdown(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay to allow click events on dropdown items
+    setTimeout(() => {
+      setShowDropdown(false);
+      setSelectedIndex(-1);
+    }, 200);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ scrollMarginTop: '80px' }}>
       <div className="mb-8">
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           placeholder="Suchbegriff eingeben..."
           className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500"
+          autoComplete="off"
         />
+        
+        {/* Dropdown with search results */}
+        {showDropdown && query.trim() && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto">
+            {results.length === 0 ? (
+              <div className="px-4 py-3 text-gray-500 text-sm">
+                Keine Ergebnisse gefunden
+              </div>
+            ) : (
+              <ul>
+                {results.slice(0, 10).map((result, idx) => {
+                  const sectionColor = result.section.color_primary || '#521d3a';
+                  const isSelected = idx === selectedIndex;
+                  
+                  return (
+                    <li key={idx}>
+                      <button
+                        onClick={() => handleResultClick(result.url)}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors ${
+                          isSelected ? 'bg-gray-100' : ''
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? `color-mix(in srgb, ${sectionColor} 10%, white)` : undefined
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-gray-900 truncate" style={{ color: sectionColor }}>
+                              {highlightText(result.title, query, `color-mix(in srgb, ${sectionColor} 30%, white)`)}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span 
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                style={{ 
+                                  backgroundColor: `color-mix(in srgb, ${sectionColor} 15%, white)`,
+                                  color: sectionColor 
+                                }}
+                              >
+                                {result.type === 'section' ? 'Bereich' : 'Kapitel'}
+                              </span>
+                              <span className="text-xs text-gray-500">{result.section.title}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+                {results.length > 10 && (
+                  <li className="px-4 py-2 text-sm text-gray-500 bg-gray-50 text-center">
+                    +{results.length - 10} weitere Ergebnisse. Drücken Sie Enter für alle Ergebnisse.
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
 
       <div id="search-results">
-        {!query.trim() ? (
+        {loading || (sections.length === 0 && !initialSections?.length) ? (
+          <div className="text-center py-12 text-gray-500">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+            <p>Lade Suchdaten...</p>
+          </div>
+        ) : !query.trim() ? (
           <div className="text-center py-12 text-gray-500">
             <p>Geben Sie einen Suchbegriff ein</p>
           </div>
