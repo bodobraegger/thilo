@@ -11,6 +11,17 @@ import '../styles/global.css';
 import '../styles/colors.css';
 import '../styles/layout.css';
 
+// Collect all unique section icon URLs for preloading
+const iconUrls: string[] = [];
+if (allSectionsData?.sections) {
+  for (const locale of Object.values(allSectionsData.sections) as any[]) {
+    for (const section of locale) {
+      if (section.icon?.url && !iconUrls.includes(section.icon.url)) {
+        iconUrls.push(section.icon.url);
+      }
+    }
+  }
+}
 ---
 
 <!DOCTYPE html>
@@ -19,6 +30,16 @@ import '../styles/layout.css';
     <meta charset="UTF-8" />
     <meta name="description" content="Thilo - Scout Magazin" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Preconnect to API and CDN -->
+    <link rel="preconnect" href="https://api.thilo.scouts.ch" crossorigin />
+    <link rel="dns-prefetch" href="https://api.thilo.scouts.ch" />
+
+    <!-- Preload section icons -->
+    {iconUrls.map(url => (
+      <link rel="preload" href={url} as="image" />
+    ))}
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     {allSectionsData && (

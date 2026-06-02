@@ -7,6 +7,10 @@ import react from "@astrojs/react";
 // https://astro.build/config
 export default defineConfig({
   integrations: [tailwind(), react()],
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover'
+  },
   i18n: {
     defaultLocale: "de",
     locales: ["de", "fr", "it", "en"],
