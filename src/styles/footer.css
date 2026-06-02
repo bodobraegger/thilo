@@ -20,12 +20,11 @@
   background-color: var(--color-primary);
 
   &:hover {
-    background-color: #64224b;
-    transform: translateY(-1px);
+    background-color: var(--color-primary-hover);
   }
 
   &:active {
-    transform: translateY(0);
+    background-color: var(--color-primary-hover);
   }
 
   .label {
