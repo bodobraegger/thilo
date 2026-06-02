@@ -40,7 +40,7 @@ if (allSectionsData?.sections) {
       <link rel="preload" href={url} as="image" />
     ))}
 
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
     <meta name="base-url" content={import.meta.env.BASE_URL.replace(/\/$/, '')} />
     <title>{title}</title>
     {allSectionsData && (
