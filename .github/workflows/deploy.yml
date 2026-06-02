@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - astro-rewrite
 
 jobs:
   build-and-push-container:
@@ -41,8 +42,6 @@ jobs:
   buildGHPages:
     name: Build Thilo App GHPages
     runs-on: ubuntu-latest
-    env:
-      REACT_APP_PUBLIC_URL: /thilo/
 
     steps:
       - uses: actions/checkout@v4
@@ -50,11 +49,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      - name: Create backend export
-        run: node src/scripts/strapiToJson.js
-      - run: npm run build
-      - run: echo "$(envsubst < build/index.html)" > build/index.html
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install
+      - name: Build for GH Pages (base /thilo/)
+        run: pnpm astro build --base /thilo/
+      - run: cp build/index.html build/404.html
 
       - uses: actions/upload-artifact@v4
         with:
@@ -81,7 +83,6 @@ jobs:
     name: Build Thilo App Prod
     runs-on: ubuntu-latest
     env:
-      REACT_APP_PUBLIC_URL: /
       BACKEND_URL: ${{ secrets.BACKEND_URL }}
 
     steps:
@@ -90,11 +91,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-      # - name: Create backend export
-      #   run: node src/scripts/strapiToJson.js
-      - run: npm run build
-      - run: echo "$(envsubst < build/index.html)" > build/index.html
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install
+      - run: pnpm build
 
       - uses: actions/upload-artifact@v4
         with:
