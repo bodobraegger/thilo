@@ -267,10 +267,11 @@ if (currentSection) {
     const currentPath = window.location.pathname;
     const currentHash = window.location.hash;
     
-    // Get current section slug from path
-    let path = currentPath.replace(/^\//, ''); // Remove leading slash
+    // Normalize path: remove leading and trailing slashes, then strip locale prefix
+    let path = currentPath.replace(/^\/|\/$/g, ''); // Remove leading/trailing slashes
     if (path.startsWith('fr/')) path = path.substring(3);
-    if (path.startsWith('it/')) path = path.substring(3);
+    else if (path.startsWith('it/')) path = path.substring(3);
+    else if (path === 'fr' || path === 'it') path = '';
     
     // Handle impressum page
     if (path === 'impressum') {
@@ -279,17 +280,18 @@ if (currentSection) {
       return;
     }
     
-    // Get all sections from localStorage (set by BaseLayout)
-    const allSectionsData = localStorage.getItem('allSectionsData');
-    if (!allSectionsData) {
+    // Get all sections from the meta tag (set by BaseLayout)
+    const allSectionsMeta = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
+    if (!allSectionsMeta) {
       // Fallback: navigate to start page
       const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
       window.location.href = fallbackUrl;
       return;
     }
     
-    const allSections = JSON.parse(allSectionsData).sections;
-    const currentSections = allSections[document.documentElement.lang || 'de'] || [];
+    const allSections = JSON.parse(allSectionsMeta);
+    const currentLocale = document.documentElement.lang || 'de';
+    const currentSections = allSections[currentLocale] || [];
     const targetSections = allSections[targetLocale] || [];
     
     // Find current section by slug
