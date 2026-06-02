@@ -69,32 +69,31 @@ if (currentSection) {
 
 <!-- Redesigned Header -->
 <header>
-  <div class="max-w-[1400px] mx-auto px-4 lg:px-10">
-    <div class="flex items-center gap-2">
+  <div class="max-w-[1400px] mx-auto flex items-center">
 
-      <!-- Left: Sidebar toggle (mobile only) -->
-      <div class="flex items-center lg:w-[288px]">
-        <button 
-          type="button"
-          id="sidebar-toggle-header"
-          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-          aria-label="Toggle sidebar"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
+    <!-- Mirrors sidebar width (w-72 = 288px on desktop, just holds burger on mobile) -->
+    <div class="shrink-0 lg:w-72 px-4 lg:px-0 flex items-center">
+      <button 
+        type="button"
+        id="sidebar-toggle-header"
+        class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+        aria-label="Toggle sidebar"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
 
-      <!-- Center: Search — full width on mobile, centered fixed-width on desktop -->
-      <div class="flex-1 flex justify-center lg:justify-center">
+    <!-- Mirrors <main class="flex-1"> exactly -->
+    <div class="flex-1 flex items-center min-w-0">
+      <!-- Mirrors <div class="px-4 lg:px-10 max-w-3xl"> — padding and max-width are on the SAME element -->
+      <div class="flex-1 min-w-0 px-4 lg:px-10 max-w-3xl">
         {!isSearchPage && (
           <>
-            <!-- Desktop search (centered) -->
-            <div class="hidden lg:block w-[480px]">
+            <div class="hidden lg:block">
               <SearchComponent client:load locale={locale} inline={true} />
             </div>
-            <!-- Mobile search (full width between the two buttons) -->
             <div class="lg:hidden w-full">
               <SearchComponent client:load locale={locale} inline={true} isMobile={true} />
             </div>
@@ -102,8 +101,8 @@ if (currentSection) {
         )}
       </div>
 
-      <!-- Right: Menu button -->
-      <div class="flex items-center justify-end lg:w-[288px]">
+      <!-- Menu button sits outside the content area, with its own right padding -->
+      <div class="flex items-center shrink-0 pr-4 lg:pr-4">
         <div class="relative">
           <!-- Menu dropdown toggle -->
           <button 
@@ -178,11 +177,11 @@ if (currentSection) {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </div><!-- end relative -->
+        </div><!-- end menu button -->
+      </div><!-- end flex-1 main mirror -->
 
-    </div>
-  </div>
+  </div><!-- end max-w-[1400px] -->
 </header>
 
 <script>
