@@ -43,7 +43,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
 }
 ---
 
-<nav class="w-72 bg-white border-r border-gray-200 lg:flex lg:flex-col hidden" id="sidebar-nav" style="height: calc(100vh - 52px); top: 52px; position: sticky; overflow: hidden;">
+<nav class="w-72 bg-white border-r border-gray-200 lg:flex flex-col hidden" id="sidebar-nav" style="height: calc(100vh - 52px); top: 52px; position: sticky;">
   <!-- Header on mobile only: Close button and 'Table of Contents' -->
   <div class="flex items-center justify-between p-4 border-b border-gray-200 lg:hidden h-[52px] flex-shrink-0">
     <h2 class="text-lg font-semibold">Navigation</h2>
@@ -55,7 +55,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
   </div>
 
   <!-- Navigation List -->
-  <div class="p-2 overflow-y-auto flex-1">
+  <div class="p-2 overflow-y-auto flex-1 min-h-0 overscroll-contain">
     <ul class="space-y-0.5">
       <!-- Home Link -->
       <li>
@@ -217,30 +217,31 @@ function getSectionUrl(section: SectionT, locale: string): string {
   }
 
   function openSidebar() {
-    // Only handle mobile behavior - on large screens, sidebar is always visible via CSS
     if (window.innerWidth < 1024) {
-      // On medium and smaller screens, show as modal overlay
-      sidebarNav?.classList.remove('hidden', 'sticky', 'relative');
-      sidebarNav?.classList.add('fixed', 'inset-y-0', 'left-0', 'z-50');
+      if (sidebarNav) {
+        sidebarNav.style.display = 'flex';
+        sidebarNav.style.position = 'fixed';
+        sidebarNav.style.top = '0';
+        sidebarNav.style.height = '100vh';
+        sidebarNav.style.zIndex = '50';
+      }
       sidebarOverlay?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     }
-    else {
-      // On large screens, ensure sidebar is sticky/relative
-      sidebarNav?.classList.remove('hidden', 'fixed', 'inset-y-0', 'left-0', 'z-50');
-      sidebarNav?.classList.add('sticky', 'top-16', 'relative');
-    }
-    
-    // Scroll to current active section/chapter in ToC
     scrollToCurrentInToC();
   }
 
   function closeSidebar() {
-    // Only handle mobile behavior - don't interfere with large screen CSS
     if (window.innerWidth < 1024) {
-      // On small/medium screens, hide the modal and restore original classes
-      sidebarNav?.classList.add('hidden', 'sticky', 'relative');
-      sidebarNav?.classList.remove('fixed', 'inset-y-0', 'left-0', 'z-50');
+      if (sidebarNav) {
+        sidebarNav.style.display = 'none';
+        sidebarNav.style.position = 'sticky';
+        sidebarNav.style.top = '52px';
+        sidebarNav.style.height = 'calc(100vh - 52px)';
+        sidebarNav.style.zIndex = '';
+      }
       sidebarOverlay?.classList.add('hidden');
+      document.body.style.overflow = '';
     }
   }
 

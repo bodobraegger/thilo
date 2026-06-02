@@ -16,6 +16,7 @@ const t = getTranslations(locale);
 // Get current URL to determine page type
 const url = Astro.url;
 const pathname = url.pathname;
+const isSearchPage = pathname === '/search' || pathname.endsWith('/search') || pathname.endsWith('/search/');
 
 // Fetch ALL section data at build time
 const allSectionsData: SimpleSectionsData = await fetchAllSections();
@@ -68,11 +69,11 @@ if (currentSection) {
 
 <!-- Redesigned Header -->
 <header>
-  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between">
-      <!-- Left side - Sidebar toggle (md screens) + Logo -->
-      <div class="flex items-center space-x-3">
-        <!-- Sidebar toggle button - visible on medium and small screens -->
+  <div class="max-w-[1400px] mx-auto px-4 lg:px-10">
+    <div class="flex items-center gap-2">
+
+      <!-- Left: Sidebar toggle (mobile only) -->
+      <div class="flex items-center lg:w-[288px]">
         <button 
           type="button"
           id="sidebar-toggle-header"
@@ -85,47 +86,25 @@ if (currentSection) {
         </button>
       </div>
 
-      <!-- Center - Empty space -->
-      <div class="flex-1"></div>
+      <!-- Center: Search — full width on mobile, centered fixed-width on desktop -->
+      <div class="flex-1 flex justify-center lg:justify-center">
+        {!isSearchPage && (
+          <>
+            <!-- Desktop search (centered) -->
+            <div class="hidden lg:block w-[480px]">
+              <SearchComponent client:load locale={locale} inline={true} />
+            </div>
+            <!-- Mobile search (full width between the two buttons) -->
+            <div class="lg:hidden w-full">
+              <SearchComponent client:load locale={locale} inline={true} isMobile={true} />
+            </div>
+          </>
+        )}
+      </div>
 
-      <!-- Right side - Search/Menu buttons -->
-      <div class="flex items-center space-x-2">
-        <!-- Desktop Search (always visible on larger screens) -->
-        <div class="hidden lg:block">
-          <SearchComponent client:load locale={locale} inline={true} />
-        </div>
-
-        <!-- Mobile Search Expanded (shows in header on right side) -->
-        <div id="mobile-search-expanded" class="hidden lg:hidden">
-          <SearchComponent client:load locale={locale} inline={true} isMobile={true} />
-        </div>
-
-        <!-- Mobile Search Button (collapsed state) -->
-        <button 
-          type="button"
-          id="search-expand-button"
-          class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-          aria-label="Open search"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-
-        <!-- Menu dropdown -->
+      <!-- Right: Menu button -->
+      <div class="flex items-center justify-end lg:w-[288px]">
         <div class="relative">
-          <!-- Close search button (replaces menu button when search is open) -->
-          <button 
-            type="button"
-            id="search-close-button"
-            class="hidden lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-            aria-label="Close search"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-
           <!-- Menu dropdown toggle -->
           <button 
             type="button"
@@ -201,6 +180,7 @@ if (currentSection) {
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </header>
@@ -247,60 +227,14 @@ if (currentSection) {
     }
   });
 
-  // Search functionality
-  const searchExpandButton = document.getElementById('search-expand-button');
-  const searchCloseButton = document.getElementById('search-close-button');
-  const mobileSearchExpanded = document.getElementById('mobile-search-expanded');
-
-  function openMobileSearch() {
-    // Hide search button and menu button
-    searchExpandButton?.classList.add('hidden');
-    menuDropdownToggle?.classList.add('hidden');
-    
-    // Show search input and close button
-    mobileSearchExpanded?.classList.remove('hidden');
-    searchCloseButton?.classList.remove('hidden');
-  }
-
-  function closeMobileSearch() {
-    // Show search button and menu button
-    searchExpandButton?.classList.remove('hidden');
-    menuDropdownToggle?.classList.remove('hidden');
-    
-    // Hide search input and close button
-    mobileSearchExpanded?.classList.add('hidden');
-    searchCloseButton?.classList.add('hidden');
-  }
-
-  // Event listeners
-  searchExpandButton?.addEventListener('click', openMobileSearch);
-  searchCloseButton?.addEventListener('click', closeMobileSearch);
-
-  // Escape key handler for search and menu
+  // Escape key handler for menu
   document.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
-      if (!mobileSearchExpanded?.classList.contains('hidden')) {
-        closeMobileSearch();
-      } else if (!menuDropdown?.classList.contains('hidden')) {
+      if (!menuDropdown?.classList.contains('hidden')) {
         closeMenuDropdown();
       }
     }
   });
-
-  // Responsive breakpoint handler - close search when going from mobile to desktop
-  function handleResponsiveChange() {
-    const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
-    
-    if (isLargeScreen && mobileSearchExpanded && !mobileSearchExpanded.classList.contains('hidden')) {
-      closeMobileSearch();
-    }
-  }
-
-  // Listen for window resize
-  window.addEventListener('resize', handleResponsiveChange);
-  
-  // Initial check on page load
-  handleResponsiveChange();
 
   // Theme toggle functionality (placeholder for future implementation)
   const themeToggle = document.getElementById('theme-toggle');

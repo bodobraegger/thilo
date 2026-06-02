@@ -42,7 +42,7 @@ try {
 <BaseLayout title={title} lang={lang} allSectionsData={allSectionsData}>
   <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} />
   
-  <div class="flex min-h-[calc(100vh-52px)]">
+  <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
     <!-- Table of Contents Sidebar -->
     <TableOfContents 
       sections={sections} 
@@ -51,11 +51,13 @@ try {
     />
     
     <!-- Main Content -->
-    <main class="flex-1 p-6 overflow-x-hidden">
-      <slot />
-      {useFooter &&
-        <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
-      }
+    <main class="flex-1 overflow-x-hidden min-w-0">
+      <div class="px-4 lg:px-10 py-8 max-w-3xl">
+        <slot />
+        {useFooter &&
+          <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+        }
+      </div>
     </main>
   </div>
 

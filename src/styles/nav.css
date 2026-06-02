@@ -2,7 +2,7 @@ header {
   position: sticky;
   top: 0;
   background-color: var(--color-primary);
-  padding: 0.6em;
+  padding: 0.6em 0;
 }
 
 nav.header-nav {

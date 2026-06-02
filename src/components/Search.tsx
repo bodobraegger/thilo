@@ -341,7 +341,6 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     <div
       ref={dropdownRef}
       className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"
-      style={inline ? { minWidth: isMobile ? '300px' : '400px' } : undefined}
     >
       {query.trim().length < MIN_QUERY_LENGTH ? (
         <div className="px-4 py-3 text-gray-400 text-sm flex items-center gap-2">
@@ -413,7 +412,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
 
   if (inline) {
     return (
-      <div className={`relative ${isMobile ? 'w-full' : 'w-64'}`}>
+      <div className="relative w-full">
         <input
           ref={inputRef}
           type="text"
