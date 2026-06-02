@@ -292,9 +292,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
         break;
       case 'Enter':
         e.preventDefault();
-        if (inline) {
-          navigateToSearchPage();
-        } else if (selectedIndex >= 0 && selectedIndex < results.length) {
+        if (selectedIndex >= 0 && selectedIndex < results.length) {
           window.location.href = results[selectedIndex].url;
         } else {
           navigateToSearchPage();
@@ -309,12 +307,8 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
   };
 
   const handleResultClick = (url: string) => {
-    if (inline) {
-      navigateToSearchPage();
-    } else {
-      setShowDropdown(false);
-      window.location.href = url;
-    }
+    setShowDropdown(false);
+    window.location.href = url;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
