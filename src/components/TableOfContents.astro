@@ -179,40 +179,34 @@ function getSectionUrl(section: SectionT, locale: string): string {
   const sidebarNav = document.getElementById('sidebar-nav');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-  function scrollToCurrentInToC() {
-    // Find the currently active chapter/section in the ToC
+  function scrollToCurrentInToC(behavior = 'smooth') {
     const currentHash = window.location.hash;
     const currentPath = window.location.pathname;
     
     let activeLink = null;
     
-    // First, try to find active link by hash if present
     if (currentHash) {
       const hashWithoutHash = currentHash.slice(1);
       activeLink = sidebarNav?.querySelector(`a[href*="#${hashWithoutHash}"]`);
     }
     
-    // If no hash match, try to find active link by current path
     if (!activeLink) {
       activeLink = sidebarNav?.querySelector(`a[href="${currentPath}"], a[href*="${currentPath}"]`);
     }
     
-    // If we found an active link, scroll it into view in the ToC
     if (activeLink && sidebarNav) {
-      // Use setTimeout to ensure the sidebar is fully rendered first
       setTimeout(() => {
-        const linkRect = activeLink.getBoundingClientRect();
-        const sidebarRect = sidebarNav.getBoundingClientRect();
-        
-        // Calculate the position to scroll to (center the active item if possible)
         const scrollTop = activeLink.offsetTop - (sidebarNav.clientHeight / 2) + (activeLink.clientHeight / 2);
-        
-        // Scroll the sidebar to show the active item
-        sidebarNav.scrollTo({
-          top: Math.max(0, scrollTop),
-          behavior: 'smooth'
-        });
-      }, 100); // Small delay to ensure DOM is ready
+        if (behavior === 'instant') {
+          // Temporarily override CSS scroll-behavior: smooth on the sidebar
+          const prev = sidebarNav.style.scrollBehavior;
+          sidebarNav.style.scrollBehavior = 'auto';
+          sidebarNav.scrollTop = Math.max(0, scrollTop);
+          sidebarNav.style.scrollBehavior = prev;
+        } else {
+          sidebarNav.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+        }
+      }, 100);
     }
   }
 
@@ -228,7 +222,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
       sidebarOverlay?.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
     }
-    scrollToCurrentInToC();
+    scrollToCurrentInToC('smooth');
   }
 
   function closeSidebar() {
@@ -259,10 +253,15 @@ function getSectionUrl(section: SectionT, locale: string): string {
   // Initialize on load
   initSidebarVisibility();
   
-  // Scroll to current position on page load (for both desktop and mobile)
+  // Scroll to current position on page load — instant, no animation on fresh load
   setTimeout(() => {
-    scrollToCurrentInToC();
-  }, 200);
+    scrollToCurrentInToC('instant');
+  }, 100);
+
+  // Animate ToC scroll only when navigating within the same page
+  window.addEventListener('hashchange', () => {
+    scrollToCurrentInToC('smooth');
+  });
   
   // Handle window resize
   window.addEventListener('resize', initSidebarVisibility);
@@ -295,24 +294,28 @@ function getSectionUrl(section: SectionT, locale: string): string {
     closeSidebar(); // Close mobile modal if open
   });
 
-  // Smooth scroll for anchor links
-  document.querySelectorAll('a[href*="#"]').forEach((anchor) => {
+  // Smooth scroll for anchor links within the same page
+  document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
       const href = this.getAttribute('href');
-      if (href && href.startsWith('#')) {
+      if (!href) return;
+
+      const hashIndex = href.indexOf('#');
+      if (hashIndex === -1) return;
+
+      const path = href.slice(0, hashIndex) || window.location.pathname;
+      const hash = href.slice(hashIndex + 1);
+
+      // Only intercept if we're staying on the same page
+      if (path === window.location.pathname || path === '') {
         e.preventDefault();
-        const targetId = href.slice(1);
-        const targetElement = document.getElementById(targetId);
+        const targetElement = document.getElementById(hash);
         if (targetElement) {
-          targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-          // Close mobile sidebar after navigation
-          if (window.innerWidth < 1024) {
-            closeSidebar();
-          }
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.pushState(null, '', '#' + hash);
+          scrollToCurrentInToC('smooth');
         }
+        if (window.innerWidth < 1024) closeSidebar();
       }
     });
   });
