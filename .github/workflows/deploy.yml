@@ -1,132 +1,59 @@
-name: Build
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - master
-      - astro-rewrite
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  build-and-push-container:
-    name: Build and Push Thilo Container
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build docker container
-        uses: docker/build-push-action@v5
-        with:
-          context: ./
-          load: true
-          tags: |
-            ghcr.io/scout-ch/thilo/thilo_frontend:latest
-      - name: Push docker container
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          context: ./
-          tags: |
-            ghcr.io/scout-ch/thilo/thilo_frontend:latest
-
-  buildGHPages:
-    name: Build Thilo App GHPages
-    runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - run: pnpm install
-      - name: Build for GH Pages (base /thilo/)
-        run: pnpm astro build --base /thilo/
-      - run: cp build/index.html build/404.html
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-cache-gp
-          path: ./build
-
-  deployGHPages:
-    name: Deploy Thilo App GHPages
-    needs: buildGHPages
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-cache-gp
-          path: ./build
-      - uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-
-  buildProd:
-    name: Build Thilo App Prod
-    runs-on: ubuntu-latest
-    env:
-      BACKEND_URL: ${{ secrets.BACKEND_URL }}
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-      - run: pnpm install
-      - run: pnpm build
+          cache: pnpm
 
-      - uses: actions/upload-artifact@v4
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        run: pnpm astro build --base ${{ steps.pages.outputs.base_path }}
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: build-cache-prod
           path: ./build
 
-  deployProd:
-    name: Deploy Thilo App Prod
-    needs: buildProd
+  deploy:
+    name: Deploy
+    needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-cache-prod
-          path: ./build
-      - name: 📂 Sync files
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          server-dir: /webroot/ROOT/
-          local-dir: ./build/
-          exclude: |
-            **/.devcontainer*
-            **/.devcontainer*/**
-            **/.git*
-            **/.git*/**
-            **/.github*
-            **/.github*/**
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
