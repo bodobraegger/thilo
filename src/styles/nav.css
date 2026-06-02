@@ -94,10 +94,6 @@ nav.header-nav {
 }
 
 /* Table of Contents hover effects using CSS variables */
-#sidebar-nav .group:hover:not(.font-medium) {
-  background-color: var(--color-primary-50) !important;
-  color: var(--color-primary-700) !important;
-}
 
 /* Active section/chapter state */
 #sidebar-nav .section.active {
@@ -110,7 +106,7 @@ nav.header-nav {
   color: var(--color-primary-700);
 }
 
-#sidebar-nav a:hover:not(.font-medium) {
+#sidebar-nav .chapters-list a:hover {
   background-color: var(--color-primary-50) !important;
   color: var(--color-primary-700) !important;
 }
