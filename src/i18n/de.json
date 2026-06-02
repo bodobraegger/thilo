@@ -24,7 +24,13 @@
       "description": "Durchsuche alle Inhalte",
       "placeholder": "Suchbegriff eingeben...",
       "noResults": "Keine Ergebnisse gefunden",
-      "results": "Ergebnisse"
+      "results": "Ergebnisse",
+      "section": "Bereich",
+      "chapter": "Kapitel",
+      "loading": "Lade Suchdaten...",
+      "enterQuery": "Geben Sie einen Suchbegriff ein",
+      "noResultsFor": "Keine Ergebnisse für \"{query}\" gefunden",
+      "moreResults": "+{count} weitere Ergebnisse. Drücken Sie Enter für alle Ergebnisse."
     },
     "section": {
       "backToTop": "Nach oben"

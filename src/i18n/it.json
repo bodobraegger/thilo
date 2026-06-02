@@ -24,7 +24,13 @@
       "description": "Cerca in tutti i contenuti",
       "placeholder": "Inserisci termine di ricerca...",
       "noResults": "Nessun risultato trovato",
-      "results": "Risultati"
+      "results": "Risultati",
+      "section": "Sezione",
+      "chapter": "Capitolo",
+      "loading": "Caricamento dati di ricerca...",
+      "enterQuery": "Inserisci un termine di ricerca",
+      "noResultsFor": "Nessun risultato per \"{query}\"",
+      "moreResults": "+{count} altri risultati. Premi Invio per tutti i risultati."
     },
     "section": {
       "backToTop": "Torna in alto"

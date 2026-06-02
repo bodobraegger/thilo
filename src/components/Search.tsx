@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getSections, type SectionT } from '../utils/data';
 import Link from './Link';
+import { t, type Locale } from '../i18n';
 
 interface SearchProps {
   initialQuery?: string;
   locale: string;
   initialSections?: SectionT[];
+  inline?: boolean;
+  isMobile?: boolean;
 }
 
 export interface SearchResult {
@@ -115,13 +118,15 @@ export function highlightText(text: string, searchQuery: string, color?: string)
   );
 }
 
-export default function SearchComponent({ initialQuery = '', locale, initialSections = [] }: SearchProps) {
+export default function SearchComponent({ initialQuery = '', locale, initialSections = [], inline = false, isMobile = false }: SearchProps) {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [sections, setSections] = useState<SectionT[]>(initialSections);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync with URL params on mount (for client-side navigation)
   useEffect(() => {
@@ -153,81 +158,8 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
       }
     }
     fetchSections();
-  }, [locale, initialSections]);
-
-  // Calculate relevance score for search results (higher is more relevant)
-  const calculateRelevance = (text: string, title: string, searchQuery: string, isTitle: boolean): number => {
-    if (!text && !title) return 0;
-    
-    const lowerText = text?.toLowerCase() || '';
-    const lowerTitle = title?.toLowerCase() || '';
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    const targetText = isTitle ? lowerTitle : lowerText;
-    
-    if (!targetText.includes(lowerQuery)) return 0;
-    
-    let score = 0;
-    
-    // Exact match (highest priority)
-    if (targetText === lowerQuery) {
-      score += 1000;
-    }
-    
-    // Exact match in title (very high priority)
-    if (lowerTitle === lowerQuery) {
-      score += 800;
-    }
-    
-    // Title contains exact match as whole phrase
-    if (lowerTitle.includes(lowerQuery)) {
-      score += 500;
-    }
-    
-    // Whole word match in title
-    const titleWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-    if (titleWordBoundaryRegex.test(lowerTitle)) {
-      score += 400;
-    }
-    
-    // Starts with query in title
-    if (lowerTitle.startsWith(lowerQuery)) {
-      score += 300;
-    }
-    
-    // Whole word match in content
-    const contentWordBoundaryRegex = new RegExp(`\\b${lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
-    if (contentWordBoundaryRegex.test(lowerText)) {
-      score += 200;
-    }
-    
-    // Starts with query in content
-    if (lowerText.startsWith(lowerQuery)) {
-      score += 150;
-    }
-    
-    // Partial match in title (contains substring)
-    if (lowerTitle.includes(lowerQuery) && score < 300) {
-      score += 100;
-    }
-    
-    // Partial match in content
-    if (lowerText.includes(lowerQuery) && score < 100) {
-      score += 50;
-    }
-    
-    // Boost score based on position (earlier matches are better)
-    const position = targetText.indexOf(lowerQuery);
-    if (position !== -1) {
-      const positionBoost = Math.max(0, 50 - position);
-      score += positionBoost;
-    }
-    
-    // Boost for shorter text (more focused matches)
-    const lengthPenalty = Math.min(50, targetText.length / 100);
-    score -= lengthPenalty;
-    
-    return score;
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale, initialSections.length]);
 
   // Perform search
   useEffect(() => {
@@ -334,12 +266,17 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     return (start > 0 ? '...' : '') + excerpt + (end < cleanText.length ? '...' : '');
   };
 
+  const navigateToSearchPage = () => {
+    const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
+    window.location.href = searchUrl;
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const maxIndex = inline ? Math.min(results.length - 1, 2) : results.length - 1;
+
     if (!showDropdown || results.length === 0) {
       if (e.key === 'Enter') {
-        // Navigate to search page with query
-        const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
-        window.location.href = searchUrl;
+        navigateToSearchPage();
       }
       return;
     }
@@ -347,7 +284,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+        setSelectedIndex(prev => (prev < maxIndex ? prev + 1 : prev));
         break;
       case 'ArrowUp':
         e.preventDefault();
@@ -355,25 +292,29 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < results.length) {
-          // Navigate to selected result
+        if (inline) {
+          navigateToSearchPage();
+        } else if (selectedIndex >= 0 && selectedIndex < results.length) {
           window.location.href = results[selectedIndex].url;
         } else {
-          // Navigate to search page with query
-          const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
-          window.location.href = searchUrl;
+          navigateToSearchPage();
         }
         break;
       case 'Escape':
         setShowDropdown(false);
         setSelectedIndex(-1);
+        inputRef.current?.blur();
         break;
     }
   };
 
   const handleResultClick = (url: string) => {
-    setShowDropdown(false);
-    window.location.href = url;
+    if (inline) {
+      navigateToSearchPage();
+    } else {
+      setShowDropdown(false);
+      window.location.href = url;
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -389,7 +330,10 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     }
   };
 
-  const handleInputBlur = () => {
+  const handleInputBlur = (e: React.FocusEvent) => {
+    if (dropdownRef.current && dropdownRef.current.contains(e.relatedTarget as Node)) {
+      return;
+    }
     // Delay to allow click events on dropdown items
     setTimeout(() => {
       setShowDropdown(false);
@@ -397,92 +341,136 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     }, 200);
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ scrollMarginTop: '80px' }}>
-      <div className="mb-8">
+  // Shared dropdown list used in both modes
+  const renderDropdown = (maxItems: number) => (
+    <div
+      ref={dropdownRef}
+      className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"
+      style={inline ? { minWidth: isMobile ? '300px' : '400px' } : undefined}
+    >
+      {results.length === 0 ? (
+        <div className="px-4 py-3 text-gray-500 text-sm">
+          {t('searchPage.noResults', locale as Locale)}
+        </div>
+      ) : (
+        <ul>
+          {results.slice(0, maxItems).map((result, idx) => {
+            const sectionColor = result.section.color_primary || '#521d3a';
+            const isSelected = idx === selectedIndex;
+
+            return (
+              <li key={idx}>
+                <button
+                  onClick={() => handleResultClick(result.url)}
+                  onMouseEnter={() => setSelectedIndex(idx)}
+                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors ${
+                    isSelected ? 'bg-gray-100' : ''
+                  }`}
+                  style={{
+                    backgroundColor: isSelected ? `color-mix(in srgb, ${sectionColor} 10%, white)` : undefined
+                  }}
+                  tabIndex={0}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-medium truncate ${inline ? 'text-sm' : ''}`} style={{ color: sectionColor }}>
+                        {highlightText(result.title, query, `color-mix(in srgb, ${sectionColor} 30%, white)`)}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${sectionColor} 15%, white)`,
+                            color: sectionColor
+                          }}
+                        >
+                          {result.type === 'section' ? t('searchPage.section', locale as Locale) : t('searchPage.chapter', locale as Locale)}
+                        </span>
+                        <span className="text-xs text-gray-500 truncate">{result.section.title}</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+          {results.length > maxItems && (
+            <li>
+              <button
+                onClick={navigateToSearchPage}
+                className="w-full px-4 py-2 text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 text-center transition-colors"
+              >
+                {t('searchPage.moreResults', locale as Locale).replace('{count}', String(results.length - maxItems))}
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+
+  if (inline) {
+    return (
+      <div className={`relative ${isMobile ? 'w-full' : 'w-64'}`}>
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          placeholder="Suchbegriff eingeben..."
+          placeholder={t('searchPage.placeholder', locale as Locale)}
+          className={`w-full rounded-md pl-4 pr-10 text-sm focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500 ${
+            isMobile ? 'py-1.5' : 'h-8'
+          }`}
+          autoComplete="off"
+        />
+        <svg
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {showDropdown && query.trim() && renderDropdown(3)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ scrollMarginTop: '80px' }}>
+      <div className="mb-8 relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          placeholder={t('searchPage.placeholder', locale as Locale)}
           className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500"
           autoComplete="off"
         />
-        
         {/* Dropdown with search results */}
-        {showDropdown && query.trim() && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto">
-            {results.length === 0 ? (
-              <div className="px-4 py-3 text-gray-500 text-sm">
-                Keine Ergebnisse gefunden
-              </div>
-            ) : (
-              <ul>
-                {results.slice(0, 10).map((result, idx) => {
-                  const sectionColor = result.section.color_primary || '#521d3a';
-                  const isSelected = idx === selectedIndex;
-                  
-                  return (
-                    <li key={idx}>
-                      <button
-                        onClick={() => handleResultClick(result.url)}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors ${
-                          isSelected ? 'bg-gray-100' : ''
-                        }`}
-                        style={{
-                          backgroundColor: isSelected ? `color-mix(in srgb, ${sectionColor} 10%, white)` : undefined
-                        }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900 truncate" style={{ color: sectionColor }}>
-                              {highlightText(result.title, query, `color-mix(in srgb, ${sectionColor} 30%, white)`)}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span 
-                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                style={{ 
-                                  backgroundColor: `color-mix(in srgb, ${sectionColor} 15%, white)`,
-                                  color: sectionColor 
-                                }}
-                              >
-                                {result.type === 'section' ? 'Bereich' : 'Kapitel'}
-                              </span>
-                              <span className="text-xs text-gray-500">{result.section.title}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    </li>
-                  );
-                })}
-                {results.length > 10 && (
-                  <li className="px-4 py-2 text-sm text-gray-500 bg-gray-50 text-center">
-                    +{results.length - 10} weitere Ergebnisse. Drücken Sie Enter für alle Ergebnisse.
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
-        )}
+        {showDropdown && query.trim() && renderDropdown(10)}
       </div>
 
       <div id="search-results">
         {loading || (sections.length === 0 && !initialSections?.length) ? (
           <div className="text-center py-12 text-gray-500">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-            <p>Lade Suchdaten...</p>
+            <p>{t('searchPage.loading', locale as Locale)}</p>
           </div>
         ) : !query.trim() ? (
           <div className="text-center py-12 text-gray-500">
-            <p>Geben Sie einen Suchbegriff ein</p>
+            <p>{t('searchPage.enterQuery', locale as Locale)}</p>
           </div>
         ) : results.length === 0 ? (
           <div className="text-center py-8">
-            <p>Keine Ergebnisse für "{query}" gefunden</p>
+            <p>{t('searchPage.noResultsFor', locale as Locale).replace('{query}', query)}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -491,10 +479,10 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
               const sectionColor = result.section.color_primary || '#521d3a';
 
               return (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  style={{ 
+                  style={{
                     '--section-color': sectionColor,
                     borderColor: sectionColor,
                     scrollMarginTop: '80px'
@@ -509,16 +497,16 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
                     {highlightText(excerpt, query, `color-mix(in srgb, ${sectionColor} 20%, white)`)}
                   </p>
                   <div className="flex items-center gap-3 text-sm">
-                    <span 
+                    <span
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{ 
+                      style={{
                         backgroundColor: `color-mix(in srgb, ${sectionColor} 20%, white)`,
-                        color: sectionColor 
+                        color: sectionColor
                       }}
                     >
-                      {result.type === 'section' ? 'Bereich' : 'Kapitel'}
+                      {result.type === 'section' ? t('searchPage.section', locale as Locale) : t('searchPage.chapter', locale as Locale)}
                     </span>
-                    <span className="text-gray-500" style={{color: sectionColor}}>{result.section.title}</span>
+                    <span className="text-gray-500" style={{ color: sectionColor }}>{result.section.title}</span>
                   </div>
                 </div>
               );
