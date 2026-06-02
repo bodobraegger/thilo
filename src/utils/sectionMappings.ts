@@ -4,9 +4,16 @@ import { slugify } from './slugify';
 export interface SectionData {
   id: number;
   title: string;
+  menu_name: string;
   slug: string;
   locale: string;
   sorting: number;
+  color_primary?: string;
+  icon?: {
+    id: number;
+    url: string;
+    alternativeText?: string;
+  };
   chapters?: Array<{
     id: number;
     title: string;
@@ -60,9 +67,16 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
         sections: data.map((section: any) => ({
           id: section.id,
           title: section.title,
+          menu_name: section.menu_name || section.title,
           slug: slugify(section.title),
           locale,
           sorting: section.sorting,
+          color_primary: section.color_primary,
+          icon: section.icon ? {
+            id: section.icon.id,
+            url: section.icon.url,
+            alternativeText: section.icon.alternativeText,
+          } : undefined,
           chapters: section.chapters?.map((chapter: any) => ({
             id: chapter.id,
             title: chapter.title,
