@@ -41,6 +41,7 @@ if (allSectionsData?.sections) {
     ))}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="base-url" content={import.meta.env.BASE_URL.replace(/\/$/, '')} />
     <title>{title}</title>
     {allSectionsData && (
       <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />

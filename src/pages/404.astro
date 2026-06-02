@@ -1,5 +1,6 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
+import AstroLink from '../components/AstroLink.astro';
 ---
 
 <MainLayoutWithToC title="Seite nicht gefunden - Thilo">
@@ -9,8 +10,8 @@ import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
       <h2>Seite nicht gefunden</h2>
       <p>Die gesuchte Seite konnte leider nicht gefunden werden.</p>
       <div class="error-actions">
-        <a href="/" class="button primary">Zur Startseite</a>
-        <a href="/search" class="button secondary">Suche</a>
+        <AstroLink href="/" class="button primary">Zur Startseite</AstroLink>
+        <AstroLink href="/search" class="button secondary">Suche</AstroLink>
       </div>
     </div>
   </div>

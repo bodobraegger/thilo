@@ -97,9 +97,12 @@ export function calculateRelevance(text: string, title: string, searchQuery: str
 
 // Helper to generate locale-aware URLs
 export function getLocalizedUrl(locale: string, slug: string, hash?: string): string {
-  const basePath = locale === 'de' ? '' : `/${locale}`;
+  const base = typeof document !== 'undefined'
+    ? (document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '')
+    : '';
+  const localePart = locale === 'de' ? '' : `/${locale}`;
   const hashPart = hash ? `#${hash}` : '';
-  return `${basePath}/${slug}${hashPart}`;
+  return `${base}${localePart}/${slug}${hashPart}`;
 }
 
 // Highlight search terms in text
@@ -268,7 +271,10 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
   };
 
   const navigateToSearchPage = () => {
-    const searchUrl = locale === 'de' ? `/search?q=${encodeURIComponent(query)}` : `/${locale}/search?q=${encodeURIComponent(query)}`;
+    const base = document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+    const searchUrl = locale === 'de'
+      ? `${base}/search?q=${encodeURIComponent(query)}`
+      : `${base}/${locale}/search?q=${encodeURIComponent(query)}`;
     window.location.href = searchUrl;
   };
 

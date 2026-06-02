@@ -184,7 +184,7 @@ if (currentSection) {
   </div><!-- end max-w-[1400px] -->
 </header>
 
-<script>
+<script define:vars={{ base: import.meta.env.BASE_URL.replace(/\/$/, '') }}>
   // Sidebar toggle functionality (for medium screens)
   const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
   
@@ -220,14 +220,14 @@ if (currentSection) {
   // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
     if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
-      if (!menuDropdown.contains(e.target as Node) && !menuDropdownToggle?.contains(e.target as Node)) {
+      if (!menuDropdown.contains(e.target) && !menuDropdownToggle?.contains(e.target)) {
         closeMenuDropdown();
       }
     }
   });
 
   // Escape key handler for menu
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
+  document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (!menuDropdown?.classList.contains('hidden')) {
         closeMenuDropdown();
@@ -249,7 +249,7 @@ if (currentSection) {
   
   languageOptions.forEach(option => {
     option.addEventListener('click', (e) => {
-      const selectedLocale = (e.currentTarget as HTMLElement)?.dataset?.locale;
+      const selectedLocale = e.currentTarget?.dataset?.locale;
       const currentLocale = document.documentElement.lang || 'de';
       
       if (selectedLocale === currentLocale || !selectedLocale) {
@@ -262,20 +262,30 @@ if (currentSection) {
     });
   });
 
+  // Helper: build a URL with the base prefix
+  function buildUrl(path) {
+    // path should start with /
+    return base + path;
+  }
+
   // Language change handler with smart chapter number mapping
-  function handleLanguageChange(targetLocale: string) {
+  function handleLanguageChange(targetLocale) {
     const currentPath = window.location.pathname;
     const currentHash = window.location.hash;
-    
-    // Normalize path: remove leading and trailing slashes, then strip locale prefix
-    let path = currentPath.replace(/^\/|\/$/g, ''); // Remove leading/trailing slashes
+
+    // Strip the base prefix first, then normalize slashes
+    let path = currentPath;
+    if (base && path.startsWith(base)) path = path.slice(base.length);
+    path = path.replace(/^\/|\/$/g, ''); // remove leading/trailing slashes
+
+    // Strip locale prefix
     if (path.startsWith('fr/')) path = path.substring(3);
     else if (path.startsWith('it/')) path = path.substring(3);
     else if (path === 'fr' || path === 'it') path = '';
     
     // Handle impressum page
     if (path === 'impressum') {
-      const targetUrl = targetLocale === 'de' ? '/impressum' : `/${targetLocale}/impressum`;
+      const targetUrl = targetLocale === 'de' ? buildUrl('/impressum') : buildUrl(`/${targetLocale}/impressum`);
       window.location.href = targetUrl;
       return;
     }
@@ -283,9 +293,7 @@ if (currentSection) {
     // Get all sections from the meta tag (set by BaseLayout)
     const allSectionsMeta = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
     if (!allSectionsMeta) {
-      // Fallback: navigate to start page
-      const fallbackUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
-      window.location.href = fallbackUrl;
+      window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
       return;
     }
     
@@ -295,39 +303,30 @@ if (currentSection) {
     const targetSections = allSections[targetLocale] || [];
     
     // Find current section by slug
-    const currentSection = currentSections.find((s: any) => s.slug === path);
+    const currentSection = currentSections.find((s) => s.slug === path);
     
     if (currentSection) {
       // Find equivalent section by sorting
-      const targetSection = targetSections.find((s: any) => s.sorting === currentSection.sorting);
+      const targetSection = targetSections.find((s) => s.sorting === currentSection.sorting);
       
       if (targetSection) {
-        const baseTargetUrl = (targetLocale === 'de' ? '/' : `/${targetLocale}/`) + targetSection.slug;
+        const baseTargetUrl = buildUrl(targetLocale === 'de' ? `/${targetSection.slug}` : `/${targetLocale}/${targetSection.slug}`);
         
         // Smart chapter hash mapping by sorting (not position)
         if (currentHash && currentSection.chapters && targetSection.chapters) {
           const currentChapterSlug = currentHash.replace('#', '');
-          
-          // Find current chapter by slug
-          const currentChapter = currentSection.chapters.find((c: any) => c.slug === currentChapterSlug);
+          const currentChapter = currentSection.chapters.find((c) => c.slug === currentChapterSlug);
           
           if (currentChapter && currentChapter.sorting !== undefined) {
-            // Find target chapter with same sorting
-            const targetChapter = targetSection.chapters.find((c: any) => c.sorting === currentChapter.sorting);
+            const targetChapter = targetSection.chapters.find((c) => c.sorting === currentChapter.sorting);
             
             if (targetChapter) {
-              const targetHash = `#${targetChapter.slug}`;
-              
-              console.log(`Chapter mapping: ${currentHash} → ${targetHash} (sorting ${currentChapter.sorting})`);
-              window.location.href = baseTargetUrl + targetHash;
+              window.location.href = baseTargetUrl + `#${targetChapter.slug}`;
               return;
-            } else {
-              console.log(`No chapter with sorting ${currentChapter.sorting} found in target section`);
             }
           }
         }
         
-        // No hash or chapter mapping failed - just go to section
         window.location.href = baseTargetUrl;
         return;
       }
@@ -336,21 +335,15 @@ if (currentSection) {
     // Handle non-section pages
     let targetUrl;
     if (path === '' || path === 'index') {
-      // Index page
-      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+      targetUrl = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
     } else if (path === 'search') {
-      // Search page
-      targetUrl = targetLocale === 'de' ? '/search' : `/${targetLocale}/search`;
+      targetUrl = targetLocale === 'de' ? buildUrl('/search') : buildUrl(`/${targetLocale}/search`);
     } else {
-      // Unknown page, fallback to start page
-      targetUrl = targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+      targetUrl = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
     }
     
-    // Preserve query parameters
     const currentSearch = window.location.search;
-    if (currentSearch) {
-      targetUrl += currentSearch;
-    }
+    if (currentSearch) targetUrl += currentSearch;
     
     window.location.href = targetUrl;
   }
