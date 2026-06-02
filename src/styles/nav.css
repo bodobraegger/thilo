@@ -93,22 +93,42 @@ nav.header-nav {
   }
 }
 
-/* Table of Contents hover effects using CSS variables */
+/* Table of Contents */
 
-/* Active section/chapter state */
-#sidebar-nav .section.active {
-  background-color: var(--color-primary-100);
-  color: var(--color-primary-700);
-}
+#sidebar-nav {
+  .section,
+  .chapters-list a.chapter {
+    position: relative;
+    cursor: pointer;
 
-#sidebar-nav a.active {
-  background-color: var(--color-primary-100);
-  color: var(--color-primary-700);
-}
+    /* Extend hit area downward to bridge the space-y gap */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0 0 -2px 0;
+      pointer-events: auto;
+      z-index: -1;
+    }
+  }
 
-#sidebar-nav .chapters-list a:hover {
-  background-color: var(--color-primary-50) !important;
-  color: var(--color-primary-700) !important;
+  .section {
+    &.active {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+  }
+
+  a {
+    &.active {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+  }
+
+  .chapters-list a:hover {
+    background-color: var(--color-primary-50) !important;
+    color: var(--color-primary-700) !important;
+  }
 }
 
 #sidebar-overlay {
