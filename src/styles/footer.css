@@ -15,7 +15,7 @@
   color: #fff;
   text-decoration: none;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 2px 6px rgba(0,0,0,0.1);
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: background-color 0.2s ease;
   max-width: 100%;
   background-color: var(--color-primary);
 
@@ -23,9 +23,6 @@
     background-color: var(--color-primary-hover);
   }
 
-  &:active {
-    background-color: var(--color-primary-hover);
-  }
 
   .label {
     max-width: 100%;
