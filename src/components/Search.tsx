@@ -119,6 +119,7 @@ export function highlightText(text: string, searchQuery: string, color?: string)
 }
 
 export default function SearchComponent({ initialQuery = '', locale, initialSections = [], inline = false, isMobile = false }: SearchProps) {
+  const MIN_QUERY_LENGTH = 2;
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [sections, setSections] = useState<SectionT[]>(initialSections);
@@ -163,7 +164,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
 
   // Perform search
   useEffect(() => {
-    if (!query.trim() || sections.length === 0) {
+    if (query.trim().length < MIN_QUERY_LENGTH || sections.length === 0) {
       setResults([]);
       return;
     }
@@ -314,12 +315,12 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    setShowDropdown(newQuery.trim().length > 0);
+    setShowDropdown(newQuery.trim().length >= 1);
     setSelectedIndex(-1);
   };
 
   const handleInputFocus = () => {
-    if (query.trim().length > 0) {
+    if (query.trim().length >= 1) {
       setShowDropdown(true);
     }
   };
@@ -342,7 +343,14 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
       className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"
       style={inline ? { minWidth: isMobile ? '300px' : '400px' } : undefined}
     >
-      {results.length === 0 ? (
+      {query.trim().length < MIN_QUERY_LENGTH ? (
+        <div className="px-4 py-3 text-gray-400 text-sm flex items-center gap-2">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+          </svg>
+          {t('searchPage.keepTyping', locale as Locale)}
+        </div>
+      ) : results.length === 0 ? (
         <div className="px-4 py-3 text-gray-500 text-sm">
           {t('searchPage.noResults', locale as Locale)}
         </div>
@@ -434,7 +442,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ scrollMarginTop: '80px' }}>
+    <div style={{ scrollMarginTop: '80px' }}>
       <div className="mb-8 relative">
         <input
           ref={inputRef}
@@ -458,7 +466,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
             <p>{t('searchPage.loading', locale as Locale)}</p>
           </div>
-        ) : !query.trim() ? (
+        ) : query.trim().length < MIN_QUERY_LENGTH ? (
           <div className="text-center py-12 text-gray-500">
             <p>{t('searchPage.enterQuery', locale as Locale)}</p>
           </div>

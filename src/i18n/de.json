@@ -25,6 +25,7 @@
       "placeholder": "Suchbegriff eingeben...",
       "noResults": "Keine Ergebnisse gefunden",
       "results": "Ergebnisse",
+      "keepTyping": "Bitte mindestens 2 Zeichen eingeben…",
       "section": "Bereich",
       "chapter": "Kapitel",
       "loading": "Lade Suchdaten...",
