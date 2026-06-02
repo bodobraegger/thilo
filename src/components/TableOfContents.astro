@@ -245,10 +245,16 @@ function getSectionUrl(section: SectionT, locale: string): string {
   // Initialize sidebar visibility based on screen size
   function initSidebarVisibility() {
     if (window.innerWidth >= 1024) {
-      // Large screens: ensure sidebar is visible
+      // Large screens: only clear display so CSS (lg:flex) takes over;
+      // leave position/top/height inline styles intact (they are set on the element itself)
+      if (sidebarNav) {
+        sidebarNav.style.display = '';
+        sidebarNav.style.zIndex = '';
+      }
       sidebarOverlay?.classList.add('hidden');
+      document.body.style.overflow = '';
     } else {
-      // Small/medium screens: hide by default
+      // Small/medium screens: hide by default unless explicitly opened
       sidebarOverlay?.classList.add('hidden');
     }
   }
@@ -290,11 +296,6 @@ function getSectionUrl(section: SectionT, locale: string): string {
     } else {
       console.log('Large screen - sidebar should be visible via CSS');
     }
-  });
-
-  window.addEventListener('resize', () => {
-    // On resize, if we switch to large screen, ensure sidebar is visible
-    closeSidebar(); // Close mobile modal if open
   });
 
   // Smooth scroll for anchor links within the same page
