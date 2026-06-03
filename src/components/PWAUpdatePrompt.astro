@@ -1,0 +1,115 @@
+---
+// PWA update notification - shown when a new service worker is waiting
+---
+
+<div id="pwa-update-toast" class="pwa-toast" aria-live="polite" aria-atomic="true" hidden>
+  <p id="pwa-update-message">Eine neue Version ist verfügbar.</p>
+  <div class="pwa-toast-buttons">
+    <button id="pwa-update-reload" class="pwa-btn pwa-btn-primary">Aktualisieren</button>
+    <button id="pwa-update-dismiss" class="pwa-btn pwa-btn-ghost">Später</button>
+  </div>
+</div>
+
+<style>
+  .pwa-toast {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--color-primary, #521d3a);
+    color: #fff;
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-md) var(--spacing-lg);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12),
+      var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    z-index: var(--z-index-modal);
+    max-width: calc(100vw - 2 * var(--spacing-md));
+    transition: opacity var(--transition-normal), transform var(--transition-normal);
+
+    &[hidden] {
+      display: none;
+    }
+
+    p {
+      margin: 0;
+      line-height: var(--line-height-normal);
+    }
+
+    .pwa-toast-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      flex-shrink: 0;
+    }
+
+    .pwa-btn {
+      border: none;
+      border-radius: var(--border-radius-lg);
+      padding: 0.4rem var(--spacing-md);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      cursor: pointer;
+      transition: opacity var(--transition-fast), background-color var(--transition-fast);
+
+      &.pwa-btn-primary {
+        background-color: #fff;
+        color: var(--color-primary, #521d3a);
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+
+      &.pwa-btn-ghost {
+        background-color: transparent;
+        color: rgba(255, 255, 255, 0.7);
+
+        &:hover {
+          color: #fff;
+        }
+      }
+    }
+
+    @media (max-width: 500px) {
+      flex-direction: column;
+      align-items: flex-start;
+      bottom: var(--spacing-md);
+      gap: var(--spacing-sm);
+    }
+  }
+</style>
+
+<script>
+  import { registerSW } from 'virtual:pwa-register';
+
+  const toast = document.getElementById('pwa-update-toast') as HTMLElement;
+  const reloadBtn = document.getElementById('pwa-update-reload') as HTMLButtonElement;
+  const dismissBtn = document.getElementById('pwa-update-dismiss') as HTMLButtonElement;
+
+  // registerSW returns an updateSW function; the onNeedRefresh callback fires
+  // when a new service worker is installed and waiting to activate.
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      toast.hidden = false;
+    },
+    onOfflineReady() {
+      // Optionally show a "ready for offline use" toast here
+      console.log('[PWA] App ready for offline use');
+    },
+  });
+
+  reloadBtn?.addEventListener('click', () => {
+    toast.hidden = true;
+    updateSW(true); // Skip waiting + reload
+  });
+
+  dismissBtn?.addEventListener('click', () => {
+    toast.hidden = true;
+  });
+</script>
