@@ -14,7 +14,14 @@ html {
   line-height: var(--line-height-normal);
   color: var(--text-color);
   background-color: var(--background-color);
-  scroll-padding-top: 52px;
+  /* position: sticky on header causes scroll on typing with scroll-padding-top, 
+  known bug */
+  /* scroll-padding-top: 52px; */
+  [id] {
+    scroll-margin-top: 52px;
+  }
+
+  scroll-behavior: smooth;
 }
 
 body {
