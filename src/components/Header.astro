@@ -89,16 +89,12 @@ if (currentSection) {
     <div class="flex-1 flex items-center min-w-0">
       <!-- Mirrors <div class="px-4 lg:px-10 max-w-3xl"> — padding and max-width are on the SAME element -->
       <div class="flex-1 min-w-0 px-4 lg:px-10 max-w-3xl">
-        {!isSearchPage && (
-          <>
-            <div class="hidden lg:block">
-              <SearchComponent client:load locale={locale} inline={true} />
-            </div>
-            <div class="lg:hidden w-full">
-              <SearchComponent client:load locale={locale} inline={true} isMobile={true} />
-            </div>
-          </>
-        )}
+        <div class="hidden lg:block">
+          <SearchComponent client:load locale={locale} inline={true} noDropdown={isSearchPage} />
+        </div>
+        <div class="lg:hidden w-full">
+          <SearchComponent client:load locale={locale} inline={true} isMobile={true} noDropdown={isSearchPage} />
+        </div>
       </div>
 
       <!-- Menu button sits outside the content area, with its own right padding -->

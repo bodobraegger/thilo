@@ -31,7 +31,8 @@
       "loading": "Caricamento dati di ricerca...",
       "enterQuery": "Inserisci un termine di ricerca",
       "noResultsFor": "Nessun risultato per \"{query}\"",
-      "moreResults": "+{count} altri risultati. Premi Invio per tutti i risultati."
+      "moreResults": "+{count} altri risultati",
+      "moreResultsHint": "– Premi Invio per tutti i risultati"
     },
     "section": {
       "backToTop": "Torna in alto"

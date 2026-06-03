@@ -31,7 +31,8 @@
       "loading": "Chargement des données de recherche...",
       "enterQuery": "Entrez un terme de recherche",
       "noResultsFor": "Aucun résultat pour \"{query}\"",
-      "moreResults": "+{count} autres résultats. Appuyez sur Entrée pour tous les résultats."
+      "moreResults": "+{count} autres résultats",
+      "moreResultsHint": "– Appuyez sur Entrée pour tous les résultats"
     },
     "section": {
       "backToTop": "Retour en haut"

@@ -9,6 +9,8 @@ interface SearchProps {
   initialSections?: SectionT[];
   inline?: boolean;
   isMobile?: boolean;
+  hideInput?: boolean;
+  noDropdown?: boolean;
 }
 
 export interface SearchResult {
@@ -121,7 +123,7 @@ export function highlightText(text: string, searchQuery: string, color?: string)
   );
 }
 
-export default function SearchComponent({ initialQuery = '', locale, initialSections = [], inline = false, isMobile = false }: SearchProps) {
+export default function SearchComponent({ initialQuery = '', locale, initialSections = [], inline = false, isMobile = false, hideInput = false, noDropdown = false }: SearchProps) {
   const MIN_QUERY_LENGTH = 2;
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -142,6 +144,17 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
       }
     }
   }, []);
+
+  // If hideInput: listen for search events from the header input
+  useEffect(() => {
+    if (!hideInput) return;
+    const handler = (e: Event) => {
+      const q = (e as CustomEvent<{ query: string }>).detail.query;
+      setQuery(q);
+    };
+    window.addEventListener('thilo:search', handler);
+    return () => window.removeEventListener('thilo:search', handler);
+  }, [hideInput]);
 
   // Fetch sections on mount only if not provided
   useEffect(() => {
@@ -323,6 +336,9 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     setQuery(newQuery);
     setShowDropdown(newQuery.trim().length >= 1);
     setSelectedIndex(-1);
+    if (noDropdown) {
+      window.dispatchEvent(new CustomEvent('thilo:search', { detail: { query: newQuery } }));
+    }
   };
 
   const handleInputFocus = () => {
@@ -408,6 +424,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
                 className="w-full px-4 py-2 text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 text-center transition-colors"
               >
                 {t('searchPage.moreResults', locale as Locale).replace('{count}', String(results.length - maxItems))}
+                <span className="hidden sm:inline"> {t('searchPage.moreResultsHint', locale as Locale)}</span>
               </button>
             </li>
           )}
@@ -428,7 +445,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={t('searchPage.placeholder', locale as Locale)}
-          className={`w-full rounded-md pl-4 pr-10 text-sm focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500 ${
+          className={`w-full rounded-md pl-4 pr-10 text-base focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500 ${
             isMobile ? 'py-1.5' : 'h-8'
           }`}
           autoComplete="off"
@@ -441,13 +458,14 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        {showDropdown && query.trim() && renderDropdown(3)}
+        {!noDropdown && showDropdown && query.trim() && renderDropdown(3)}
       </div>
     );
   }
 
   return (
     <div style={{ scrollMarginTop: '80px' }}>
+      {!hideInput && (
       <div className="mb-8 relative">
         <input
           ref={inputRef}
@@ -458,7 +476,7 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           placeholder={t('searchPage.placeholder', locale as Locale)}
-          className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
+          className="w-full pl-4 pr-10 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
           autoComplete="off"
         />
         <svg
@@ -469,9 +487,8 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        {/* Dropdown with search results */}
-        {showDropdown && query.trim() && renderDropdown(10)}
       </div>
+      )}
 
       <div id="search-results">
         {loading || (sections.length === 0 && !initialSections?.length) ? (
