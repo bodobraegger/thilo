@@ -213,7 +213,6 @@ function getSectionUrl(section: SectionT, locale: string): string {
         sidebarNav.style.zIndex = '50';
       }
       sidebarOverlay?.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
     }
     scrollToCurrentInToC('smooth');
   }
@@ -228,7 +227,6 @@ function getSectionUrl(section: SectionT, locale: string): string {
         sidebarNav.style.zIndex = '';
       }
       sidebarOverlay?.classList.add('hidden');
-      document.body.style.overflow = '';
     }
   }
 
@@ -242,7 +240,6 @@ function getSectionUrl(section: SectionT, locale: string): string {
         sidebarNav.style.zIndex = '';
       }
       sidebarOverlay?.classList.add('hidden');
-      document.body.style.overflow = '';
     } else {
       // Small/medium screens: hide by default unless explicitly opened
       sidebarOverlay?.classList.add('hidden');
