@@ -45,7 +45,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
   </div>
 
   <!-- Navigation List -->
-  <div class="p-2 overflow-y-auto flex-1 min-h-0 overscroll-contain">
+  <div class="p-2 overflow-y-auto flex-1 min-h-0 overscroll-contain scrollbar-gutter-stable">
     <ul class="space-y-0.5">
       <!-- Home Link -->
       <li>
@@ -241,7 +241,10 @@ function getSectionUrl(section: SectionT, locale: string): string {
       }
       sidebarOverlay?.classList.add('hidden');
     } else {
-      // Small/medium screens: hide by default unless explicitly opened
+      // Small/medium screens: hide sidebar (close it) unless it is already explicitly open
+      if (sidebarNav && sidebarNav.style.display !== 'flex') {
+        sidebarNav.style.display = 'none';
+      }
       sidebarOverlay?.classList.add('hidden');
     }
   }
@@ -271,14 +274,14 @@ function getSectionUrl(section: SectionT, locale: string): string {
     
     // Only handle toggle on small/medium screens
     if (window.innerWidth < 1024) {
-      console.log('Mobile toggle - checking if hidden:', sidebarNav?.classList.contains('hidden'));
+      console.log('Mobile toggle - checking if open:', sidebarNav?.style.display === 'flex');
       
-      if (sidebarNav?.classList.contains('hidden')) {
-        console.log('Opening mobile sidebar');
-        openSidebar();
-      } else {
+      if (sidebarNav?.style.display === 'flex') {
         console.log('Closing mobile sidebar');
         closeSidebar();
+      } else {
+        console.log('Opening mobile sidebar');
+        openSidebar();
       }
     } else {
       console.log('Large screen - sidebar should be visible via CSS');
