@@ -40,7 +40,7 @@ try {
 ---
 
 <BaseLayout title={title} lang={lang} allSectionsData={allSectionsData}>
-  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} />
+  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
     <!-- Table of Contents Sidebar -->
@@ -48,6 +48,7 @@ try {
       sections={sections} 
       currentSection={currentSection}
       lang={lang}
+      transition:persist
     />
     
     <!-- Main Content -->
@@ -55,7 +56,7 @@ try {
       <div class="px-4 lg:px-10 py-8 max-w-3xl">
         <slot />
         {useFooter &&
-          <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+          <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} transition:persist/>
         }
       </div>
     </main>

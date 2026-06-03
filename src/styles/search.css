@@ -18,6 +18,10 @@
     font-size: var(--font-size-lg);
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius-lg);
+
+    @media (max-width: 768px) {
+        font-size: max(var(--font-size-lg), 16px);
+    }
 }
 
 .search-input:focus {

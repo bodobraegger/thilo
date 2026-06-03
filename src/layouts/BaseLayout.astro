@@ -11,6 +11,7 @@ import '../styles/global.css';
 import '../styles/colors.css';
 import '../styles/layout.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
+import { ViewTransitions } from 'astro:transitions';
 
 // Collect all unique section icon URLs for preloading
 const iconUrls: string[] = [];
@@ -52,6 +53,7 @@ if (allSectionsData?.sections) {
     <link rel="apple-touch-icon" href="/logo.svg" />
     <meta name="base-url" content={import.meta.env.BASE_URL.replace(/\/$/, '')} />
     <title>{title}</title>
+    <ViewTransitions />
     {allSectionsData && (
       <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
     )}

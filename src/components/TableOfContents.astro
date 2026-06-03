@@ -374,7 +374,9 @@ function getSectionUrl(section: SectionT, locale: string): string {
   });
 
   // Chapter toggle functionality
-  document.addEventListener('DOMContentLoaded', () => {
+  // Use astro:page-load instead of DOMContentLoaded so event listeners are
+  // re-attached after every Astro View Transition navigation.
+  document.addEventListener('astro:page-load', () => {
     document.querySelectorAll('.chapter-toggle').forEach((toggle) => {
       toggle.addEventListener('click', (e) => {
         e.preventDefault();

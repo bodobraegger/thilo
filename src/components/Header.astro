@@ -180,6 +180,17 @@ if (currentSection) {
   </div><!-- end max-w-[1400px] -->
 </header>
 
+<script is:inline>
+  (function () {
+    var q = new URLSearchParams(location.search).get('q');
+    if (!q) return;
+    // Populate SSR-rendered search inputs immediately, before React hydrates
+    document.querySelectorAll('header input[type="text"]').forEach(function (el) {
+      el.value = q;
+    });
+  })();
+</script>
+
 <script define:vars={{ base: import.meta.env.BASE_URL.replace(/\/$/, '') }}>
   // Sidebar toggle functionality (for medium screens)
   const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');

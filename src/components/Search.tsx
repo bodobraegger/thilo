@@ -125,7 +125,12 @@ export function highlightText(text: string, searchQuery: string, color?: string)
 
 export default function SearchComponent({ initialQuery = '', locale, initialSections = [], inline = false, isMobile = false, hideInput = false, noDropdown = false }: SearchProps) {
   const MIN_QUERY_LENGTH = 2;
-  const [query, setQuery] = useState(initialQuery);
+  const [query, setQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('q') || initialQuery;
+    }
+    return initialQuery;
+  });
   const [results, setResults] = useState<SearchResult[]>([]);
   const [sections, setSections] = useState<SectionT[]>(initialSections);
   const [loading, setLoading] = useState(false);
@@ -133,17 +138,6 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Sync with URL params on mount (for client-side navigation)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const queryParam = urlParams.get('q');
-      if (queryParam && queryParam !== query) {
-        setQuery(queryParam);
-      }
-    }
-  }, []);
 
   // If hideInput: listen for search events from the header input
   useEffect(() => {
@@ -288,7 +282,14 @@ export default function SearchComponent({ initialQuery = '', locale, initialSect
     const searchUrl = locale === 'de'
       ? `${base}/search?q=${encodeURIComponent(query)}`
       : `${base}/${locale}/search?q=${encodeURIComponent(query)}`;
-    window.location.href = searchUrl;
+    // If already on search page, just update URL + fire event (no reload)
+    const isSearchPage = window.location.pathname.endsWith('/search') || window.location.pathname.endsWith('/search/');
+    if (isSearchPage) {
+      history.pushState({}, '', searchUrl);
+      window.dispatchEvent(new CustomEvent('thilo:search', { detail: { query } }));
+    } else {
+      window.location.href = searchUrl;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
