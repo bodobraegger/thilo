@@ -1,0 +1,514 @@
+---
+import { t, type Locale } from '../i18n';
+import type { SectionT } from '../utils/data';
+
+interface Props {
+  initialQuery?: string;
+  locale: string;
+  initialSections?: SectionT[];
+  inline?: boolean;
+  isMobile?: boolean;
+  hideInput?: boolean;
+  noDropdown?: boolean;
+}
+
+const {
+  initialQuery = '',
+  locale,
+  initialSections = [],
+  inline = false,
+  isMobile = false,
+  hideInput = false,
+  noDropdown = false,
+} = Astro.props;
+
+const i18n = {
+  keepTyping:   t('searchPage.keepTyping',   locale as Locale),
+  noResults:    t('searchPage.noResults',    locale as Locale),
+  placeholder:  t('searchPage.placeholder', locale as Locale),
+  section:      t('searchPage.section',     locale as Locale),
+  chapter:      t('searchPage.chapter',     locale as Locale),
+  moreResults:  t('searchPage.moreResults', locale as Locale),
+  moreResultsHint: t('searchPage.moreResultsHint', locale as Locale),
+  loading:      t('searchPage.loading',     locale as Locale),
+  enterQuery:   t('searchPage.enterQuery',  locale as Locale),
+  noResultsFor: t('searchPage.noResultsFor', locale as Locale),
+};
+
+const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-none focus:ring-2 placeholder-opacity-70 bg-white text-gray-700 focus:ring-blue-500 ${isMobile ? 'py-1.5' : 'h-8'}`;
+---
+
+<search-widget
+  data-locale={locale}
+  data-sections={JSON.stringify(initialSections)}
+  data-initial-query={initialQuery}
+  data-inline={String(inline)}
+  data-hide-input={String(hideInput)}
+  data-no-dropdown={String(noDropdown)}
+  data-i18n={JSON.stringify(i18n)}
+  class={inline ? 'relative w-full block' : 'block'}
+  style={!inline ? 'scroll-margin-top: 80px' : ''}
+>
+  {!hideInput && inline && (
+    <div class="relative w-full">
+      <input
+        type="text"
+        value={initialQuery}
+        placeholder={i18n.placeholder}
+        class={inlineInputClass}
+        autocomplete="off"
+        data-search-input
+      />
+      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <div data-search-dropdown class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"></div>
+    </div>
+  )}
+
+  {!hideInput && !inline && (
+    <div class="mb-8 relative">
+      <input
+        type="text"
+        value={initialQuery}
+        placeholder={i18n.placeholder}
+        class="w-full pl-4 pr-10 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
+        autocomplete="off"
+        data-search-input
+      />
+      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+  )}
+
+  {!inline && (
+    <div id="search-results" data-search-results></div>
+  )}
+</search-widget>
+
+<script>
+  // ─── Pure helpers ────────────────────────────────────────────────────────────
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /** Return HTML string with query matches wrapped in <mark>. */
+  function highlightHtml(text: string, query: string, bgColor?: string): string {
+    if (!query.trim()) return escapeHtml(text);
+    const escapedText = escapeHtml(text);
+    const escapedQuery = escapeHtml(query);
+    const regexEscaped = escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const style = bgColor ? ` style="background-color:${bgColor}"` : '';
+    const cls = bgColor ? 'px-1 rounded' : 'bg-yellow-200 px-0.5 rounded';
+    return escapedText.replace(
+      new RegExp(`(${regexEscaped})`, 'gi'),
+      `<mark class="${cls}"${style}>$1</mark>`
+    );
+  }
+
+  function calculateRelevance(
+    text: string,
+    title: string,
+    searchQuery: string,
+    isTitle: boolean
+  ): number {
+    if (!text && !title) return 0;
+    const lowerText = text?.toLowerCase() || '';
+    const lowerTitle = title?.toLowerCase() || '';
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    const target = isTitle ? lowerTitle : lowerText;
+    if (!target.includes(lowerQuery)) return 0;
+
+    const esc = lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let score = 0;
+    if (target === lowerQuery) score += 1000;
+    if (lowerTitle === lowerQuery) score += 800;
+    if (lowerTitle.includes(lowerQuery)) score += 500;
+    if (new RegExp(`\\b${esc}\\b`).test(lowerTitle)) score += 400;
+    if (lowerTitle.startsWith(lowerQuery)) score += 300;
+    if (new RegExp(`\\b${esc}\\b`).test(lowerText)) score += 200;
+    if (lowerText.startsWith(lowerQuery)) score += 150;
+    if (lowerTitle.includes(lowerQuery) && score < 300) score += 100;
+    if (lowerText.includes(lowerQuery) && score < 100) score += 50;
+    const pos = target.indexOf(lowerQuery);
+    if (pos !== -1) score += Math.max(0, 50 - pos);
+    score -= Math.min(50, target.length / 100);
+    return score;
+  }
+
+  function getLocalizedUrl(locale: string, slug: string, hash?: string): string {
+    const base =
+      document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+    const lp = locale === 'de' ? '' : `/${locale}`;
+    return `${base}${lp}/${slug}${hash ? '#' + hash : ''}`;
+  }
+
+  function stripMarkdown(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/#{1,6}\s+/g, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/>\s+/g, '')
+      .replace(/^\s*[-*+]\s+/gm, '')
+      .replace(/^\s*\d+\.\s+/gm, '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+  }
+
+  function getExcerpt(text: string, query: string, maxLength = 200): string {
+    const clean = stripMarkdown(text);
+    const lc = clean.toLowerCase();
+    const qi = lc.indexOf(query.toLowerCase());
+    if (qi === -1) return clean.length > maxLength ? clean.slice(0, maxLength) + '...' : clean;
+    const ctx = Math.floor((maxLength - query.length) / 2);
+    let start = Math.max(0, qi - ctx);
+    let end = Math.min(clean.length, qi + query.length + ctx);
+    if (start > 0) {
+      const si = clean.lastIndexOf(' ', start);
+      if (si > 0 && start - si < 20) start = si + 1;
+    }
+    if (end < clean.length) {
+      const si = clean.indexOf(' ', end);
+      if (si > 0 && si - end < 20) end = si;
+    }
+    return (start > 0 ? '…' : '') + clean.slice(start, end) + (end < clean.length ? '…' : '');
+  }
+
+  // ─── Web Component ───────────────────────────────────────────────────────────
+
+  class SearchWidget extends HTMLElement {
+    private query = '';
+    private sections: any[] = [];
+    private results: any[] = [];
+    private selectedIndex = -1;
+    private showDropdown = false;
+    private locale = 'de';
+    private inline = false;
+    private hideInput = false;
+    private noDropdown = false;
+    private i18n: Record<string, string> = {};
+    private input: HTMLInputElement | null = null;
+    private dropdown: HTMLElement | null = null;
+    private resultsContainer: HTMLElement | null = null;
+    private readonly MIN = 2;
+
+    connectedCallback() {
+      this.locale    = this.dataset.locale    ?? 'de';
+      this.inline    = this.dataset.inline    === 'true';
+      this.hideInput = this.dataset.hideInput === 'true';
+      this.noDropdown= this.dataset.noDropdown=== 'true';
+      this.i18n      = JSON.parse(this.dataset.i18n     ?? '{}');
+      this.sections  = JSON.parse(this.dataset.sections ?? '[]');
+      this.query     = this.dataset.initialQuery ?? '';
+
+      this.input           = this.querySelector('[data-search-input]');
+      this.dropdown        = this.querySelector('[data-search-dropdown]');
+      this.resultsContainer= this.querySelector('[data-search-results]');
+
+      if (this.input) {
+        this.input.addEventListener('input',   this.#onInput.bind(this));
+        this.input.addEventListener('keydown', this.#onKeyDown.bind(this));
+        this.input.addEventListener('focus',   this.#onFocus.bind(this));
+        this.input.addEventListener('blur',    this.#onBlur.bind(this));
+      }
+
+      if (this.hideInput) {
+        window.addEventListener('thilo:search', this.#onSearchEvent.bind(this) as EventListener);
+      }
+
+      // If sections not embedded, fetch them
+      if (this.sections.length === 0) {
+        this.#fetchSections();
+      } else {
+        this.#performSearch();
+        this.#renderResults();
+      }
+    }
+
+    #onSearchEvent(e: CustomEvent<{ query: string }>) {
+      this.query = e.detail.query;
+      this.#performSearch();
+      this.#renderResults();
+    }
+
+    #onInput(e: Event) {
+      this.query = (e.target as HTMLInputElement).value;
+      this.selectedIndex = -1;
+      this.showDropdown = this.query.trim().length >= 1;
+      this.#performSearch();
+      if (!this.noDropdown) this.#renderDropdown();
+      if (!this.inline) this.#renderResults();
+      if (this.noDropdown) {
+        window.dispatchEvent(
+          new CustomEvent('thilo:search', { detail: { query: this.query } })
+        );
+      }
+    }
+
+    #onFocus() {
+      if (this.query.trim().length >= 1) {
+        this.showDropdown = true;
+        this.#renderDropdown();
+      }
+    }
+
+    #onBlur(e: FocusEvent) {
+      if (this.dropdown?.contains(e.relatedTarget as Node)) return;
+      setTimeout(() => {
+        this.showDropdown = false;
+        this.selectedIndex = -1;
+        this.#renderDropdown();
+      }, 200);
+    }
+
+    #onKeyDown(e: KeyboardEvent) {
+      const maxIdx = this.inline
+        ? Math.min(this.results.length - 1, 2)
+        : this.results.length - 1;
+
+      if (!this.showDropdown || this.results.length === 0) {
+        if (e.key === 'Enter') this.#navigateToSearch();
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          this.selectedIndex = this.selectedIndex < maxIdx ? this.selectedIndex + 1 : this.selectedIndex;
+          this.#renderDropdown();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          this.selectedIndex = this.selectedIndex > 0 ? this.selectedIndex - 1 : -1;
+          this.#renderDropdown();
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (this.selectedIndex >= 0 && this.selectedIndex < this.results.length) {
+            window.location.href = this.results[this.selectedIndex].url;
+          } else {
+            this.#navigateToSearch();
+          }
+          break;
+        case 'Escape':
+          this.showDropdown = false;
+          this.selectedIndex = -1;
+          this.#renderDropdown();
+          this.input?.blur();
+          break;
+      }
+    }
+
+    #navigateToSearch() {
+      const base =
+        document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+      const searchUrl =
+        this.locale === 'de'
+          ? `${base}/search?q=${encodeURIComponent(this.query)}`
+          : `${base}/${this.locale}/search?q=${encodeURIComponent(this.query)}`;
+      const onSearch =
+        window.location.pathname.endsWith('/search') ||
+        window.location.pathname.endsWith('/search/');
+      if (onSearch) {
+        history.pushState({}, '', searchUrl);
+        window.dispatchEvent(new CustomEvent('thilo:search', { detail: { query: this.query } }));
+      } else {
+        window.location.href = searchUrl;
+      }
+    }
+
+    async #fetchSections() {
+      this.#renderResults(); // show loading state
+      try {
+        const apiBase =
+          (import.meta as any).env?.BACKEND_URL || 'https://api.thilo.scouts.ch/';
+        const res = await fetch(`${apiBase}sections?_locale=${this.locale}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        this.sections = json.data || json;
+      } catch (err) {
+        console.error('[search-widget] Failed to fetch sections:', err);
+      }
+      this.#performSearch();
+      this.#renderResults();
+    }
+
+    #performSearch() {
+      if (this.query.trim().length < this.MIN || this.sections.length === 0) {
+        this.results = [];
+        return;
+      }
+      const out: any[] = [];
+      for (const section of this.sections) {
+        const tr = calculateRelevance(section.content ?? '', section.title ?? '', this.query, true);
+        const cr = calculateRelevance(section.content ?? '', section.title ?? '', this.query, false);
+        const r  = Math.max(tr, cr);
+        if (r > 0) {
+          out.push({
+            type: 'section',
+            title: section.title,
+            content: section.content,
+            url: getLocalizedUrl(this.locale, section.slug ?? ''),
+            section,
+            relevance: r,
+          });
+        }
+        for (const ch of section.chapters ?? []) {
+          const ctr = calculateRelevance(ch.content ?? '', ch.title ?? '', this.query, true);
+          const ccr = calculateRelevance(ch.content ?? '', ch.title ?? '', this.query, false);
+          const cr2 = Math.max(ctr, ccr);
+          if (cr2 > 0) {
+            out.push({
+              type: 'chapter',
+              title: ch.title,
+              content: ch.content,
+              url: getLocalizedUrl(this.locale, section.slug ?? '', ch.slug),
+              section,
+              chapter: ch,
+              relevance: cr2,
+            });
+          }
+        }
+      }
+      out.sort((a, b) => b.relevance - a.relevance);
+      this.results = out;
+    }
+
+    // ── Dropdown (inline / header) ──────────────────────────────────────────
+
+    #renderDropdown() {
+      if (!this.dropdown || this.noDropdown) return;
+      if (!this.showDropdown || !this.query.trim()) {
+        this.dropdown.classList.add('hidden');
+        return;
+      }
+      this.dropdown.classList.remove('hidden');
+
+      const MAX = 3;
+      let html = '';
+
+      if (this.query.trim().length < this.MIN) {
+        html = `<div class="px-4 py-3 text-gray-400 text-sm flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z"/>
+          </svg>
+          ${escapeHtml(this.i18n.keepTyping ?? '')}
+        </div>`;
+      } else if (this.results.length === 0) {
+        html = `<div class="px-4 py-3 text-gray-500 text-sm">${escapeHtml(this.i18n.noResults ?? '')}</div>`;
+      } else {
+        html = '<ul>';
+        this.results.slice(0, MAX).forEach((result, idx) => {
+          const color = result.section.color_primary ?? '#521d3a';
+          const sel = idx === this.selectedIndex;
+          const bg = sel ? `background-color:color-mix(in srgb, ${color} 10%, white)` : '';
+          html += `
+            <li>
+              <button
+                class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors${sel ? ' bg-gray-100' : ''}"
+                style="${bg}"
+                data-result-url="${escapeHtml(result.url)}"
+                tabindex="0"
+              >
+                <div class="flex items-start gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm truncate" style="color:${color}">
+                      ${highlightHtml(result.title, this.query, `color-mix(in srgb, ${color} 30%, white)`)}
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                        style="background-color:color-mix(in srgb, ${color} 15%, white);color:${color}">
+                        ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
+                      </span>
+                      <span class="text-xs text-gray-500 truncate">${escapeHtml(result.section.title)}</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </li>`;
+        });
+        if (this.results.length > MAX) {
+          const extra = this.results.length - MAX;
+          const moreText = (this.i18n.moreResults ?? '').replace('{count}', String(extra));
+          html += `
+            <li>
+              <button class="w-full px-4 py-2 text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 text-center transition-colors" data-more-results>
+                ${escapeHtml(moreText)}
+                <span class="hidden sm:inline"> ${escapeHtml(this.i18n.moreResultsHint ?? '')}</span>
+              </button>
+            </li>`;
+        }
+        html += '</ul>';
+      }
+
+      this.dropdown.innerHTML = html;
+      this.dropdown.querySelectorAll<HTMLElement>('[data-result-url]').forEach((btn, idx) => {
+        btn.addEventListener('click',      () => { window.location.href = btn.dataset.resultUrl!; });
+        btn.addEventListener('mouseenter', () => { this.selectedIndex = idx; });
+      });
+      this.dropdown.querySelector('[data-more-results]')
+        ?.addEventListener('click', () => this.#navigateToSearch());
+    }
+
+    // ── Full-page results list ──────────────────────────────────────────────
+
+    #renderResults() {
+      if (!this.resultsContainer) return;
+      let html = '';
+
+      if (this.sections.length === 0) {
+        html = `
+          <div class="text-center py-12 text-gray-500">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+            <p>${escapeHtml(this.i18n.loading ?? '')}</p>
+          </div>`;
+      } else if (this.query.trim().length < this.MIN) {
+        html = `<div class="text-center py-12 text-gray-500"><p>${escapeHtml(this.i18n.enterQuery ?? '')}</p></div>`;
+      } else if (this.results.length === 0) {
+        html = `<div class="text-center py-8"><p>${escapeHtml((this.i18n.noResultsFor ?? '').replace('{query}', this.query))}</p></div>`;
+      } else {
+        html = '<div class="space-y-4">';
+        for (const result of this.results) {
+          const excerpt = getExcerpt(result.content ?? '', this.query);
+          const color   = result.section.color_primary ?? '#521d3a';
+          html += `
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              style="--section-color:${color};border-color:${color};scroll-margin-top:80px">
+              <h3 class="text-lg font-semibold mb-2">
+                <a href="${escapeHtml(result.url)}" class="hover:underline" style="color:${color}">
+                  ${highlightHtml(result.title, this.query, `color-mix(in srgb, ${color} 20%, white)`)}
+                </a>
+              </h3>
+              <p class="text-gray-700 leading-relaxed mb-3">
+                ${highlightHtml(excerpt, this.query, `color-mix(in srgb, ${color} 20%, white)`)}
+              </p>
+              <div class="flex items-center gap-3 text-sm">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  style="background-color:color-mix(in srgb, ${color} 20%, white);color:${color}">
+                  ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
+                </span>
+                <span style="color:${color}">${escapeHtml(result.section.title)}</span>
+              </div>
+            </div>`;
+        }
+        html += '</div>';
+      }
+
+      this.resultsContainer.innerHTML = html;
+    }
+  }
+
+  customElements.define('search-widget', SearchWidget);
+</script>

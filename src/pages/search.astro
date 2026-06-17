@@ -2,7 +2,7 @@
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../i18n';
 import { getSections } from '../utils/data';
-import SearchComponent from '../components/Search.tsx';
+import SearchComponent from '../components/Search.astro';
 
 const locale = Astro.currentLocale || 'de';
 const t = getTranslations(locale as any);
@@ -14,5 +14,5 @@ const sections = await getSections(locale);
 ---
 
 <MainLayoutWithToC title={t.translation.searchPage.title + " - Thilo"} lang={locale} currentSection={null} useFooter={false} sections={sections}>
-  <SearchComponent client:only="react" initialQuery={initialQuery} locale={locale} initialSections={sections} hideInput={true} />
+  <SearchComponent initialQuery={initialQuery} locale={locale} initialSections={sections} hideInput={true} />
 </MainLayoutWithToC>

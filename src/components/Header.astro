@@ -2,7 +2,7 @@
 import { getTranslations, type Locale } from '../i18n';
 import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
 import AstroLink from './AstroLink.astro';
-import SearchComponent from './Search.tsx';
+import SearchComponent from './Search.astro';
 
 interface Props {
   locale?: Locale;
@@ -90,10 +90,10 @@ if (currentSection) {
       <!-- Mirrors <div class="px-4 lg:px-10 max-w-3xl"> — padding and max-width are on the SAME element -->
       <div class="flex-1 min-w-0 px-4 lg:px-10 max-w-3xl">
         <div class="hidden lg:block">
-          <SearchComponent client:load locale={locale} inline={true} noDropdown={isSearchPage} />
+          <SearchComponent locale={locale} inline={true} noDropdown={isSearchPage} />
         </div>
         <div class="lg:hidden w-full">
-          <SearchComponent client:load locale={locale} inline={true} isMobile={true} noDropdown={isSearchPage} />
+          <SearchComponent locale={locale} inline={true} isMobile={true} noDropdown={isSearchPage} />
         </div>
       </div>
 
