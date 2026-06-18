@@ -7,6 +7,7 @@ import AstroPWA from '@vite-pwa/astro';
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || 'https://thilo.scouts.ch',
+  // base: '/your-sub-path/', // 👈 If you ever need a sub-path, just add it here and the manifest adjusts!
   vite: {
     plugins: [tailwindcss()],
   },
@@ -53,7 +54,40 @@ export default defineConfig({
         navigateFallback: '/404',
         navigateFallbackDenylist: [/^\/api\//],
       },
-      manifest: false, // We manage manifest.json ourselves in /public
+      // ✨ CHANGED: Replaced manifest: false with your direct manifest settings.
+      // Using "." keeps these explicitly relative to your configured base path context.
+      manifest: {
+        name: "Thilo – Schweizer Pfadfinder Handbuch",
+        short_name: "Thilo",
+        description: "Das digitale Handbuch der Schweizer Pfadibewegung",
+        start_url: ".",
+        scope: ".",
+        display: "standalone",
+        orientation: "portrait-primary",
+        theme_color: "#521d3a",
+        background_color: "#521d3a",
+        lang: "de",
+        categories: ["education", "reference"],
+        icons: [
+          {
+            src: "favicon.ico",
+            sizes: "64x64 32x32 24x24 16x16",
+            type: "image/x-icon"
+          },
+          {
+            src: "logo.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: "logo.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "maskable"
+          }
+        ]
+      },
       devOptions: {
         enabled: false, // Don't run SW in dev mode
       },
