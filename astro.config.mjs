@@ -7,14 +7,21 @@ import AstroPWA from '@vite-pwa/astro';
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || 'https://thilo.scouts.ch',
-  // base: '/your-sub-path/', // 👈 If you ever need a sub-path, just add it here and the manifest adjusts!
+  
+  // This satisfies Workbox precaching perfectly across all i18n routes.
+  build: {
+    format: 'file',
+  },
+  
   vite: {
     plugins: [tailwindcss()],
   },
   integrations: [
     react(),
     AstroPWA({
-      registerType: 'prompt', // Prompt user before activating new SW
+      registerType: 'prompt', 
+      injectRegister: 'auto',
+      
       workbox: {
         // Precache all build output (HTML, JS, CSS, fonts, assets)
         globPatterns: ['**/*.{html,js,css,svg,png,ico,woff,woff2,ttf,json}'],
@@ -45,19 +52,17 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses:,
               },
             },
           },
         ],
         // // Serve the root offline fallback for uncached navigations
-        // navigateFallback: '/404.html',
+        // navigateFallback: '/',
         // navigateFallbackDenylist: [/^\/api\//],
       },
-      manifestFilename: 'manifest.json',
-      // Using "." keeps these explicitly relative to your configured base path context.
       manifest: {
-        name: "Thilo – Schweizer Pfadfi Büchlein",
+        name: "Thilo - Schweizer Pfadi Büchlein",
         short_name: "Thilo",
         description: "Das digitale Handbuch der Schweizer Pfadibewegung",
         start_url: ".",
@@ -89,7 +94,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: false, // Don't run SW in dev mode
+        enabled: false, 
       },
     }),
   ],
