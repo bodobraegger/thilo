@@ -9,6 +9,8 @@
     },
     "header": {
       "imprint": "Mentions légales",
+      "language": "Langue",
+      "theme": "Thème",
       "theme_auto_name": "Sync",
       "theme_light_name": "Clair",
       "theme_dark_name": "Sombre"
@@ -35,7 +37,8 @@
       "moreResultsHint": "– Appuyez sur Entrée pour tous les résultats"
     },
     "section": {
-      "backToTop": "Retour en haut"
+      "backToTop": "Retour en haut",
+      "targetGroup": "Groupe cible"
     },
     "footer": {
       "copyright": "© 2023 Mouvement Scout de Suisse",

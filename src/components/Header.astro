@@ -120,7 +120,7 @@ if (currentSection) {
           >
             <div class="px-4 py-2 border-b border-gray-200">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                Language
+                {t.translation.header.language}
               </p>
               
               <!-- Language Options -->
@@ -151,14 +151,14 @@ if (currentSection) {
               
               <!-- Theme Section -->
               <div class="border-t border-gray-200 mt-1">
-                <button 
+                <button
                   type="button"
                   id="theme-toggle"
                   class="w-full text-left block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 >
                   <span class="flex items-center justify-between">
-                    <span>Theme</span>
-                    <span class="text-xs text-gray-500">Hell</span>
+                    <span>{t.translation.header.theme}</span>
+                    <span class="text-xs text-gray-500" id="theme-label">{t.translation.header.theme_light_name}</span>
                   </span>
                 </button>
               </div>
@@ -202,14 +202,18 @@ if (currentSection) {
 </script>
 
 <script is:inline define:vars={{ base: import.meta.env.BASE_URL.replace(/\/$/, '') }}>
-(function () {
-  // AbortController pattern: abort old listeners before each swap, re-attach after.
-  // window.__headerController persists across is:inline re-executions so abort() reaches
-  // the listeners from the previous run.
+  // Expose base URL for the module script below (define:vars forces is:inline)
+  window.__headerBase = base;
+</script>
+
+<script>
+  import { handleLanguageChange } from '../utils/languageSwitcher';
+
   function setup() {
     window.__headerController?.abort();
     window.__headerController = new AbortController();
     const { signal } = window.__headerController;
+    const base: string = (window as any).__headerBase ?? '';
 
     const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
     const menuDropdownToggle  = document.getElementById('menu-dropdown-toggle');
@@ -218,7 +222,6 @@ if (currentSection) {
 
     function openMenu()  { menuDropdown?.classList.remove('hidden'); }
     function closeMenu() { menuDropdown?.classList.add('hidden'); }
-    function buildUrl(path) { return base + path; }
 
     sidebarToggleHeader?.addEventListener('click', () => {
       window.dispatchEvent(new CustomEvent('toggleSidebar'));
@@ -231,7 +234,7 @@ if (currentSection) {
 
     document.addEventListener('click', (e) => {
       if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
-        if (!menuDropdown.contains(e.target) && !menuDropdownToggle?.contains(e.target)) {
+        if (!menuDropdown.contains(e.target as Node) && !menuDropdownToggle?.contains(e.target as Node)) {
           closeMenu();
         }
       }
@@ -243,73 +246,20 @@ if (currentSection) {
 
     themeToggle?.addEventListener('click', () => closeMenu(), { signal });
 
-    document.querySelectorAll('.language-option').forEach(option => {
+    document.querySelectorAll<HTMLElement>('.language-option').forEach(option => {
       option.addEventListener('click', (e) => {
-        const selectedLocale = e.currentTarget?.dataset?.locale;
+        const selectedLocale = (e.currentTarget as HTMLElement)?.dataset?.locale;
         const currentLocale  = document.documentElement.lang || 'de';
         if (!selectedLocale || selectedLocale === currentLocale) { closeMenu(); return; }
-        handleLanguageChange(selectedLocale);
+        handleLanguageChange(selectedLocale, base);
         closeMenu();
       }, { signal });
     });
-
-    function handleLanguageChange(targetLocale) {
-      const currentHash = window.location.hash;
-      let path = window.location.pathname;
-      if (base && path.startsWith(base)) path = path.slice(base.length);
-      path = path.replace(/^\/|\/$/g, '');
-      if (path.startsWith('fr/'))      path = path.substring(3);
-      else if (path.startsWith('it/')) path = path.substring(3);
-      else if (path === 'fr' || path === 'it') path = '';
-
-      if (path === 'impressum') {
-        window.location.href = targetLocale === 'de' ? buildUrl('/impressum') : buildUrl(`/${targetLocale}/impressum`);
-        return;
-      }
-
-      const allSectionsMeta = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
-      if (!allSectionsMeta) {
-        window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
-        return;
-      }
-
-      const allSections    = JSON.parse(allSectionsMeta);
-      const currentLocale  = document.documentElement.lang || 'de';
-      const currentSection = (allSections[currentLocale] || []).find(s => s.slug === path);
-
-      if (currentSection) {
-        const targetSection = (allSections[targetLocale] || []).find(s => s.sorting === currentSection.sorting);
-        if (targetSection) {
-          const targetUrl = buildUrl(targetLocale === 'de' ? `/${targetSection.slug}` : `/${targetLocale}/${targetSection.slug}`);
-          if (currentHash && currentSection.chapters && targetSection.chapters) {
-            const curChapter = currentSection.chapters.find(c => c.slug === currentHash.slice(1));
-            if (curChapter) {
-              const tgtChapter = targetSection.chapters.find(c => c.sorting === curChapter.sorting);
-              if (tgtChapter) { window.location.href = targetUrl + `#${tgtChapter.slug}`; return; }
-            }
-          }
-          window.location.href = targetUrl;
-          return;
-        }
-      }
-
-      let targetUrl = path === 'search'
-        ? (targetLocale === 'de' ? buildUrl('/search') : buildUrl(`/${targetLocale}/search`))
-        : (targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`));
-      if (window.location.search) targetUrl += window.location.search;
-      window.location.href = targetUrl;
-    }
   }
 
-  // Register the astro:page-load listener only once — it persists on window across navigations.
   if (!window.__headerDocListeners) {
     window.__headerDocListeners = true;
     document.addEventListener('astro:page-load', setup);
   }
-
-  // Also run immediately: handles the initial page load before astro:page-load fires,
-  // and re-runs setup when the is:inline script re-executes on each navigation
-  // (abort() at the top of setup() cleans up the previous run's listeners).
   setup();
-})();
 </script>

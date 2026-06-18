@@ -9,6 +9,8 @@
     },
     "header": {
       "imprint": "Impressum",
+      "language": "Sprache",
+      "theme": "Theme",
       "theme_auto_name": "Sync",
       "theme_light_name": "Hell",
       "theme_dark_name": "Dunkel"
@@ -35,7 +37,8 @@
       "moreResultsHint": "– Enter drücken für alle Ergebnisse"
     },
     "section": {
-      "backToTop": "Nach oben"
+      "backToTop": "Nach oben",
+      "targetGroup": "Zielgruppe"
     },
     "footer": {
       "copyright": "© 2023 Pfadibewegung Schweiz",

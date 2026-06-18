@@ -9,6 +9,8 @@
     },
     "header": {
       "imprint": "Colophon",
+      "language": "Lingua",
+      "theme": "Tema",
       "theme_auto_name": "Sync",
       "theme_light_name": "Chiaro",
       "theme_dark_name": "Scuro"
@@ -35,7 +37,8 @@
       "moreResultsHint": "– Premi Invio per tutti i risultati"
     },
     "section": {
-      "backToTop": "Torna in alto"
+      "backToTop": "Torna in alto",
+      "targetGroup": "Gruppo target"
     },
     "footer": {
       "copyright": "© 2023 Movimento Scout Svizzero",
