@@ -1,14 +1,16 @@
 import { defineConfig } from 'astro/config';
 
-import tailwind from "@astrojs/tailwind";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@astrojs/react";
 import AstroPWA from '@vite-pwa/astro';
 
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || 'https://thilo.scouts.ch',
+  vite: {
+    plugins: [tailwindcss()],
+  },
   integrations: [
-    tailwind(),
     react(),
     AstroPWA({
       registerType: 'prompt', // Prompt user before activating new SW

@@ -14,7 +14,7 @@ import '../styles/global.css';
 import '../styles/colors.css';
 import '../styles/layout.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 
 // Collect all unique section icon URLs for preloading
 const iconUrls: string[] = [];
@@ -46,7 +46,7 @@ if (allSectionsData?.sections) {
       <link rel="preload" href={url} as="image" />
     ))}
 
-    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.ico`} />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#521d3a" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -64,7 +64,7 @@ if (allSectionsData?.sections) {
     {hreflangUrls?.map(({ hreflang, url }) => (
       <link rel="alternate" hreflang={hreflang} href={url} />
     ))}
-    <ViewTransitions />
+    <ClientRouter />
     {allSectionsData && (
       <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
     )}

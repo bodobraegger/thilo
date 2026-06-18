@@ -72,49 +72,39 @@ function getSectionUrl(section: SectionT, locale: string): string {
         
         return (
           <li>
-            <!-- Section header with link and toggle -->
-            <div 
-              class={`section relative flex items-center px-3 py-1 text-sm rounded-md transition-colors group font-medium ${
-                isActivePage ? 'active' : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <!-- Section Link stretched to fill the whole row -->
+            <!-- Section header: link wraps icon+text, toggle button sits alongside -->
+            <div class="section relative flex items-center text-sm rounded-md transition-colors group font-medium">
               <AstroLink
                 href={sectionPath}
-                class="absolute inset-0 flex items-center px-3 min-w-0"
+                class={`flex items-center flex-1 min-w-0 px-3 py-1 rounded-md ${isActivePage ? 'active' : 'text-gray-700 hover:bg-gray-100'}`}
                 style={section.color_primary ? `--section-color: ${section.color_primary}` : ''}
-                tabindex="-1"
-                aria-hidden="true"
-              />
-              <!-- Visible content (sits above the stretched link) -->
-              <span class="relative flex items-center flex-1 min-w-0 pointer-events-none">
-                <!-- Section Icon -->
+              >
                 {section.icon ? (
-                  <img 
-                    src={section.icon.url} 
-                    alt="icon" 
+                  <img
+                    src={section.icon.url}
+                    alt=""
                     class="w-4 h-4 mr-3 flex-shrink-0"
                   />
                 ) : (
-                  <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 )}
                 <span class="flex-1 min-w-0 truncate" style={section.color_primary ? `color: ${section.color_primary}` : ''}>{section.menu_name}</span>
-              </span>
-              
-              <!-- Chapter toggle button — sits above the stretched link via z-index -->
+              </AstroLink>
+
               {section.chapters && section.chapters.length > 0 && (
-                <button 
-                  class="relative z-10 w-6 h-6 ml-2 flex items-center justify-center transform transition-transform rounded chapter-toggle"
+                <button
+                  class="relative z-10 w-6 h-6 mr-1 flex-shrink-0 flex items-center justify-center transform transition-transform rounded chapter-toggle"
                   data-section={section.slug}
                   aria-label="Toggle chapters"
                 >
-                  <svg 
+                  <svg
                     class={`w-3 h-3 transition-transform ${isCurrentSection ? 'rotate-90' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
+                    fill="none"
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                   </svg>
