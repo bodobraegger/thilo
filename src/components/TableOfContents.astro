@@ -167,254 +167,164 @@ function getSectionUrl(section: SectionT, locale: string): string {
 
 
 <script is:inline>
-  // Guard against duplicate listeners (is:inline re-runs on every Astro view transition)
-  if (!window.__tocInit) {
-    window.__tocInit = true;
+(function () {
+  // AbortController pattern — mirrors Header.astro's approach.
+  // window.__tocController persists the controller across is:inline re-executions.
+  function setup() {
+    window.__tocController?.abort();
+    window.__tocController = new AbortController();
+    const { signal } = window.__tocController;
 
-  // Mobile sidebar functionality
-  const sidebarToggle = document.getElementById('sidebar-toggle');
-  const sidebarNav = document.getElementById('sidebar-nav');
-  const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebarToggle  = document.getElementById('sidebar-toggle');
+    const sidebarNav     = document.getElementById('sidebar-nav');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-  function scrollToCurrentInToC(behavior = 'smooth') {
-    const currentHash = window.location.hash;
-    const currentPath = window.location.pathname;
-    
-    let activeLink = null;
-    
-    if (currentHash) {
-      const hashWithoutHash = currentHash.slice(1);
-      activeLink = sidebarNav?.querySelector(`a[href*="#${hashWithoutHash}"]`);
+    function scrollToCurrentInToC(behavior) {
+      const hash = window.location.hash;
+      const path = window.location.pathname;
+      let activeLink = hash
+        ? sidebarNav?.querySelector(`a[href*="#${hash.slice(1)}"]`)
+        : null;
+      if (!activeLink) activeLink = sidebarNav?.querySelector(`a[href="${path}"], a[href*="${path}"]`);
+      if (activeLink && sidebarNav) {
+        setTimeout(() => {
+          const scrollTop = activeLink.offsetTop - sidebarNav.clientHeight / 2 + activeLink.clientHeight / 2;
+          if (behavior === 'instant') {
+            const prev = sidebarNav.style.scrollBehavior;
+            sidebarNav.style.scrollBehavior = 'auto';
+            sidebarNav.scrollTop = Math.max(0, scrollTop);
+            sidebarNav.style.scrollBehavior = prev;
+          } else {
+            sidebarNav.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+          }
+        }, 100);
+      }
     }
-    
-    if (!activeLink) {
-      activeLink = sidebarNav?.querySelector(`a[href="${currentPath}"], a[href*="${currentPath}"]`);
-    }
-    
-    if (activeLink && sidebarNav) {
-      setTimeout(() => {
-        const scrollTop = activeLink.offsetTop - (sidebarNav.clientHeight / 2) + (activeLink.clientHeight / 2);
-        if (behavior === 'instant') {
-          // Temporarily override CSS scroll-behavior: smooth on the sidebar
-          const prev = sidebarNav.style.scrollBehavior;
-          sidebarNav.style.scrollBehavior = 'auto';
-          sidebarNav.scrollTop = Math.max(0, scrollTop);
-          sidebarNav.style.scrollBehavior = prev;
-        } else {
-          sidebarNav.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+
+    function openSidebar() {
+      if (window.innerWidth < 1024) {
+        if (sidebarNav) {
+          sidebarNav.style.display   = 'flex';
+          sidebarNav.style.position  = 'fixed';
+          sidebarNav.style.top       = '0';
+          sidebarNav.style.height    = '100vh';
+          sidebarNav.style.zIndex    = '50';
         }
-      }, 100);
-    }
-  }
-
-  function openSidebar() {
-    if (window.innerWidth < 1024) {
-      if (sidebarNav) {
-        sidebarNav.style.display = 'flex';
-        sidebarNav.style.position = 'fixed';
-        sidebarNav.style.top = '0';
-        sidebarNav.style.height = '100vh';
-        sidebarNav.style.zIndex = '50';
+        sidebarOverlay?.classList.remove('hidden');
       }
-      sidebarOverlay?.classList.remove('hidden');
+      scrollToCurrentInToC('smooth');
     }
-    scrollToCurrentInToC('smooth');
-  }
 
-  function closeSidebar() {
-    if (window.innerWidth < 1024) {
-      if (sidebarNav) {
-        sidebarNav.style.display = 'none';
-        sidebarNav.style.position = 'sticky';
-        sidebarNav.style.top = '52px';
-        sidebarNav.style.height = 'calc(100vh - 52px)';
-        sidebarNav.style.zIndex = '';
+    function closeSidebar() {
+      if (window.innerWidth < 1024) {
+        if (sidebarNav) {
+          sidebarNav.style.display   = 'none';
+          sidebarNav.style.position  = 'sticky';
+          sidebarNav.style.top       = '52px';
+          sidebarNav.style.height    = 'calc(100vh - 52px)';
+          sidebarNav.style.zIndex    = '';
+        }
+        sidebarOverlay?.classList.add('hidden');
       }
-      sidebarOverlay?.classList.add('hidden');
     }
-  }
 
-  // Initialize sidebar visibility based on screen size
-  function initSidebarVisibility() {
-    if (window.innerWidth >= 1024) {
-      // Large screens: only clear display so CSS (lg:flex) takes over;
-      // leave position/top/height inline styles intact (they are set on the element itself)
-      if (sidebarNav) {
-        sidebarNav.style.display = '';
-        sidebarNav.style.zIndex = '';
-      }
-      sidebarOverlay?.classList.add('hidden');
-    } else {
-      // Small/medium screens: hide sidebar (close it) unless it is already explicitly open
-      if (sidebarNav && sidebarNav.style.display !== 'flex') {
-        sidebarNav.style.display = 'none';
-      }
-      sidebarOverlay?.classList.add('hidden');
-    }
-  }
-
-  // Initialize on load
-  initSidebarVisibility();
-  
-  // Scroll to current position on page load — instant, no animation on fresh load
-  setTimeout(() => {
-    scrollToCurrentInToC('instant');
-  }, 100);
-
-  // Animate ToC scroll only when navigating within the same page
-  window.addEventListener('hashchange', () => {
-    scrollToCurrentInToC('smooth');
-  });
-  
-  // Handle window resize
-  window.addEventListener('resize', initSidebarVisibility);
-
-  sidebarToggle?.addEventListener('click', closeSidebar);
-  sidebarOverlay?.addEventListener('click', closeSidebar);
-
-  // Listen for header sidebar toggle event (mobile only)
-  window.addEventListener('toggleSidebar', () => {
-    console.log('Toggle sidebar event received');
-    
-    // Only handle toggle on small/medium screens
-    if (window.innerWidth < 1024) {
-      console.log('Mobile toggle - checking if open:', sidebarNav?.style.display === 'flex');
-      
-      if (sidebarNav?.style.display === 'flex') {
-        console.log('Closing mobile sidebar');
-        closeSidebar();
+    function initSidebarVisibility() {
+      if (window.innerWidth >= 1024) {
+        if (sidebarNav) { sidebarNav.style.display = ''; sidebarNav.style.zIndex = ''; }
+        sidebarOverlay?.classList.add('hidden');
       } else {
-        console.log('Opening mobile sidebar');
-        openSidebar();
+        if (sidebarNav && sidebarNav.style.display !== 'flex') sidebarNav.style.display = 'none';
+        sidebarOverlay?.classList.add('hidden');
       }
-    } else {
-      console.log('Large screen - sidebar should be visible via CSS');
     }
-  });
 
-  // Smooth scroll for anchor links within the same page
-  document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach((anchor) => {
-    anchor.addEventListener('click', function (e) {
-      const href = this.getAttribute('href');
-      if (!href) return;
+    function updateActiveChapter() {
+      const viewportTop = window.scrollY;
+      let activeId = null, minDist = Infinity;
+      document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach(link => {
+        const hash = link.getAttribute('href')?.split('#')[1];
+        const el   = hash ? document.getElementById(hash) : null;
+        if (el) {
+          const dist = Math.abs(el.offsetTop - viewportTop);
+          if (dist < minDist) { minDist = dist; activeId = hash; }
+        }
+      });
+      document.querySelectorAll('#sidebar-nav a').forEach(link => {
+        const hash = link.getAttribute('href')?.split('#')[1];
+        if (hash) {
+          link.classList.toggle('active',        hash === activeId);
+          link.classList.toggle('text-gray-600', hash !== activeId);
+        }
+      });
+    }
 
-      const hashIndex = href.indexOf('#');
-      if (hashIndex === -1) return;
+    initSidebarVisibility();
+    setTimeout(() => scrollToCurrentInToC('instant'), 100);
 
-      const path = href.slice(0, hashIndex) || window.location.pathname;
-      const hash = href.slice(hashIndex + 1);
+    window.addEventListener('hashchange',   () => scrollToCurrentInToC('smooth'), { signal });
+    window.addEventListener('resize',       initSidebarVisibility, { signal });
+    window.addEventListener('toggleSidebar', () => {
+      if (window.innerWidth < 1024) {
+        sidebarNav?.style.display === 'flex' ? closeSidebar() : openSidebar();
+      }
+    }, { signal });
 
-      // Only intercept if we're staying on the same page
-      if (path === window.location.pathname || path === '') {
-        e.preventDefault();
-        const targetElement = document.getElementById(hash);
-        if (targetElement) {
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sidebarToggle?.addEventListener('click',  closeSidebar, { signal });
+    sidebarOverlay?.addEventListener('click', closeSidebar, { signal });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSidebar();
+    }, { signal });
+
+    // Smooth scroll for in-page anchor links
+    document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const href      = this.getAttribute('href');
+        const hashIndex = href?.indexOf('#') ?? -1;
+        if (hashIndex === -1) return;
+        const path = href.slice(0, hashIndex) || window.location.pathname;
+        const hash = href.slice(hashIndex + 1);
+        if (path === window.location.pathname || path === '') {
+          e.preventDefault();
+          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           history.pushState(null, '', '#' + hash);
           scrollToCurrentInToC('smooth');
+          if (window.innerWidth < 1024) closeSidebar();
         }
-        if (window.innerWidth < 1024) closeSidebar();
-      }
+      }, { signal });
     });
-  });
 
-  // Update active chapter based on scroll position - always one active, closest to viewport top
-  function updateActiveChapter() {
-    const viewportTop = window.scrollY;
-    
-    let activeChapterId = null;
-    let minDistance = Infinity;
-    
-    // Find the chapter link closest to the top of the viewport (always select one)
-    document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach((link) => {
-      const href = link.getAttribute('href');
-      const hash = href.split('#')[1];
-      const element = document.getElementById(hash);
-      
-      if (element) {
-        const elementTop = element.offsetTop; // Use offsetTop for better accuracy
-        
-        // Calculate distance from viewport top (no visibility check, always find closest)
-        const distanceFromTop = Math.abs(elementTop - viewportTop);
-        if (distanceFromTop < minDistance) {
-          minDistance = distanceFromTop;
-          activeChapterId = hash;
-        }
+    // Throttled scroll → active chapter tracking
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => { updateActiveChapter(); ticking = false; });
+        ticking = true;
       }
-    });
-    
-    // Update active states in navigation - only one active at a time
-    document.querySelectorAll('#sidebar-nav a').forEach((link) => {
-      const href = link.getAttribute('href');
-      if (href && href.includes('#')) {
-        const hash = href.split('#')[1];
-        if (hash === activeChapterId) {
-          // Add active class for the single active chapter
-          link.classList.add('active');
-          link.classList.remove('text-gray-600');
-        } else {
-          // Reset to default styles
-          link.classList.remove('active');
-          link.classList.add('text-gray-600');
-        }
-      }
-    });
-  }
+    }, { signal });
 
-  // Throttled scroll handler
-  let ticking = false;
-  window.addEventListener('scroll', () => {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        updateActiveChapter();
-        ticking = false;
-      });
-      ticking = true;
-    }
-  });
-
-  // Handle escape key for mobile
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeSidebar();
-    }
-  });
-
-  } // end __tocInit guard
-
-  // Chapter toggle functionality
-  // Use astro:page-load instead of DOMContentLoaded so event listeners are
-  // re-attached after every Astro View Transition navigation.
-  document.addEventListener('astro:page-load', () => {
-    document.querySelectorAll('.chapter-toggle').forEach((toggle) => {
+    // Chapter expand/collapse toggles
+    document.querySelectorAll('.chapter-toggle').forEach(toggle => {
       toggle.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        console.log('Chapter toggle clicked!');
-        
-        const button = e.currentTarget;
-        const sectionSlug = button.getAttribute('data-section');
+        const sectionSlug  = e.currentTarget.getAttribute('data-section');
         const chaptersList = document.querySelector(`[data-chapters="${sectionSlug}"]`);
-        const arrow = button.querySelector('svg');
-        
-        console.log('Section slug:', sectionSlug);
-        console.log('Chapters list:', chaptersList);
-        console.log('Arrow:', arrow);
-        
+        const arrow        = e.currentTarget.querySelector('svg');
         if (chaptersList && arrow) {
-          const isHidden = chaptersList.classList.contains('hidden');
-          console.log('Is hidden:', isHidden);
-          
-          if (isHidden) {
-            chaptersList.classList.remove('hidden');
-            arrow.style.transform = 'rotate(90deg)';
-          } else {
-            chaptersList.classList.add('hidden');
-            arrow.style.transform = 'rotate(0deg)';
-          }
+          const hidden = chaptersList.classList.contains('hidden');
+          chaptersList.classList.toggle('hidden', !hidden);
+          arrow.style.transform = hidden ? 'rotate(90deg)' : 'rotate(0deg)';
         }
-      });
+      }, { signal });
     });
-  });
+  }
+
+  if (!window.__tocDocListeners) {
+    window.__tocDocListeners = true;
+    document.addEventListener('astro:page-load', setup);
+  }
+
+  setup();
+})();
 </script>

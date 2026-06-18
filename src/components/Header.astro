@@ -202,173 +202,114 @@ if (currentSection) {
 </script>
 
 <script is:inline define:vars={{ base: import.meta.env.BASE_URL.replace(/\/$/, '') }}>
-  // Guard against duplicate listeners: is:inline scripts re-run on every Astro
-  // view transition even though transition:persist keeps the element alive.
-  if (!window.__headerInit) {
-    window.__headerInit = true;
+(function () {
+  // AbortController pattern: abort old listeners before each swap, re-attach after.
+  // window.__headerController persists across is:inline re-executions so abort() reaches
+  // the listeners from the previous run.
+  function setup() {
+    window.__headerController?.abort();
+    window.__headerController = new AbortController();
+    const { signal } = window.__headerController;
 
-  // Sidebar toggle functionality (for medium screens)
-  const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
-  
-  sidebarToggleHeader?.addEventListener('click', () => {
-    console.log('Header sidebar toggle clicked');
-    // This will be handled by the sidebar component
-    const sidebarToggleEvent = new CustomEvent('toggleSidebar');
-    window.dispatchEvent(sidebarToggleEvent);
-    console.log('Toggle event dispatched');
-  });
+    const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
+    const menuDropdownToggle  = document.getElementById('menu-dropdown-toggle');
+    const menuDropdown        = document.getElementById('menu-dropdown');
+    const themeToggle         = document.getElementById('theme-toggle');
 
-  // Menu dropdown functionality
-  const menuDropdownToggle = document.getElementById('menu-dropdown-toggle');
-  const menuDropdown = document.getElementById('menu-dropdown');
+    function openMenu()  { menuDropdown?.classList.remove('hidden'); }
+    function closeMenu() { menuDropdown?.classList.add('hidden'); }
+    function buildUrl(path) { return base + path; }
 
-  function openMenuDropdown() {
-    menuDropdown?.classList.remove('hidden');
-  }
+    sidebarToggleHeader?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('toggleSidebar'));
+    }, { signal });
 
-  function closeMenuDropdown() {
-    menuDropdown?.classList.add('hidden');
-  }
+    menuDropdownToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown?.classList.contains('hidden') ? openMenu() : closeMenu();
+    }, { signal });
 
-  menuDropdownToggle?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (menuDropdown?.classList.contains('hidden')) {
-      openMenuDropdown();
-    } else {
-      closeMenuDropdown();
-    }
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
-      if (!menuDropdown.contains(e.target) && !menuDropdownToggle?.contains(e.target)) {
-        closeMenuDropdown();
+    document.addEventListener('click', (e) => {
+      if (menuDropdown && !menuDropdown.classList.contains('hidden')) {
+        if (!menuDropdown.contains(e.target) && !menuDropdownToggle?.contains(e.target)) {
+          closeMenu();
+        }
       }
-    }
-  });
+    }, { signal });
 
-  // Escape key handler for menu
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (!menuDropdown?.classList.contains('hidden')) {
-        closeMenuDropdown();
-      }
-    }
-  });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menuDropdown?.classList.contains('hidden')) closeMenu();
+    }, { signal });
 
-  // Theme toggle functionality (placeholder for future implementation)
-  const themeToggle = document.getElementById('theme-toggle');
-  
-  themeToggle?.addEventListener('click', () => {
-    // TODO: Implement theme switching in next step
-    console.log('Theme toggle clicked - to be implemented');
-    closeMenuDropdown();
-  });
+    themeToggle?.addEventListener('click', () => closeMenu(), { signal });
 
-  // SIMPLE Language switching (exactly like React app)
-  const languageOptions = document.querySelectorAll('.language-option');
-  
-  languageOptions.forEach(option => {
-    option.addEventListener('click', (e) => {
-      const selectedLocale = e.currentTarget?.dataset?.locale;
-      const currentLocale = document.documentElement.lang || 'de';
-      
-      if (selectedLocale === currentLocale || !selectedLocale) {
-        closeMenuDropdown();
+    document.querySelectorAll('.language-option').forEach(option => {
+      option.addEventListener('click', (e) => {
+        const selectedLocale = e.currentTarget?.dataset?.locale;
+        const currentLocale  = document.documentElement.lang || 'de';
+        if (!selectedLocale || selectedLocale === currentLocale) { closeMenu(); return; }
+        handleLanguageChange(selectedLocale);
+        closeMenu();
+      }, { signal });
+    });
+
+    function handleLanguageChange(targetLocale) {
+      const currentHash = window.location.hash;
+      let path = window.location.pathname;
+      if (base && path.startsWith(base)) path = path.slice(base.length);
+      path = path.replace(/^\/|\/$/g, '');
+      if (path.startsWith('fr/'))      path = path.substring(3);
+      else if (path.startsWith('it/')) path = path.substring(3);
+      else if (path === 'fr' || path === 'it') path = '';
+
+      if (path === 'impressum') {
+        window.location.href = targetLocale === 'de' ? buildUrl('/impressum') : buildUrl(`/${targetLocale}/impressum`);
         return;
       }
-      
-      handleLanguageChange(selectedLocale);
-      closeMenuDropdown();
-    });
-  });
 
-  // Helper: build a URL with the base prefix
-  function buildUrl(path) {
-    // path should start with /
-    return base + path;
-  }
+      const allSectionsMeta = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
+      if (!allSectionsMeta) {
+        window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
+        return;
+      }
 
-  // Language change handler with smart chapter number mapping
-  function handleLanguageChange(targetLocale) {
-    const currentPath = window.location.pathname;
-    const currentHash = window.location.hash;
+      const allSections    = JSON.parse(allSectionsMeta);
+      const currentLocale  = document.documentElement.lang || 'de';
+      const currentSection = (allSections[currentLocale] || []).find(s => s.slug === path);
 
-    // Strip the base prefix first, then normalize slashes
-    let path = currentPath;
-    if (base && path.startsWith(base)) path = path.slice(base.length);
-    path = path.replace(/^\/|\/$/g, ''); // remove leading/trailing slashes
-
-    // Strip locale prefix
-    if (path.startsWith('fr/')) path = path.substring(3);
-    else if (path.startsWith('it/')) path = path.substring(3);
-    else if (path === 'fr' || path === 'it') path = '';
-    
-    // Handle impressum page
-    if (path === 'impressum') {
-      const targetUrl = targetLocale === 'de' ? buildUrl('/impressum') : buildUrl(`/${targetLocale}/impressum`);
-      window.location.href = targetUrl;
-      return;
-    }
-    
-    // Get all sections from the meta tag (set by BaseLayout)
-    const allSectionsMeta = document.querySelector('meta[name="all-sections"]')?.getAttribute('content');
-    if (!allSectionsMeta) {
-      window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
-      return;
-    }
-    
-    const allSections = JSON.parse(allSectionsMeta);
-    const currentLocale = document.documentElement.lang || 'de';
-    const currentSections = allSections[currentLocale] || [];
-    const targetSections = allSections[targetLocale] || [];
-    
-    // Find current section by slug
-    const currentSection = currentSections.find((s) => s.slug === path);
-    
-    if (currentSection) {
-      // Find equivalent section by sorting
-      const targetSection = targetSections.find((s) => s.sorting === currentSection.sorting);
-      
-      if (targetSection) {
-        const baseTargetUrl = buildUrl(targetLocale === 'de' ? `/${targetSection.slug}` : `/${targetLocale}/${targetSection.slug}`);
-        
-        // Smart chapter hash mapping by sorting (not position)
-        if (currentHash && currentSection.chapters && targetSection.chapters) {
-          const currentChapterSlug = currentHash.replace('#', '');
-          const currentChapter = currentSection.chapters.find((c) => c.slug === currentChapterSlug);
-          
-          if (currentChapter && currentChapter.sorting !== undefined) {
-            const targetChapter = targetSection.chapters.find((c) => c.sorting === currentChapter.sorting);
-            
-            if (targetChapter) {
-              window.location.href = baseTargetUrl + `#${targetChapter.slug}`;
-              return;
+      if (currentSection) {
+        const targetSection = (allSections[targetLocale] || []).find(s => s.sorting === currentSection.sorting);
+        if (targetSection) {
+          const targetUrl = buildUrl(targetLocale === 'de' ? `/${targetSection.slug}` : `/${targetLocale}/${targetSection.slug}`);
+          if (currentHash && currentSection.chapters && targetSection.chapters) {
+            const curChapter = currentSection.chapters.find(c => c.slug === currentHash.slice(1));
+            if (curChapter) {
+              const tgtChapter = targetSection.chapters.find(c => c.sorting === curChapter.sorting);
+              if (tgtChapter) { window.location.href = targetUrl + `#${tgtChapter.slug}`; return; }
             }
           }
+          window.location.href = targetUrl;
+          return;
         }
-        
-        window.location.href = baseTargetUrl;
-        return;
       }
-    }
-    
-    // Handle non-section pages
-    let targetUrl;
-    if (path === '' || path === 'index') {
-      targetUrl = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
-    } else if (path === 'search') {
-      targetUrl = targetLocale === 'de' ? buildUrl('/search') : buildUrl(`/${targetLocale}/search`);
-    } else {
-      targetUrl = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
-    }
-    
-    const currentSearch = window.location.search;
-    if (currentSearch) targetUrl += currentSearch;
 
-    window.location.href = targetUrl;
+      let targetUrl = path === 'search'
+        ? (targetLocale === 'de' ? buildUrl('/search') : buildUrl(`/${targetLocale}/search`))
+        : (targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`));
+      if (window.location.search) targetUrl += window.location.search;
+      window.location.href = targetUrl;
+    }
   }
 
-  } // end __headerInit guard
+  // Register the astro:page-load listener only once — it persists on window across navigations.
+  if (!window.__headerDocListeners) {
+    window.__headerDocListeners = true;
+    document.addEventListener('astro:page-load', setup);
+  }
+
+  // Also run immediately: handles the initial page load before astro:page-load fires,
+  // and re-runs setup when the is:inline script re-executes on each navigation
+  // (abort() at the top of setup() cleans up the previous run's listeners).
+  setup();
+})();
 </script>
