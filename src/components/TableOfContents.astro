@@ -167,6 +167,10 @@ function getSectionUrl(section: SectionT, locale: string): string {
 
 
 <script is:inline>
+  // Guard against duplicate listeners (is:inline re-runs on every Astro view transition)
+  if (!window.__tocInit) {
+    window.__tocInit = true;
+
   // Mobile sidebar functionality
   const sidebarToggle = document.getElementById('sidebar-toggle');
   const sidebarNav = document.getElementById('sidebar-nav');
@@ -375,6 +379,8 @@ function getSectionUrl(section: SectionT, locale: string): string {
       closeSidebar();
     }
   });
+
+  } // end __tocInit guard
 
   // Chapter toggle functionality
   // Use astro:page-load instead of DOMContentLoaded so event listeners are
