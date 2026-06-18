@@ -90,18 +90,18 @@ export default defineConfig({
         categories: ["education", "reference"],
         icons: [
           {
-            src: "favicon.ico",
+            src: "./favicon.ico",
             sizes: "64x64 32x32 24x24 16x16",
             type: "image/x-icon"
           },
           {
-            src: "logo.svg",
+            src: "./logo.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any"
           },
           {
-            src: "logo.svg",
+            src: "./logo.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "maskable"
