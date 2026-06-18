@@ -166,6 +166,18 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
         }
       }
 
+      // Wrap tables so they scroll horizontally on mobile
+      if (token.type === 'table') {
+        flushHtml();
+        const html = marked.parser([token]);
+        elements.push(
+          <div key={`table-${index}`} className="table-wrapper">
+            <div className="table-inner" dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        );
+        return;
+      }
+
       // Default rendering - accumulate HTML
       const html = marked.parser([token]);
       currentHtml += html;

@@ -1,49 +1,60 @@
 .content .table-wrapper {
   overflow-x: auto;
   max-width: 100%;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.content .table-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.content .table-inner {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
 }
 
 .content table {
-  box-shadow: inset 0px 0px 0px 1px var(--color-primary);
-  border-radius: var(--borderRadius-medium, 6px);
-  border-collapse: unset;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9em;
+  border: none;
+  margin: 0;
 }
 
-.content table th:first-child {
-  border-radius: var(--borderRadius-medium, 6px) 0 0 0;
+.content table th,
+.content table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
 }
 
-.content table th:last-child {
-  border-radius: 0 var(--borderRadius-medium, 6px) 0 0;
+.content table td {
+  border-bottom: 1px solid var(--color-primary-200);
 }
 
-.content table td:first-child,
-.content table th:first-child {
-  border-left: none;
+.content table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.content table td:not(:last-child) {
+  box-shadow: inset -1px 0 0 var(--color-primary-200);
+}
+
+.content table thead tr {
+  border-bottom: 1px solid var(--color-primary-200);
 }
 
 .content table th {
   background-color: var(--color-primary-light);
-  padding: 10px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.content table td {
-  padding: 10px 6px;
-}
-
-.content table tbody td,
-.content table tbody th {
-  box-shadow: inset 0px 0px 0px 0.5px var(--color-primary);
-}
-
-.content table tbody tr:hover {
-  background-color: var(--color-btn-hover-bg);
-}
-
-.content table tbody tr:last-child :first-child {
-  border-radius: 0 0 0 var(--borderRadius-medium, 6px);
-}
-
-.content table tbody tr:last-child :last-child {
-  border-radius: 0 0 var(--borderRadius-medium, 6px) 0;
+.content table tbody tr:hover td {
+  background-color: var(--color-primary-50);
 }
