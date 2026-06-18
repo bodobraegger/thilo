@@ -51,13 +51,13 @@ export default defineConfig({
           },
         ],
         // Serve the root offline fallback for uncached navigations
-        navigateFallback: '/404',
+        navigateFallback: '/404.html',
         navigateFallbackDenylist: [/^\/api\//],
       },
       manifestFilename: 'manifest.json',
       // Using "." keeps these explicitly relative to your configured base path context.
       manifest: {
-        name: "Thilo – Schweizer Pfadfinder Handbuch",
+        name: "Thilo – Schweizer Pfadfi Büchlein",
         short_name: "Thilo",
         description: "Das digitale Handbuch der Schweizer Pfadibewegung",
         start_url: ".",
