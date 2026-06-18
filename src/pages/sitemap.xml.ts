@@ -5,12 +5,12 @@ const LOCALES = ['de', 'fr', 'it'] as const;
 
 type Locale = typeof LOCALES[number];
 
-function sectionUrl(locale: Locale, slug: string): string {
-  return locale === 'de' ? `${SITE}/${slug}` : `${SITE}/${locale}/${slug}`;
+function sectionUrl(site: string, locale: Locale, slug: string): string {
+  return locale === 'de' ? `${site}/${slug}` : `${site}/${locale}/${slug}`;
 }
 
-function pageUrl(locale: Locale, path: string): string {
-  return locale === 'de' ? `${SITE}${path}` : `${SITE}/${locale}${path}`;
+function pageUrl(site: string, locale: Locale, path: string): string {
+  return locale === 'de' ? `${site}${path}` : `${site}/${locale}${path}`;
 }
 
 function urlEntry(loc: string, alternates: Array<{ hreflang: string; href: string }>): string {
@@ -28,15 +28,15 @@ export const GET: APIRoute = async ({ site }) => {
   // Static pages: home, search, impressum
   for (const path of ['/', '/search', '/impressum']) {
     const alternates = [
-      ...LOCALES.map(l => ({ hreflang: l, href: pageUrl(l, path) })),
-      { hreflang: 'x-default', href: pageUrl('de', path) },
+      ...LOCALES.map(l => ({ hreflang: l, href: pageUrl(SITE, l, path) })),
+      { hreflang: 'x-default', href: pageUrl(SITE, 'de', path) },
     ];
     for (const locale of LOCALES) {
-      entries.push(urlEntry(pageUrl(locale, path), alternates));
+      entries.push(urlEntry(pageUrl(SITE, locale, path), alternates));
     }
   }
 
-  // Section pages — group by sorting field so equivalent sections across locales share alternates
+  // Section pages — group by sorting so equivalent sections across locales share alternates
   const bySort = new Map<number, Array<{ locale: Locale; slug: string }>>();
   for (const locale of LOCALES) {
     for (const section of allSections.sections[locale] ?? []) {
@@ -48,11 +48,11 @@ export const GET: APIRoute = async ({ site }) => {
   for (const group of bySort.values()) {
     const deSlug = group.find(s => s.locale === 'de')?.slug ?? '';
     const alternates = [
-      ...group.map(s => ({ hreflang: s.locale, href: sectionUrl(s.locale, s.slug) })),
-      { hreflang: 'x-default', href: sectionUrl('de', deSlug) },
+      ...group.map(s => ({ hreflang: s.locale, href: sectionUrl(SITE, s.locale, s.slug) })),
+      { hreflang: 'x-default', href: sectionUrl(SITE, 'de', deSlug) },
     ];
     for (const { locale, slug } of group) {
-      entries.push(urlEntry(sectionUrl(locale, slug), alternates));
+      entries.push(urlEntry(sectionUrl(SITE, locale, slug), alternates));
     }
   }
 

@@ -59,15 +59,6 @@ export interface LinkT {
   slug: string | null;
 }
 
-export interface Article {
-  id: number;
-  title: string;
-  content: string;
-  published_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
 // Fetch data from Strapi with caching
 const dataCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache (was 5 minutes)
@@ -194,19 +185,7 @@ export function formatDate(date: string | Date): string {
   });
 }
 
-// Get article by ID (placeholder - articles not implemented yet)
-export async function getArticleById(_id: string): Promise<Article | null> {
-  // This would fetch from Strapi when articles are implemented
-  return null;
-}
-
 // Get section by ID (alias for getSectionBySlug)
 export async function getSectionById(id: string, locale: string = 'de'): Promise<SectionT | null> {
   return getSectionBySlug(id, locale);
-}
-
-// Get articles by section (placeholder - articles not implemented yet)
-export async function getArticlesBySection(_sectionId: string): Promise<Article[]> {
-  // This would fetch from Strapi when articles are implemented
-  return [];
 }

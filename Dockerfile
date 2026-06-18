@@ -11,7 +11,7 @@ ENTRYPOINT [ "./entrypoint.sh" ]
 ############################################
 # System Dependencies
 ############################################
-RUN apk update && apk add --no-cache gettext dos2unix
+RUN apk update && apk add --no-cache dos2unix
 
 ############################################
 # Install pnpm
@@ -23,7 +23,7 @@ RUN npm install -g pnpm
 ############################################
 RUN chown -R node:node /srv/app
 USER node
-COPY --chown=node:node [ "package.json", "pnpm-lock.yaml", "astro.config.mjs", "tailwind.config.mjs", "tsconfig.json", "404.html", "./"]
+COPY --chown=node:node [ "package.json", "pnpm-lock.yaml", "astro.config.mjs", "tailwind.config.mjs", "tsconfig.json", "./"]
 COPY --chown=node:node [ "./docker/entrypoint.sh", "./entrypoint.sh"]
 COPY --chown=node:node [ "public", "public"]
 COPY --chown=node:node [ "src", "src"]
@@ -31,6 +31,11 @@ COPY --chown=node:node [ "src", "src"]
 ############################################
 # Building Application
 ############################################
+ARG BACKEND_URL=https://api.thilo.scouts.ch/
+ARG SITE_URL=https://thilo.scouts.ch
+ENV BACKEND_URL=$BACKEND_URL
+ENV SITE_URL=$SITE_URL
+
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
