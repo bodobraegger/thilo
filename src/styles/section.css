@@ -13,10 +13,13 @@ section {
   }
   
   ul, ol {
-    padding-left: 1em;
-    li::marker {
-      color: var(--color-primary);
-    }
+    list-style: revert;
+    padding-left: 1.5em;
+  }
+
+  li::marker {
+    color: var(--color-primary);
+    font-weight: 600;
   }
 
   p {
