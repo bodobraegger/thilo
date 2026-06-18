@@ -9,6 +9,7 @@ jobs:
   build-and-push-container:
     name: Build and Push Thilo Container
     runs-on: ubuntu-latest
+    if: github.repository == 'scout-ch/thilo'
 
     steps:
       - name: Check out the repo
@@ -64,7 +65,7 @@ jobs:
     name: Deploy Thilo App GHPages
     needs: buildGHPages
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.repository == 'scout-ch/thilo'
 
     steps:
       - uses: actions/download-artifact@v4
@@ -104,7 +105,7 @@ jobs:
     name: Deploy Thilo App Prod
     needs: buildProd
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.repository == 'scout-ch/thilo'
 
     steps:
       - uses: actions/download-artifact@v4
