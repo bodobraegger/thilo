@@ -88,102 +88,13 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 </search-widget>
 
 <script>
-  // ─── Pure helpers ────────────────────────────────────────────────────────────
-
-  function escapeHtml(s: string): string {
-    return s
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  /** Return HTML string with query matches wrapped in <mark>. */
-  function highlightHtml(text: string, query: string, bgColor?: string): string {
-    if (!query.trim()) return escapeHtml(text);
-    const escapedText = escapeHtml(text);
-    const escapedQuery = escapeHtml(query);
-    const regexEscaped = escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const style = bgColor ? ` style="background-color:${bgColor}"` : '';
-    const cls = bgColor ? 'px-1 rounded' : 'bg-yellow-200 px-0.5 rounded';
-    return escapedText.replace(
-      new RegExp(`(${regexEscaped})`, 'gi'),
-      `<mark class="${cls}"${style}>$1</mark>`
-    );
-  }
-
-  function calculateRelevance(
-    text: string,
-    title: string,
-    searchQuery: string,
-    isTitle: boolean
-  ): number {
-    if (!text && !title) return 0;
-    const lowerText = text?.toLowerCase() || '';
-    const lowerTitle = title?.toLowerCase() || '';
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    const target = isTitle ? lowerTitle : lowerText;
-    if (!target.includes(lowerQuery)) return 0;
-
-    const esc = lowerQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    let score = 0;
-    if (target === lowerQuery) score += 1000;
-    if (lowerTitle === lowerQuery) score += 800;
-    if (lowerTitle.includes(lowerQuery)) score += 500;
-    if (new RegExp(`\\b${esc}\\b`).test(lowerTitle)) score += 400;
-    if (lowerTitle.startsWith(lowerQuery)) score += 300;
-    if (new RegExp(`\\b${esc}\\b`).test(lowerText)) score += 200;
-    if (lowerText.startsWith(lowerQuery)) score += 150;
-    if (lowerTitle.includes(lowerQuery) && score < 300) score += 100;
-    if (lowerText.includes(lowerQuery) && score < 100) score += 50;
-    const pos = target.indexOf(lowerQuery);
-    if (pos !== -1) score += Math.max(0, 50 - pos);
-    score -= Math.min(50, target.length / 100);
-    return score;
-  }
+  import { escapeHtml, highlightHtml, calculateRelevance, getExcerpt } from '../utils/search';
 
   function getLocalizedUrl(locale: string, slug: string, hash?: string): string {
     const base =
       document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
     const lp = locale === 'de' ? '' : `/${locale}`;
     return `${base}${lp}/${slug}${hash ? '#' + hash : ''}`;
-  }
-
-  function stripMarkdown(text: string): string {
-    if (!text) return '';
-    return text
-      .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      .replace(/#{1,6}\s+/g, '')
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/`(.*?)`/g, '$1')
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/>\s+/g, '')
-      .replace(/^\s*[-*+]\s+/gm, '')
-      .replace(/^\s*\d+\.\s+/gm, '')
-      .replace(/<[^>]*>/g, '')
-      .replace(/\n{2,}/g, '\n')
-      .trim();
-  }
-
-  function getExcerpt(text: string, query: string, maxLength = 200): string {
-    const clean = stripMarkdown(text);
-    const lc = clean.toLowerCase();
-    const qi = lc.indexOf(query.toLowerCase());
-    if (qi === -1) return clean.length > maxLength ? clean.slice(0, maxLength) + '...' : clean;
-    const ctx = Math.floor((maxLength - query.length) / 2);
-    let start = Math.max(0, qi - ctx);
-    let end = Math.min(clean.length, qi + query.length + ctx);
-    if (start > 0) {
-      const si = clean.lastIndexOf(' ', start);
-      if (si > 0 && start - si < 20) start = si + 1;
-    }
-    if (end < clean.length) {
-      const si = clean.indexOf(' ', end);
-      if (si > 0 && si - end < 20) end = si;
-    }
-    return (start > 0 ? '…' : '') + clean.slice(start, end) + (end < clean.length ? '…' : '');
   }
 
   // ─── Web Component ───────────────────────────────────────────────────────────
@@ -211,7 +122,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       this.noDropdown= this.dataset.noDropdown=== 'true';
       this.i18n      = JSON.parse(this.dataset.i18n     ?? '{}');
       this.sections  = JSON.parse(this.dataset.sections ?? '[]');
-      this.query     = this.dataset.initialQuery ?? '';
+      // read query from url if not provided via props
+      this.query     = new URLSearchParams(window.location.search).get('q') ?? this.dataset.initialQuery ?? '';
 
       this.input           = this.querySelector('[data-search-input]');
       this.dropdown        = this.querySelector('[data-search-dropdown]');
@@ -414,6 +326,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
           const color = result.section.color_primary ?? '#521d3a';
           const sel = idx === this.selectedIndex;
           const bg = sel ? `background-color:color-mix(in srgb, ${color} 10%, white)` : '';
+          const excerpt = getExcerpt(result.content ?? '', this.query, 100);
           html += `
             <li>
               <button
@@ -427,6 +340,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
                     <div class="font-medium text-sm truncate" style="color:${color}">
                       ${highlightHtml(result.title, this.query, `color-mix(in srgb, ${color} 30%, white)`)}
                     </div>
+                    ${excerpt ? `<p class="text-xs text-gray-600 mt-1 line-clamp-2 text-left">${highlightHtml(excerpt, this.query)}</p>` : ''}
                     <div class="flex items-center gap-2 mt-1">
                       <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                         style="background-color:color-mix(in srgb, ${color} 15%, white);color:${color}">
