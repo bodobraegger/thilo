@@ -4,9 +4,24 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@astrojs/react";
 import AstroPWA from '@vite-pwa/astro';
 
+// This looks for '--base /your-path/' in your build command line arguments.
+// If it finds it, it uses it. If not, it falls back to your default '/thilo/'.
+const getBaseUrl = () => {
+  const baseIndex = process.argv.indexOf('--base');
+  if (baseIndex !== -1 && process.argv[baseIndex + 1]) {
+    let flagValue = process.argv[baseIndex + 1];
+    // Ensure it starts and ends with a slash (e.g., /thilo/)
+    if (!flagValue.startsWith('/')) flagValue = '/' + flagValue;
+    if (!flagValue.endsWith('/')) flagValue = flagValue + '/';
+    return flagValue;
+  }
+  return '/thilo/'; // Your default fallback
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || 'https://thilo.scouts.ch',
+  base: '/thilo/',
   
   // This satisfies Workbox precaching perfectly across all i18n routes.
   build: {
@@ -52,14 +67,14 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
               cacheableResponse: {
-                statuses:,
+                statuses: [0, 200],
               },
             },
           },
         ],
         // // Serve the root offline fallback for uncached navigations
-        // navigateFallback: '/',
-        // navigateFallbackDenylist: [/^\/api\//],
+        navigateFallback: `${getBaseUrl()}/404`,
+        navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
         name: "Thilo - Schweizer Pfadi Büchlein",
