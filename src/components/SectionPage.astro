@@ -7,15 +7,16 @@ import type { SectionT } from "../utils/data";
 interface Props {
   section: SectionT;
   locale: string;
+  isIndex?: boolean;
 }
 
-const { section, locale } = Astro.props;
+const { section, locale, isIndex = false } = Astro.props;
 
 if (!section) {
   return Astro.redirect('/404');
 }
 ---
 
-<MainLayoutWithToC title={section.title} lang={locale} currentSection={section}>
+<MainLayoutWithToC title={isIndex ? section.title : section.title + ' | Thilo'} lang={locale} currentSection={section}>
   <Section section={section} />
 </MainLayoutWithToC>

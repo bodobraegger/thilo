@@ -38,7 +38,7 @@ const impressumData = await fetchImpressum(locale);
 console.log('Final impressum data:', impressumData); // Debug log
 ---
 
-<MainLayoutWithToC title={impressumData?.title ? impressumData.title + " - Thilo" : t.translation.header.imprint + " - Thilo"} lang={locale}>
+<MainLayoutWithToC title={(impressumData?.title || t.translation.header.imprint) + " | Thilo"} lang={locale}>
   <div class="content">
     <div class="section-title mb-2">
       <h1 class="bg-primary px-2">{impressumData?.title || t.translation.header.imprint}</h1>
