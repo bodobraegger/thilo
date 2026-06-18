@@ -65,7 +65,7 @@ jobs:
     name: Deploy Thilo App GHPages
     needs: buildGHPages
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.repository == 'scout-ch/thilo'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - uses: actions/download-artifact@v4
