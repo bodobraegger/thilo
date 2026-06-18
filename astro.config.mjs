@@ -54,7 +54,7 @@ export default defineConfig({
         navigateFallback: '/404',
         navigateFallbackDenylist: [/^\/api\//],
       },
-      // ✨ CHANGED: Replaced manifest: false with your direct manifest settings.
+      manifestFilename: 'manifest.json',
       // Using "." keeps these explicitly relative to your configured base path context.
       manifest: {
         name: "Thilo – Schweizer Pfadfinder Handbuch",
