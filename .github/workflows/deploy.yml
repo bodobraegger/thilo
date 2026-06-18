@@ -80,6 +80,7 @@ jobs:
   buildProd:
     name: Build Thilo App Prod
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.repository == 'scout-ch/thilo'
 
     steps:
       - uses: actions/checkout@v4
