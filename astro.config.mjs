@@ -50,9 +50,9 @@ export default defineConfig({
             },
           },
         ],
-        // Serve the root offline fallback for uncached navigations
-        navigateFallback: '/404.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        // // Serve the root offline fallback for uncached navigations
+        // navigateFallback: '/404.html',
+        // navigateFallbackDenylist: [/^\/api\//],
       },
       manifestFilename: 'manifest.json',
       // Using "." keeps these explicitly relative to your configured base path context.
