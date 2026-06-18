@@ -2,11 +2,6 @@
   overflow-x: auto;
   max-width: 100%;
   margin-bottom: 8px;
-  scrollbar-width: none;
-}
-
-.content .table-wrapper::-webkit-scrollbar {
-  display: none;
 }
 
 .content .table-inner {
