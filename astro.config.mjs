@@ -6,6 +6,7 @@ import AstroPWA from '@vite-pwa/astro';
 
 // https://astro.build/config
 export default defineConfig({
+  site: process.env.SITE_URL || 'https://thilo.scouts.ch',
   integrations: [
     tailwind(),
     react(),

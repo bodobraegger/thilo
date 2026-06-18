@@ -16,6 +16,26 @@ export interface Props {
 
 const { title, lang = 'de', currentSection, useFooter=true, sections: providedSections } = Astro.props;
 
+const SITE_DESC = 'Das digitale Handbuch der Schweizer Pfadibewegung';
+const siteBase = (Astro.site?.href ?? 'https://thilo.scouts.ch').replace(/\/$/, '');
+
+function extractDescription(md?: string): string {
+  if (!md) return SITE_DESC;
+  const plain = md
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*?(.*?)\*\*?/g, '$1')
+    .replace(/`[^`]+`/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain.length > 155 ? plain.slice(0, 155).trimEnd() + '…' : plain || SITE_DESC;
+}
+
+const description = extractDescription(currentSection?.content);
+const canonicalUrl = `${siteBase}${Astro.url.pathname}`;
+
 let sections: any[] = [];
 let allSectionsData: any = null;
 try {
@@ -37,9 +57,42 @@ try {
   sections = [];
   allSectionsData = { sections: {}, sectionMappings: {} };
 }
+
+// Build hreflang alternates
+type HreflangEntry = { hreflang: string; url: string };
+let hreflangUrls: HreflangEntry[] = [];
+
+const sectionMapping = currentSection
+  ? allSectionsData?.sectionMappings?.[currentSection.id.toString()]
+  : null;
+
+if (sectionMapping) {
+  const trailingSlash = (u: string) => u.endsWith('/') ? u : u + '/';
+  hreflangUrls = Object.entries(sectionMapping).map(([locale, info]: [string, any]) => ({
+    hreflang: locale,
+    url: `${siteBase}${trailingSlash(info.url)}`,
+  }));
+  const deUrl = sectionMapping['de']?.url;
+  if (deUrl) hreflangUrls.push({ hreflang: 'x-default', url: `${siteBase}${trailingSlash(deUrl)}` });
+} else {
+  // Non-section pages, or sections not in the mapping (e.g. start-page): derive from URL path
+  let basePath = Astro.url.pathname;
+  const basePrefix = import.meta.env.BASE_URL.replace(/\/$/, '');
+  if (basePrefix && basePath.startsWith(basePrefix)) basePath = basePath.slice(basePrefix.length);
+  if (basePath.startsWith('/fr')) basePath = basePath.slice(3) || '/';
+  else if (basePath.startsWith('/it')) basePath = basePath.slice(3) || '/';
+  if (!basePath.startsWith('/')) basePath = '/' + basePath;
+
+  const lp = (locale: string) => locale === 'de' ? '' : `/${locale}`;
+  hreflangUrls = ['de', 'fr', 'it'].map(locale => ({
+    hreflang: locale,
+    url: `${siteBase}${lp(locale)}${basePath}`,
+  }));
+  hreflangUrls.push({ hreflang: 'x-default', url: `${siteBase}${basePath}` });
+}
 ---
 
-<BaseLayout title={title} lang={lang} allSectionsData={allSectionsData}>
+<BaseLayout title={title} lang={lang} allSectionsData={allSectionsData} description={description} canonicalUrl={canonicalUrl} hreflangUrls={hreflangUrls}>
   <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">

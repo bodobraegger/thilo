@@ -3,9 +3,12 @@ export interface Props {
   title: string;
   lang?: string;
   allSectionsData?: any;
+  description?: string;
+  canonicalUrl?: string;
+  hreflangUrls?: Array<{ hreflang: string; url: string }>;
 }
 
-const { title, lang = 'de', allSectionsData } = Astro.props;
+const { title, lang = 'de', allSectionsData, description, canonicalUrl, hreflangUrls } = Astro.props;
 
 import '../styles/global.css';
 import '../styles/colors.css';
@@ -30,7 +33,6 @@ if (allSectionsData?.sections) {
 <html lang={lang}>
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="Thilo - Scout Magazin" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Preconnect to API and CDN -->
@@ -53,6 +55,15 @@ if (allSectionsData?.sections) {
     <link rel="apple-touch-icon" href="/logo.svg" />
     <meta name="base-url" content={import.meta.env.BASE_URL.replace(/\/$/, '')} />
     <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {hreflangUrls?.map(({ hreflang, url }) => (
+      <link rel="alternate" hreflang={hreflang} href={url} />
+    ))}
     <ViewTransitions />
     {allSectionsData && (
       <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
