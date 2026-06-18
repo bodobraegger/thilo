@@ -93,7 +93,7 @@ if (sectionMapping) {
 ---
 
 <BaseLayout title={title} lang={lang} allSectionsData={allSectionsData} description={description} canonicalUrl={canonicalUrl} hreflangUrls={hreflangUrls}>
-  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} transition:persist />
+  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
     <!-- Table of Contents Sidebar -->

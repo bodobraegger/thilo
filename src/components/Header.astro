@@ -7,9 +7,10 @@ import SearchComponent from './Search.astro';
 interface Props {
   locale?: Locale;
   currentSection?: any;
+  sections?: any[];
 }
 
-const { locale = 'de', currentSection } = Astro.props;
+const { locale = 'de', currentSection, sections = [] } = Astro.props;
 const t = getTranslations(locale);
 
 
@@ -90,10 +91,10 @@ if (currentSection) {
       <!-- Mirrors <div class="px-4 lg:px-10 max-w-3xl"> — padding and max-width are on the SAME element -->
       <div class="flex-1 min-w-0 px-4 lg:px-10 max-w-3xl">
         <div class="hidden lg:block">
-          <SearchComponent locale={locale} inline={true} noDropdown={isSearchPage} />
+          <SearchComponent locale={locale} inline={true} noDropdown={isSearchPage} initialSections={sections} />
         </div>
         <div class="lg:hidden w-full">
-          <SearchComponent locale={locale} inline={true} isMobile={true} noDropdown={isSearchPage} />
+          <SearchComponent locale={locale} inline={true} isMobile={true} noDropdown={isSearchPage} initialSections={sections} />
         </div>
       </div>
 
