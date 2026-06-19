@@ -73,7 +73,7 @@ export default defineConfig({
           },
         ],
         // // Serve the root offline fallback for uncached navigations
-        navigateFallback: `${getBaseUrl()}/404`,
+        navigateFallback: `${getBaseUrl()}404`,
         navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
