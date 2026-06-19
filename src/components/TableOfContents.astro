@@ -71,13 +71,12 @@ function getSectionUrl(section: SectionT, locale: string): string {
         const isCurrentSection = isActivePage; // Only expand if we're actually on this section's page
         
         return (
-          <li>
+          <li style={section.color_primary ? `--section-color: ${section.color_primary}` : ''}>
             <!-- Section header: link wraps icon+text, toggle button sits alongside -->
             <div class="section relative flex items-center text-sm rounded-md transition-colors group font-medium">
               <AstroLink
                 href={sectionPath}
                 class={`flex items-center flex-1 min-w-0 px-3 py-1 rounded-md ${isActivePage ? 'active' : 'text-gray-700 hover:bg-gray-100'}`}
-                style={section.color_primary ? `--section-color: ${section.color_primary}` : ''}
               >
                 {section.icon ? (
                   <img

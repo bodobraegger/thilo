@@ -21,7 +21,7 @@ import "../styles/section.css";
 const sectionColor = section.color_primary || "#521d3a";
 ---
 
-<section class="content">
+<section class="content" data-color={sectionColor}>
     <div
         id="section-title"
         class={`section-title section-${section.sorting} mb-2`}
@@ -101,31 +101,3 @@ const sectionColor = section.color_primary || "#521d3a";
         >
     </button>
 </section>
-
-<script define:vars={{ sectionColor }}>
-  function setup() {
-    window.__sectionController?.abort();
-    window.__sectionController = new AbortController();
-    const { signal } = window.__sectionController;
-
-    document.documentElement.style.setProperty('--color-primary', sectionColor);
-
-    const backToTopButton = document.getElementById('back-to-top');
-
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      if (backToTopButton) {
-        const past = window.scrollY > 300;
-        backToTopButton.classList.toggle('opacity-0', !past);
-        backToTopButton.classList.toggle('opacity-100', past);
-      }
-    }, { signal });
-  }
-
-  window.__sectionSetup = setup;
-  if (!window.__sectionDocListeners) {
-    window.__sectionDocListeners = true;
-    document.addEventListener('astro:page-load', () => window.__sectionSetup?.());
-  }
-  setup();
-</script>

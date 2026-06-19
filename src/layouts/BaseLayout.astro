@@ -75,40 +75,34 @@ if (allSectionsData?.sections) {
 </html>
 
 <script>
-  // Global color management utility
-  (window as any).updateThemeColors = function(colorCSS: string) {
-    if (colorCSS && typeof colorCSS === 'string') {
-      const colorProperties = colorCSS.split('\n');
-      colorProperties.forEach((property: string) => {
-        if (property.trim() && property.includes(':')) {
-          const [key, value] = property.split(':');
-          if (key && value) {
-            const cleanKey = key.trim();
-            const cleanValue = value.replace(';', '').trim();
-            document.documentElement.style.setProperty(cleanKey, cleanValue);
-          }
-        }
-      });
-    }
-  };
+  function applyColor(): void {
+    const el = document.querySelector('section.content') as HTMLElement | null;
+    const color = el?.dataset?.color;
+    if (color) document.documentElement.style.setProperty('--color-primary', color);
+  }
 
-  // Ensure colors are properly inherited on page navigation
-  document.addEventListener('astro:page-load', function() {
-    // This event fires on Astro page transitions
-    // Re-apply any stored color settings
-    const sectionElement = document.querySelector('section.content[style*="--color-primary"]') as HTMLElement;
-    if (sectionElement && sectionElement.style) {
-      // Extract and reapply colors from section to document root
-      const sectionStyle = sectionElement.style.cssText;
-      const colorProps = sectionStyle.match(/--color-[^;]+;/g);
-      if (colorProps) {
-        colorProps.forEach((prop: string) => {
-          const [key, value] = prop.replace(';', '').split(':');
-          if (key && value) {
-            document.documentElement.style.setProperty(key.trim(), value.trim());
-          }
-        });
-      }
-    }
+  function setupBackToTop(): void {
+    (window as any).__sectionController?.abort();
+    const ctrl = new AbortController();
+    (window as any).__sectionController = ctrl;
+    const btn = document.getElementById('back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', () => {
+      const past = window.scrollY > 300;
+      btn.classList.toggle('opacity-0', !past);
+      btn.classList.toggle('opacity-100', past);
+    }, { signal: ctrl.signal });
+  }
+
+  // Apply color immediately after the DOM swap so the transition animation
+  // already shows the new section color while it's still animating.
+  document.addEventListener('astro:after-swap', applyColor);
+
+  // astro:page-load fires on initial load AND after every navigation.
+  // Handles the initial-load case (astro:after-swap doesn't fire then)
+  // and resets the back-to-top listener for the new page's button element.
+  document.addEventListener('astro:page-load', () => {
+    applyColor();
+    setupBackToTop();
   });
 </script>
