@@ -56,9 +56,24 @@ export default defineConfig({
               },
             },
           },
-          // Cache remote section icons/images
+          // Cache Cloudinary images (section content + icons)
           {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cloudinary-image-cache',
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          // Cache any other remote images by extension (allow trailing query params)
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)(?:\?.*)?$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'image-cache',
