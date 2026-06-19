@@ -1,6 +1,7 @@
 ---
 import MarkdownRenderer from "./MarkdownRenderer.tsx";
 import type { SectionT } from "../utils/data";
+import { getTranslations, type Locale } from "../i18n";
 
 import quiz from "../styles/quiz.css";
 
@@ -11,7 +12,8 @@ export interface Props {
     currentSection?: any;
 }
 
-const { section, title, lang, currentSection } = Astro.props;
+const { section, title, lang = 'de', currentSection } = Astro.props;
+const t = getTranslations(lang as Locale);
 
 import "../styles/section.css";
 
@@ -55,7 +57,7 @@ const sectionColor = section.color_primary || "#521d3a";
                             </div>
                             {chapter.targets && chapter.targets.length > 0 && (
                                 <div class="targets">
-                                    <h3>Zielgruppe</h3>
+                                    <h3>{t.translation.section.targetGroup}</h3>
                                     <div class="targets-list">
                                         {chapter.targets.map((target) => (
                                             <div class="target-item">
@@ -83,7 +85,7 @@ const sectionColor = section.color_primary || "#521d3a";
         id="back-to-top"
         class="opacity-0 fixed bottom-4 right-4 h-10 w-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-opacity duration-300 z-50"
         onclick="document.getElementById('section-title')?.scrollIntoView({behavior: 'smooth'})"
-        aria-label="Nach oben"
+        aria-label={t.translation.section.backToTop}
     >
         <svg
             aria-hidden="true"
@@ -101,28 +103,29 @@ const sectionColor = section.color_primary || "#521d3a";
 </section>
 
 <script define:vars={{ sectionColor }}>
-    // Set section primary color as CSS variable
-    const sectionElement = document.querySelector("section.content");
-    if (sectionElement) {
-        // set it on :root as well for global access
-        document.documentElement.style.setProperty(
-            "--color-primary",
-            sectionColor,
-        );
-    }
-    document.addEventListener("DOMContentLoaded", function () {
-        // Show/hide back to top button based on scroll position
-        const backToTopButton = document.getElementById("back-to-top");
-        if (backToTopButton) {
-            window.addEventListener("scroll", function () {
-                if (window.scrollY > 300) {
-                    backToTopButton.classList.remove("opacity-0");
-                    backToTopButton.classList.add("opacity-100");
-                } else {
-                    backToTopButton.classList.remove("opacity-100");
-                    backToTopButton.classList.add("opacity-0");
-                }
-            });
-        }
-    });
+  function setup() {
+    window.__sectionController?.abort();
+    window.__sectionController = new AbortController();
+    const { signal } = window.__sectionController;
+
+    document.documentElement.style.setProperty('--color-primary', sectionColor);
+
+    const backToTopButton = document.getElementById('back-to-top');
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (backToTopButton) {
+        const past = window.scrollY > 300;
+        backToTopButton.classList.toggle('opacity-0', !past);
+        backToTopButton.classList.toggle('opacity-100', past);
+      }
+    }, { signal });
+  }
+
+  window.__sectionSetup = setup;
+  if (!window.__sectionDocListeners) {
+    window.__sectionDocListeners = true;
+    document.addEventListener('astro:page-load', () => window.__sectionSetup?.());
+  }
+  setup();
 </script>

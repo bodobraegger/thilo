@@ -1,5 +1,4 @@
-// Simple utility to fetch all section data at build time (like React app)
-import { slugify } from './slugify';
+import { getSections, type SectionT } from './data';
 
 export interface SectionData {
   id: number;
@@ -32,130 +31,101 @@ export interface SimpleSectionsData {
         title: string;
         slug: string;
         url: string;
+        color_primary?: string;
       };
     };
   };
 }
 
-// Cache for fetchAllSections - important for dev server performance
 let cachedAllSections: SimpleSectionsData | null = null;
 let cacheTimestamp = 0;
-const CACHE_DURATION = 60 * 1000; // 1 minute cache in dev
+const CACHE_DURATION = 60 * 60 * 1000; // 1-hour TTL
 
-// Simple function to fetch all sections (like React app)
+function toSectionData(s: SectionT): SectionData {
+  return {
+    id: s.id,
+    title: s.title,
+    menu_name: s.menu_name,
+    slug: s.slug!,
+    locale: s.locale,
+    sorting: s.sorting,
+    color_primary: s.color_primary,
+    icon: s.icon ? { id: s.icon.id, url: s.icon.url, alternativeText: s.icon.alternativeText } : undefined,
+    chapters: s.chapters.map(c => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug!,
+      sorting: c.sorting,
+    })),
+  };
+}
+
 export async function fetchAllSections(): Promise<SimpleSectionsData> {
-  // Return cached data if available and fresh
   if (cachedAllSections && Date.now() - cacheTimestamp < CACHE_DURATION) {
     return cachedAllSections;
   }
 
   const locales = ['de', 'fr', 'it'];
   const sections: { [locale: string]: SectionData[] } = {};
-  
-  // Fetch sections for all locales IN PARALLEL
-  const fetchPromises = locales.map(async (locale) => {
+
+  await Promise.all(locales.map(async (locale) => {
     try {
-      const response = await fetch(`https://api.thilo.scouts.ch/sections?_locale=${locale}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sections for ${locale}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      
-      // Process sections and add generated slugs (same as React app)
-      return {
-        locale,
-        sections: data.map((section: any) => ({
-          id: section.id,
-          title: section.title,
-          menu_name: section.menu_name || section.title,
-          slug: slugify(section.title),
-          locale,
-          sorting: section.sorting,
-          color_primary: section.color_primary,
-          icon: section.icon ? {
-            id: section.icon.id,
-            url: section.icon.url,
-            alternativeText: section.icon.alternativeText,
-          } : undefined,
-          chapters: section.chapters?.map((chapter: any) => ({
-            id: chapter.id,
-            title: chapter.title,
-            slug: slugify(chapter.title),
-            sorting: chapter.sorting
-          })) || []
-        }))
-      };
+      const raw = await getSections(locale);
+      sections[locale] = raw.map(toSectionData);
     } catch (error) {
       console.error(`❌ Failed to fetch sections for ${locale}:`, error);
-      return { locale, sections: [] };
+      sections[locale] = [];
     }
-  });
+  }));
 
-  // Wait for all fetches to complete in parallel
-  const results = await Promise.all(fetchPromises);
-  
-  // Populate sections object
-  for (const result of results) {
-    sections[result.locale] = result.sections;
-  }
-  
-  // Build simple section mappings by sorting (like React app)
   const sectionMappings: SimpleSectionsData['sectionMappings'] = {};
-  
-  // Group sections by sorting across locales (like React app uses sorting to match)
   const sectionsBySort: { [sorting: number]: SectionData[] } = {};
-  
+
+  // Group parallel translations by their sorting order index
   for (const locale of locales) {
     for (const section of sections[locale]) {
-      if (!sectionsBySort[section.sorting]) {
-        sectionsBySort[section.sorting] = [];
-      }
+      if (!sectionsBySort[section.sorting]) sectionsBySort[section.sorting] = [];
       sectionsBySort[section.sorting].push(section);
     }
   }
-  
-  // Build mappings for each sorting group
-  for (const [sorting, sectionGroup] of Object.entries(sectionsBySort)) {
-    // Use first section's ID as key (they should all have same ID anyway)
-    const sectionId = sectionGroup[0]?.id.toString() || sorting;
-    sectionMappings[sectionId] = {};
+
+  // Build mappings
+  for (const [_, group] of Object.entries(sectionsBySort)) {
+    // Generate the localized inner map for this grouped cluster of pages
+    const localeMap: { [locale: string]: any } = {};
     
-    for (const section of sectionGroup) {
-      const url = section.locale === 'de' 
-        ? `/${section.slug}` 
+    for (const section of group) {
+      const url = section.locale === 'de'
+        ? `/${section.slug}`
         : `/${section.locale}/${section.slug}`;
         
-      sectionMappings[sectionId][section.locale] = {
-        title: section.title,
-        slug: section.slug,
-        url
+      localeMap[section.locale] = { 
+        title: section.title, 
+        slug: section.slug, 
+        url,
+        color_primary: section.color_primary 
       };
     }
-  }
-  
-  const result = {
-    sections,
-    sectionMappings
-  };
 
-  // Cache the result
+    // ✨ FIX: Bind this translation map to EVERY unique section ID in the group
+    // This ensures that looking up mapping[de_id], mapping[fr_id], or mapping[it_id] all resolve correctly!
+    for (const section of group) {
+      sectionMappings[section.id.toString()] = localeMap;
+    }
+  }
+
+  const result = { sections, sectionMappings };
   cachedAllSections = result;
   cacheTimestamp = Date.now();
-
   return result;
 }
 
-// Get section URL for a specific locale (using cached data)
 export function getSectionUrlForLocaleFromCache(
-  sectionId: string, 
-  targetLocale: string, 
+  sectionId: string,
+  targetLocale: string,
   sectionMappings: SimpleSectionsData['sectionMappings']
 ): string {
   const mapping = sectionMappings[sectionId];
-  if (mapping && mapping[targetLocale]) {
-    return mapping[targetLocale].url;
-  }
-  
-  // Fallback
+  if (mapping?.[targetLocale]) return mapping[targetLocale].url;
   return targetLocale === 'de' ? '/' : `/${targetLocale}/`;
 }
