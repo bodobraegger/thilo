@@ -4,12 +4,20 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   docker:
     name: Build and Push Container
     runs-on: ubuntu-latest
     if: github.repository == 'scout-ch/thilo'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
@@ -26,11 +34,9 @@ jobs:
           push: true
           tags: ghcr.io/scout-ch/thilo/thilo_frontend:latest
 
-  gh-pages:
-    name: Deploy to GitHub Pages
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -40,21 +46,41 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm astro build --base /thilo/
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Build
+        run: pnpm astro build --base ${{ steps.pages.outputs.base_path }}
         env:
           SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/thilo', github.repository_owner) }}
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
-        if: github.ref == 'refs/heads/master'
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          path: ./build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   production:
     name: Deploy to Production (FTP)
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.repository == 'scout-ch/thilo'
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
