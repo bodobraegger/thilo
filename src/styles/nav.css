@@ -119,9 +119,9 @@ nav.header-nav {
     }
   }
 
-  .chapters-list a:hover {
-    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, white 95%) !important;
-    color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, black 30%) !important;
+  a:not(.active):hover {
+    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, white 95%);
+    color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, black 30%);
   }
 }
 
