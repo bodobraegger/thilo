@@ -40,6 +40,8 @@ export default defineConfig({
       workbox: {
         // Precache all build output (HTML, JS, CSS, fonts, assets)
         globPatterns: ['**/*.{html,js,css,svg,png,ico,woff,woff2,ttf,json}'],
+        // Strip all query params from precache lookups so ?q=... doesn't break the search page match
+        ignoreURLParametersMatching: [/.*/],
         // Cache Strapi API responses (sections, start-page) for offline use
         runtimeCaching: [
           {
