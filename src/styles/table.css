@@ -6,11 +6,15 @@
 
 .content .table-inner {
   display: block;
-  width: max-content;
+  width: fit-content;
   min-width: 100%;
   border: 1px solid var(--color-primary-200);
   border-radius: var(--border-radius-md);
   overflow: hidden;
+}
+
+.content table td {
+  overflow-wrap: break-word;
 }
 
 .content table {
