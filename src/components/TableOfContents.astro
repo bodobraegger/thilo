@@ -266,6 +266,29 @@ function getSectionUrl(section: SectionT, locale: string): string {
       if (e.key === 'Escape') closeSidebar();
     }, { signal });
 
+    // Wait for all unloaded images in the section before scrolling, then scroll.
+    function scrollAfterImages(el, behavior) {
+      const imgs = Array.from(document.querySelectorAll('section.content img'))
+        .filter(img => !img.complete);
+      if (imgs.length === 0) {
+        el.scrollIntoView({ behavior, block: 'start' });
+        return;
+      }
+      Promise.all(imgs.map(img => new Promise(res => {
+        img.addEventListener('load',  res, { once: true });
+        img.addEventListener('error', res, { once: true });
+      }))).then(() => el.scrollIntoView({ behavior, block: 'start' }));
+    }
+
+    // On load, if there's a hash in the URL re-scroll after images settle so
+    // content that loaded after the browser's native scroll doesn't push the
+    // target out of view.
+    const initialHash = window.location.hash.slice(1);
+    if (initialHash) {
+      const target = document.getElementById(initialHash);
+      if (target) scrollAfterImages(target, 'instant');
+    }
+
     // Smooth scroll for in-page anchor links
     document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
@@ -279,7 +302,8 @@ function getSectionUrl(section: SectionT, locale: string): string {
         const normalizedPathname = window.location.pathname.replace(/\/$/, '') || '/';
         if (normalizedPath === normalizedPathname || path === '') {
           e.preventDefault();
-          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const el = document.getElementById(hash);
+          if (el) scrollAfterImages(el, 'smooth');
           history.pushState(null, '', '#' + hash);
           scrollToCurrentInToC('smooth');
           if (window.innerWidth < 1024) closeSidebar();
