@@ -122,9 +122,10 @@ const sectionColor = section.color_primary || "#521d3a";
     }, { signal });
   }
 
+  window.__sectionSetup = setup;
   if (!window.__sectionDocListeners) {
     window.__sectionDocListeners = true;
-    document.addEventListener('astro:page-load', setup);
+    document.addEventListener('astro:page-load', () => window.__sectionSetup?.());
   }
   setup();
 </script>

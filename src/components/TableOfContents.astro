@@ -274,7 +274,10 @@ function getSectionUrl(section: SectionT, locale: string): string {
         if (hashIndex === -1) return;
         const path = href.slice(0, hashIndex) || window.location.pathname;
         const hash = href.slice(hashIndex + 1);
-        if (path === window.location.pathname || path === '') {
+        // Normalize trailing slashes — Astro's static build serves pages at /slug/ but hrefs are /slug
+        const normalizedPath     = path.replace(/\/$/, '') || '/';
+        const normalizedPathname = window.location.pathname.replace(/\/$/, '') || '/';
+        if (normalizedPath === normalizedPathname || path === '') {
           e.preventDefault();
           document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           history.pushState(null, '', '#' + hash);
