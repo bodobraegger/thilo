@@ -42,6 +42,17 @@ export default defineConfig({
         globPatterns: ['**/*.{html,js,css,svg,png,ico,woff,woff2,ttf,json}'],
         // Strip all query params from precache lookups so ?q=... doesn't break the search page match
         ignoreURLParametersMatching: [/.*/],
+        // Remap the root '/' precache entry to the actual base path so the
+        // SW can serve the homepage when navigating to /thilo/ (not just /)
+        manifestTransforms: [
+          async (entries) => {
+            const base = getBaseUrl();
+            return {
+              manifest: entries.map(e => e.url === '/' ? { ...e, url: base } : e),
+              warnings: [],
+            };
+          },
+        ],
         // Cache Strapi API responses (sections, start-page) for offline use
         runtimeCaching: [
           {
