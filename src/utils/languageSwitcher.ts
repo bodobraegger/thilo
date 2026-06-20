@@ -20,7 +20,7 @@ export function handleLanguageChange(targetLocale: string, base: string): void {
     .querySelector('meta[name="all-sections"]')
     ?.getAttribute('content');
   if (!allSectionsMeta) {
-    window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}/`);
+    window.location.href = targetLocale === 'de' ? buildUrl('/') : buildUrl(`/${targetLocale}`);
     return;
   }
 
@@ -64,7 +64,7 @@ export function handleLanguageChange(targetLocale: string, base: string): void {
         : buildUrl(`/${targetLocale}/search`)
       : targetLocale === 'de'
         ? buildUrl('/')
-        : buildUrl(`/${targetLocale}/`);
+        : buildUrl(`/${targetLocale}`);
   if (window.location.search) targetUrl += window.location.search;
   window.location.href = targetUrl;
 }
