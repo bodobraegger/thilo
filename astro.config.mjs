@@ -47,8 +47,13 @@ export default defineConfig({
         manifestTransforms: [
           async (entries) => {
             const base = getBaseUrl();
+            const localeHomepages = new Set(['fr', 'it', 'en']);
             return {
-              manifest: entries.map(e => e.url === '/' ? { ...e, url: base } : e),
+              manifest: entries.map(e => {
+                if (e.url === '/') return { ...e, url: base };
+                if (localeHomepages.has(e.url)) return { ...e, url: e.url + '/' };
+                return e;
+              }),
               warnings: [],
             };
           },
