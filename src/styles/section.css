@@ -1,12 +1,14 @@
 section {
   h1, h2, h3 {
     color: var(--color-primary);
+    text-wrap: balance;
   }
   h3 {
     margin-bottom: 4px;
   }
   h4 {
     color: var(--color-primary-light);
+    text-wrap: balance;
   }
   img {
     max-width: 100%;
@@ -26,6 +28,7 @@ section {
     text-align: justify;
     word-wrap: break-word;
     hyphens: auto;
+    text-wrap: pretty;
   }
 
   address, article, aside, blockquote, canvas, 
