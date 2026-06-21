@@ -24,11 +24,12 @@ const allSectionsData: SimpleSectionsData = await fetchAllSections();
 
 // Generate language alternatives for dropdown
 let languageAlternatives = [];
+const allLocales = ['de', 'fr', 'it'];
 
 if (currentSection) {
   // For section pages, use pre-built section mapping
-  for (const targetLocale of ['de', 'fr', 'it']) {
-    if (targetLocale === locale) continue; // Skip current locale
+  for (const targetLocale of allLocales) {
+    // if (targetLocale === locale) continue; // Skip current locale
     
     const url = getSectionUrlForLocaleFromCache(
       currentSection.id.toString(), 
@@ -54,7 +55,7 @@ if (currentSection) {
   }
   
   // Generate URLs for all locales
-  for (const targetLocale of ['de', 'fr', 'it']) {
+  for (const targetLocale of allLocales) {
     if (targetLocale === locale) continue; // Skip current locale
     
     let targetUrl;
@@ -118,38 +119,29 @@ if (currentSection) {
             id="menu-dropdown" 
             class="hidden absolute right-0 xl:left-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
           >
-            <div class="px-4 py-2 border-b border-gray-200">
+            <div class="px-4 py-2 border-gray-200">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
                 {t.translation.header.language}
               </p>
               
               <!-- Language Options -->
-              <button 
-                type="button"
-                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
-                data-locale="de"
-              >
-                <span class="mr-2">{locale === 'de' ? '✓' : ''}</span>
-                <span>Deutsch</span>
-              </button>
-              <button 
-                type="button"
-                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
-                data-locale="fr"
-              >
-                <span class="mr-2">{locale === 'fr' ? '✓' : ''}</span>
-                <span>Français</span>
-              </button>
-              <button 
-                type="button"
-                class="w-full text-left flex items-center px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 language-option"
-                data-locale="it"
-              >
-                <span class="mr-2">{locale === 'it' ? '✓' : ''}</span>
-                <span>Italiano</span>
-              </button>
-              
+              <div class="languages-container my-1 border-b border-gray-200 *:rounded *:w-full *:text-left *:flex *:items-center *:px-4 *:py-2 *:text-sm *:transition-colors *:text-gray-700 *:hover:bg-gray-100 *:hover:text-gray-900 *:"> 
+                {languageAlternatives.map(({ locale: altLocale, url }) => (
+                  <AstroLink 
+                    key={altLocale}
+                    href={url}
+                    class="language-option last:mb-1"
+                    data-locale={altLocale}
+                  >
+                    <span class="mr-2">{locale === altLocale ? '✓' : ''}</span>
+                    <span>
+                      {altLocale === 'de' ? 'Deutsch' : altLocale === 'fr' ? 'Français' : altLocale === 'it' ? 'Italiano' : altLocale}
+                    </span>
+                  </AstroLink>
+                ))}
+              </div>
               <!-- Theme Section -->
+              <!--
               <div class="border-t border-gray-200 mt-1">
                 <button
                   type="button"
@@ -162,12 +154,12 @@ if (currentSection) {
                   </span>
                 </button>
               </div>
-              
+              -->
               <!-- Impressum Section -->
-              <div class="border-t border-gray-200">
+              <div class="impressum-container">
                 <AstroLink 
                   href={locale === 'de' ? '/impressum' : `/${locale}/impressum`}
-                  class="block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  class="block px-4 py-2 text-sm rounded-md transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 >
                   {t.translation.header.imprint}
                 </AstroLink>
