@@ -96,6 +96,31 @@ nav.header-nav {
 
 /* Table of Contents */
 
+/* Sidebar visibility and positioning — JS only toggles .sidebar-open */
+#sidebar-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 50;
+
+  &.sidebar-open {
+    display: flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  #sidebar-nav {
+    display: flex;
+    position: sticky;
+    top: 52px;
+    height: calc(100vh - 52px);
+    z-index: auto;
+    left: auto;
+  }
+}
+
 #sidebar-nav {
   .section,
   .chapters-list a.chapter {
