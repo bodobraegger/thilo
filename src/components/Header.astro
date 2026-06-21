@@ -40,24 +40,28 @@ if (currentSection) {
   }
 } else {
   // For other pages (index, search, etc.), determine equivalent URLs
-  let basePath = pathname;
-  
+  // Strip the base path first since Astro.url.pathname includes it (e.g. /thilo/fr/search)
+  const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
+  let basePath = (baseUrl && pathname.startsWith(baseUrl))
+    ? pathname.slice(baseUrl.length)
+    : pathname;
+
   // Remove locale prefix if present
-  if (pathname.startsWith('/fr/')) {
-    basePath = pathname.substring(3) || '/';
-  } else if (pathname.startsWith('/it/')) {
-    basePath = pathname.substring(3) || '/';
+  if (basePath.startsWith('/fr/')) {
+    basePath = basePath.substring(3) || '/';
+  } else if (basePath.startsWith('/it/')) {
+    basePath = basePath.substring(3) || '/';
+  } else if (basePath === '/fr' || basePath === '/it') {
+    basePath = '/';
   }
-  
+
   // Ensure basePath starts with /
   if (!basePath.startsWith('/')) {
     basePath = '/' + basePath;
   }
-  
-  // Generate URLs for all locales
+
+  // Generate URLs for all locales (including current, shown with checkmark)
   for (const targetLocale of allLocales) {
-    if (targetLocale === locale) continue; // Skip current locale
-    
     let targetUrl;
     if (targetLocale === 'de') {
       targetUrl = basePath === '/' ? '/' : basePath;
