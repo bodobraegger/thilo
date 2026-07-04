@@ -1,16 +1,17 @@
 import type { APIRoute } from 'astro';
 import { fetchAllSections } from '../utils/sectionMappings';
+import { absoluteUrl } from '../utils/urls';
 
 const LOCALES = ['de', 'fr', 'it'] as const;
 
 type Locale = typeof LOCALES[number];
 
-function sectionUrl(site: string, locale: Locale, slug: string): string {
-  return locale === 'de' ? `${site}/${slug}` : `${site}/${locale}/${slug}`;
+function sectionUrl(locale: Locale, slug: string): string {
+  return absoluteUrl(locale === 'de' ? `/${slug}` : `/${locale}/${slug}`);
 }
 
-function pageUrl(site: string, locale: Locale, path: string): string {
-  return locale === 'de' ? `${site}${path}` : `${site}/${locale}${path}`;
+function pageUrl(locale: Locale, path: string): string {
+  return absoluteUrl(locale === 'de' ? path : `/${locale}${path}`);
 }
 
 function urlEntry(loc: string, alternates: Array<{ hreflang: string; href: string }>): string {
@@ -20,39 +21,38 @@ function urlEntry(loc: string, alternates: Array<{ hreflang: string; href: strin
   return `  <url>\n    <loc>${loc}</loc>\n${alts}\n  </url>`;
 }
 
-export const GET: APIRoute = async ({ site }) => {
-  const SITE = (site?.href ?? 'https://thilo.scouts.ch').replace(/\/$/, '');
+export const GET: APIRoute = async () => {
   const allSections = await fetchAllSections();
   const entries: string[] = [];
 
   // Static pages: home, search, impressum
   for (const path of ['/', '/search', '/impressum']) {
     const alternates = [
-      ...LOCALES.map(l => ({ hreflang: l, href: pageUrl(SITE, l, path) })),
-      { hreflang: 'x-default', href: pageUrl(SITE, 'de', path) },
+      ...LOCALES.map(l => ({ hreflang: l, href: pageUrl(l, path) })),
+      { hreflang: 'x-default', href: pageUrl('de', path) },
     ];
     for (const locale of LOCALES) {
-      entries.push(urlEntry(pageUrl(SITE, locale, path), alternates));
+      entries.push(urlEntry(pageUrl(locale, path), alternates));
     }
   }
 
-  // Section pages — group by sorting so equivalent sections across locales share alternates
-  const bySort = new Map<number, Array<{ locale: Locale; slug: string }>>();
+  // Section pages — group via the cross-locale mapping so equivalent sections share alternates
+  const seenGroups = new Set<object>();
   for (const locale of LOCALES) {
     for (const section of allSections.sections[locale] ?? []) {
-      if (!bySort.has(section.sorting)) bySort.set(section.sorting, []);
-      bySort.get(section.sorting)!.push({ locale: locale as Locale, slug: section.slug });
-    }
-  }
+      const localeMap = allSections.sectionMappings[section.id.toString()];
+      if (!localeMap || seenGroups.has(localeMap)) continue;
+      seenGroups.add(localeMap);
 
-  for (const group of bySort.values()) {
-    const deSlug = group.find(s => s.locale === 'de')?.slug ?? '';
-    const alternates = [
-      ...group.map(s => ({ hreflang: s.locale, href: sectionUrl(SITE, s.locale, s.slug) })),
-      { hreflang: 'x-default', href: sectionUrl(SITE, 'de', deSlug) },
-    ];
-    for (const { locale, slug } of group) {
-      entries.push(urlEntry(sectionUrl(SITE, locale, slug), alternates));
+      const group = Object.entries(localeMap) as Array<[Locale, { slug: string }]>;
+      const deSlug = localeMap['de']?.slug;
+      const alternates = [
+        ...group.map(([l, info]) => ({ hreflang: l, href: sectionUrl(l, info.slug) })),
+        ...(deSlug ? [{ hreflang: 'x-default', href: sectionUrl('de', deSlug) }] : []),
+      ];
+      for (const [l, info] of group) {
+        entries.push(urlEntry(sectionUrl(l, info.slug), alternates));
+      }
     }
   }
 
