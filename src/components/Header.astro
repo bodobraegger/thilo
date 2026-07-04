@@ -145,20 +145,23 @@ if (currentSection) {
                 ))}
               </div>
               <!-- Theme Section -->
-              <!--
-              <div class="border-t border-gray-200 mt-1">
+              <div class="border-b border-gray-200 mb-1">
                 <button
                   type="button"
                   id="theme-toggle"
-                  class="w-full text-left block px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  class="w-full text-left block rounded px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  data-theme-labels={JSON.stringify({
+                    sync: t.translation.header.theme_auto_name,
+                    light: t.translation.header.theme_light_name,
+                    dark: t.translation.header.theme_dark_name,
+                  })}
                 >
                   <span class="flex items-center justify-between">
                     <span>{t.translation.header.theme}</span>
-                    <span class="text-xs text-gray-500" id="theme-label">{t.translation.header.theme_light_name}</span>
+                    <span class="text-xs text-gray-500" id="theme-label"></span>
                   </span>
                 </button>
               </div>
-              -->
               <!-- Impressum Section -->
               <div class="impressum-container">
                 <AstroLink 
@@ -240,7 +243,24 @@ if (currentSection) {
       if (e.key === 'Escape' && !menuDropdown?.classList.contains('hidden')) closeMenu();
     }, { signal });
 
-    themeToggle?.addEventListener('click', () => closeMenu(), { signal });
+    const THEME_ORDER = ['sync', 'light', 'dark'];
+    const themeLabel = document.getElementById('theme-label');
+    const themeLabels: Record<string, string> = JSON.parse(themeToggle?.dataset.themeLabels ?? '{}');
+
+    function currentTheme(): string {
+      try { return localStorage.getItem('thilo-theme') || 'sync'; } catch { return 'sync'; }
+    }
+    function refreshThemeLabel() {
+      if (themeLabel) themeLabel.textContent = themeLabels[currentTheme()] ?? '';
+    }
+    refreshThemeLabel();
+
+    themeToggle?.addEventListener('click', () => {
+      const next = THEME_ORDER[(THEME_ORDER.indexOf(currentTheme()) + 1) % THEME_ORDER.length];
+      try { localStorage.setItem('thilo-theme', next); } catch { /* storage unavailable */ }
+      (window as any).thiloApplyStoredTheme?.();
+      refreshThemeLabel();
+    }, { signal });
 
     document.querySelectorAll<HTMLElement>('.language-option').forEach(option => {
       option.addEventListener('click', (e) => {

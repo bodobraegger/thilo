@@ -141,14 +141,14 @@ nav.header-nav {
     transition: background-color 0.15s ease, color 0.15s ease;
 
     &.active {
-      background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 10%, white 90%);
-      color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, black 30%);
+      background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 10%, var(--mix-light) 90%);
+      color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, var(--mix-dark) 30%);
     }
   }
 
   a:not(.active):hover {
-    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, white 95%);
-    color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, black 30%);
+    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, var(--mix-light) 95%);
+    color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, var(--mix-dark) 30%);
   }
 }
 

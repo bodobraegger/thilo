@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import './variables.css';
+@import './dark.css';
 @import './layout.css';
 @import './quiz.css';
 @import './table.css';
@@ -9,6 +10,15 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Native form controls and scrollbars follow the active theme; also lets
+   extensions like Dark Reader detect built-in dark support */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 html {

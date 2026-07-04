@@ -12,6 +12,14 @@
   --border-color: #dee2e6;
   --border-muted: #e9ecef;
 
+  /* Mix targets for the color-mix() primary palette; flipped in dark mode so
+     "lighter" tints become dark surfaces and "darker" shades become light text */
+  --mix-light: white;
+  --mix-dark: black;
+  /* How much of a section accent color to keep when used as text (reduced in
+     dark mode so accents are lightened toward readable contrast) */
+  --accent-keep: 100%;
+
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
@@ -71,4 +79,26 @@
   --z-index-fixed: 1030;
   --z-index-modal-backdrop: 1040;
   --z-index-modal: 1050;
+}
+
+/* Dark theme - toggled via the header menu (sync/light/dark) or system preference */
+html.dark {
+  --text-color: #e8e8e8;
+  --text-secondary: #b0b0b0;
+  --text-muted: #8f8f8f;
+
+  --background-color: #171717;
+  --background-light: #1f1f1f;
+  --background-tertiary: #2a2a2a;
+
+  --border-color: #3a3a3a;
+  --border-muted: #2e2e2e;
+
+  --mix-light: #222222;
+  --mix-dark: #f2f2f2;
+  --accent-keep: 65%;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -2px rgba(0, 0, 0, 0.45);
 }

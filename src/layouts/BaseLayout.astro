@@ -40,6 +40,18 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script is:inline>
+      // Apply the stored theme before first paint to avoid a light flash
+      (function () {
+        try {
+          var theme = localStorage.getItem('thilo-theme') || 'sync';
+          var dark = theme === 'dark' ||
+            (theme === 'sync' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) { /* storage unavailable: stay light */ }
+      })();
+    </script>
 
     <!-- Preconnect to API and CDN -->
     <link rel="preconnect" href="https://api.thilo.scouts.ch" crossorigin />
@@ -132,6 +144,19 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
     Promise.race([settled, timeout]).then(() => el.scrollIntoView({ behavior, block: 'start' }));
   }
   (window as any).thiloScrollToAnchor = scrollToAnchor;
+
+  function applyStoredTheme(): void {
+    let theme = 'sync';
+    try { theme = localStorage.getItem('thilo-theme') || 'sync'; } catch { /* stay light */ }
+    const dark = theme === 'dark' ||
+      (theme === 'sync' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+  }
+  (window as any).thiloApplyStoredTheme = applyStoredTheme;
+
+  // View transitions replace <html> attributes, dropping the .dark class
+  document.addEventListener('astro:after-swap', applyStoredTheme);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyStoredTheme);
 
   // Smooth-scroll in-content anchor links (e.g. markdown "[see below](#knoten)")
   document.addEventListener('click', (e) => {
