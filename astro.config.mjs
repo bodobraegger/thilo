@@ -141,7 +141,9 @@ export default defineConfig({
   ],
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: 'hover'
+    // 'viewport' prefetches visible links, which also covers touch devices
+    // where 'hover' never fires; the site is small enough for this to be cheap
+    defaultStrategy: 'viewport'
   },
   i18n: {
     defaultLocale: "de",

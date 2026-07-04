@@ -34,3 +34,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll;
 }
+
+/* Remove the 300ms tap delay and mobile tap flash for a native-app feel */
+a,
+button,
+input,
+[role='button'] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

@@ -15,6 +15,8 @@ import '../styles/colors.css';
 import '../styles/layout.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
 import { ClientRouter } from 'astro:transitions';
+import fontRegular from '../styles/fonts/SourceSansPro-Regular.woff2';
+import fontBold from '../styles/fonts/SourceSansPro-Bold.woff2';
 
 // Collect the current locale's unique section icon URLs for preloading
 const iconUrls: string[] = [];
@@ -36,6 +38,10 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
     <link rel="dns-prefetch" href="https://api.thilo.scouts.ch" />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+    <!-- Preload the two above-the-fold font weights -->
+    <link rel="preload" href={fontRegular} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={fontBold} as="font" type="font/woff2" crossorigin />
 
     <!-- Preload section icons -->
     {iconUrls.map(url => (
