@@ -244,6 +244,10 @@ if (currentSection) {
 
     document.querySelectorAll<HTMLElement>('.language-option').forEach(option => {
       option.addEventListener('click', (e) => {
+        // The anchor href is rendered at build time and goes stale because the
+        // header persists across view transitions; the JS switcher below is the
+        // source of truth, so suppress the default navigation.
+        e.preventDefault();
         const selectedLocale = (e.currentTarget as HTMLElement)?.dataset?.locale;
         const currentLocale  = document.documentElement.lang || 'de';
         if (!selectedLocale || selectedLocale === currentLocale) { closeMenu(); return; }

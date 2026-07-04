@@ -89,28 +89,55 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
     }
   }
 
-  // Build mappings
-  for (const [_, group] of Object.entries(sectionsBySort)) {
-    // Generate the localized inner map for this grouped cluster of pages
-    const localeMap: { [locale: string]: any } = {};
-    
+  function toLocaleEntry(section: SectionData) {
+    const url = section.locale === 'de'
+      ? `/${section.slug}`
+      : `/${section.locale}/${section.slug}`;
+    return {
+      title: section.title,
+      slug: section.slug,
+      url,
+      color_primary: section.color_primary,
+    };
+  }
+
+  for (const group of Object.values(sectionsBySort)) {
+    // Strapi data can contain several sections of the same locale with the same
+    // sorting value (e.g. a beta/test section next to the real one). Treat the
+    // section with the most chapters as the canonical translation; the others
+    // only map to themselves, so language switching falls back to the homepage
+    // instead of landing on an unrelated section.
+    const canonical: { [locale: string]: SectionData } = {};
+    const duplicates: SectionData[] = [];
     for (const section of group) {
-      const url = section.locale === 'de'
-        ? `/${section.slug}`
-        : `/${section.locale}/${section.slug}`;
-        
-      localeMap[section.locale] = { 
-        title: section.title, 
-        slug: section.slug, 
-        url,
-        color_primary: section.color_primary 
-      };
+      const existing = canonical[section.locale];
+      if (!existing) {
+        canonical[section.locale] = section;
+      } else {
+        const winner = (section.chapters?.length ?? 0) > (existing.chapters?.length ?? 0)
+          ? section : existing;
+        const loser = winner === section ? existing : section;
+        canonical[section.locale] = winner;
+        duplicates.push(loser);
+        console.warn(
+          `⚠️ Duplicate sorting=${section.sorting} for locale "${section.locale}": ` +
+          `"${winner.title}" (id ${winner.id}) treated as translation, "${loser.title}" (id ${loser.id}) excluded from language switching.`
+        );
+      }
     }
 
-    // ✨ FIX: Bind this translation map to EVERY unique section ID in the group
-    // This ensures that looking up mapping[de_id], mapping[fr_id], or mapping[it_id] all resolve correctly!
-    for (const section of group) {
+    const localeMap: { [locale: string]: any } = {};
+    for (const section of Object.values(canonical)) {
+      localeMap[section.locale] = toLocaleEntry(section);
+    }
+
+    // Bind the translation map to every canonical section ID in the group so
+    // that looking up mapping[de_id], mapping[fr_id] or mapping[it_id] all resolve.
+    for (const section of Object.values(canonical)) {
       sectionMappings[section.id.toString()] = localeMap;
+    }
+    for (const section of duplicates) {
+      sectionMappings[section.id.toString()] = { [section.locale]: toLocaleEntry(section) };
     }
   }
 

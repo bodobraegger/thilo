@@ -1,3 +1,10 @@
+const LOCALE_PREFIXES = ['fr', 'it'];
+
+interface AllSectionsMeta {
+  sections: Record<string, any[]>;
+  mappings: Record<string, Record<string, { slug: string; url: string }>>;
+}
+
 export function handleLanguageChange(targetLocale: string, base: string): void {
   const buildUrl = (path: string) => base + path;
   const currentHash = window.location.hash;
@@ -5,9 +12,10 @@ export function handleLanguageChange(targetLocale: string, base: string): void {
   let path = window.location.pathname;
   if (base && path.startsWith(base)) path = path.slice(base.length);
   path = path.replace(/^\/|\/$/g, '');
-  if (path.startsWith('fr/'))      path = path.substring(3);
-  else if (path.startsWith('it/')) path = path.substring(3);
-  else if (path === 'fr' || path === 'it') path = '';
+  for (const prefix of LOCALE_PREFIXES) {
+    if (path === prefix) path = '';
+    else if (path.startsWith(prefix + '/')) path = path.substring(prefix.length + 1);
+  }
 
   if (path === 'impressum') {
     window.location.href = targetLocale === 'de'
@@ -24,37 +32,34 @@ export function handleLanguageChange(targetLocale: string, base: string): void {
     return;
   }
 
-  const allSections: Record<string, any[]> = JSON.parse(allSectionsMeta);
+  const { sections, mappings }: AllSectionsMeta = JSON.parse(allSectionsMeta);
   const currentLocale = document.documentElement.lang || 'de';
-  const currentSection = (allSections[currentLocale] ?? []).find((s) => s.slug === path);
+  const currentSection = (sections[currentLocale] ?? []).find((s) => s.slug === path);
+  const targetEntry = currentSection
+    ? mappings[currentSection.id.toString()]?.[targetLocale]
+    : undefined;
 
-  if (currentSection) {
-    const targetSection = (allSections[targetLocale] ?? []).find(
-      (s) => s.sorting === currentSection.sorting
-    );
-    if (targetSection) {
-      const targetUrl = buildUrl(
-        targetLocale === 'de'
-          ? `/${targetSection.slug}`
-          : `/${targetLocale}/${targetSection.slug}`
+  if (currentSection && targetEntry) {
+    const targetUrl = buildUrl(targetEntry.url);
+    if (currentHash) {
+      const targetSection = (sections[targetLocale] ?? []).find(
+        (s) => s.slug === targetEntry.slug
       );
-      if (currentHash && currentSection.chapters && targetSection.chapters) {
-        const curChapter = currentSection.chapters.find(
-          (c: any) => c.slug === currentHash.slice(1)
+      const curChapter = (currentSection.chapters ?? []).find(
+        (c: any) => c.slug === currentHash.slice(1)
+      );
+      if (curChapter && targetSection) {
+        const tgtChapter = (targetSection.chapters ?? []).find(
+          (c: any) => c.sorting === curChapter.sorting
         );
-        if (curChapter) {
-          const tgtChapter = targetSection.chapters.find(
-            (c: any) => c.sorting === curChapter.sorting
-          );
-          if (tgtChapter) {
-            window.location.href = targetUrl + `#${tgtChapter.slug}`;
-            return;
-          }
+        if (tgtChapter) {
+          window.location.href = targetUrl + `#${tgtChapter.slug}`;
+          return;
         }
       }
-      window.location.href = targetUrl;
-      return;
     }
+    window.location.href = targetUrl;
+    return;
   }
 
   let targetUrl =

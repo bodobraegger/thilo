@@ -16,15 +16,11 @@ import '../styles/layout.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
 import { ClientRouter } from 'astro:transitions';
 
-// Collect all unique section icon URLs for preloading
+// Collect the current locale's unique section icon URLs for preloading
 const iconUrls: string[] = [];
-if (allSectionsData?.sections) {
-  for (const locale of Object.values(allSectionsData.sections) as any[]) {
-    for (const section of locale) {
-      if (section.icon?.url && !iconUrls.includes(section.icon.url)) {
-        iconUrls.push(section.icon.url);
-      }
-    }
+for (const section of allSectionsData?.sections?.[lang] ?? []) {
+  if (section.icon?.url && !iconUrls.includes(section.icon.url)) {
+    iconUrls.push(section.icon.url);
   }
 }
 ---
@@ -65,12 +61,18 @@ if (allSectionsData?.sections) {
     ))}
     <ClientRouter />
     {allSectionsData && (
-      <meta name="all-sections" content={JSON.stringify(allSectionsData.sections)} />
+      <meta
+        name="all-sections"
+        content={JSON.stringify({
+          sections: allSectionsData.sections,
+          mappings: allSectionsData.sectionMappings,
+        })}
+      />
     )}
   </head>
   <body>
     <slot />
-    <PWAUpdatePrompt />
+    <PWAUpdatePrompt locale={lang} />
   </body>
 </html>
 
