@@ -3,6 +3,7 @@
 // only quizzes remain interactive islands.
 import { marked } from 'marked';
 import type { Token } from 'marked';
+import { slugify } from './slugify';
 
 const BACKEND_URL = (import.meta as any).env?.BACKEND_URL || 'https://api.thilo.scouts.ch/';
 
@@ -49,6 +50,14 @@ function parseCSSProperties(cssText: string): string | null {
 
 function createRenderer(base: string, locale: string) {
   const renderer = new marked.Renderer();
+
+  // Give headings stable ids so in-content anchor links and deep links work
+  renderer.heading = function (token: any): string {
+    const inner = this.parser.parseInline(token.tokens);
+    const id = slugify(token.text ?? '');
+    const idAttr = id ? ` id="${id}"` : '';
+    return `<h${token.depth}${idAttr}>${inner}</h${token.depth}>\n`;
+  };
 
   renderer.link = function (token: any): string {
     const { href, title, text } = token;

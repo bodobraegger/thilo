@@ -83,6 +83,38 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
     if (color) document.documentElement.style.setProperty('--color-primary', color);
   }
 
+  // Scroll an anchor target into view without the content shifting under the
+  // user: images above the target are forced to load first (lazy ones are
+  // flipped to eager), with a timeout so a stalled image can't block forever.
+  function scrollToAnchor(el: HTMLElement, behavior: ScrollBehavior): void {
+    const pending = (Array.from(document.querySelectorAll('section.content img')) as HTMLImageElement[])
+      .filter(img => !img.complete && (img.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING));
+    pending.forEach(img => { if (img.loading === 'lazy') img.loading = 'eager'; });
+    if (pending.length === 0) {
+      el.scrollIntoView({ behavior, block: 'start' });
+      return;
+    }
+    const settled = Promise.all(pending.map(img => new Promise<void>(resolve => {
+      img.addEventListener('load',  () => resolve(), { once: true });
+      img.addEventListener('error', () => resolve(), { once: true });
+    })));
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, 3000));
+    Promise.race([settled, timeout]).then(() => el.scrollIntoView({ behavior, block: 'start' }));
+  }
+  (window as any).thiloScrollToAnchor = scrollToAnchor;
+
+  // Smooth-scroll in-content anchor links (e.g. markdown "[see below](#knoten)")
+  document.addEventListener('click', (e) => {
+    const anchor = (e.target as HTMLElement).closest?.('section.content a[href^="#"]') as HTMLAnchorElement | null;
+    if (!anchor) return;
+    const id = decodeURIComponent(anchor.getAttribute('href')!.slice(1));
+    const target = document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    history.pushState(null, '', '#' + id);
+    scrollToAnchor(target, 'smooth');
+  });
+
   function setupBackToTop(): void {
     (window as any).__sectionController?.abort();
     const ctrl = new AbortController();
