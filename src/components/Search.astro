@@ -113,15 +113,23 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     private input: HTMLInputElement | null = null;
     private dropdown: HTMLElement | null = null;
     private resultsContainer: HTMLElement | null = null;
+    private controller: AbortController | null = null;
     private readonly MIN = 2;
 
     connectedCallback() {
+      // The header instance is re-connected on every view transition (it sits
+      // in a transition:persist subtree that gets moved into the new page), so
+      // listeners are scoped to an AbortController to avoid duplicates.
+      this.controller?.abort();
+      this.controller = new AbortController();
+      const { signal } = this.controller;
+
       this.locale    = this.dataset.locale    ?? 'de';
       this.inline    = this.dataset.inline    === 'true';
       this.hideInput = this.dataset.hideInput === 'true';
-      this.noDropdown= this.dataset.noDropdown=== 'true';
       this.i18n      = JSON.parse(this.dataset.i18n     ?? '{}');
       this.sections  = JSON.parse(this.dataset.sections ?? '[]');
+      this.noDropdown= this.inline ? this.#isOnSearchPage() : this.dataset.noDropdown === 'true';
       // read query from url if not provided via props
       this.query     = new URLSearchParams(window.location.search).get('q') ?? this.dataset.initialQuery ?? '';
 
@@ -130,22 +138,48 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       this.resultsContainer= this.querySelector('[data-search-results]');
 
       if (this.input) {
-        this.input.addEventListener('input',   this.#onInput.bind(this));
-        this.input.addEventListener('keydown', this.#onKeyDown.bind(this));
-        this.input.addEventListener('focus',   this.#onFocus.bind(this));
-        this.input.addEventListener('blur',    this.#onBlur.bind(this));
+        this.input.value = this.query;
+        this.input.addEventListener('input',   this.#onInput.bind(this),   { signal });
+        this.input.addEventListener('keydown', this.#onKeyDown.bind(this), { signal });
+        this.input.addEventListener('focus',   this.#onFocus.bind(this),   { signal });
+        this.input.addEventListener('blur',    this.#onBlur.bind(this),    { signal });
       }
 
       if (this.hideInput) {
-        window.addEventListener('thilo:search', this.#onSearchEvent.bind(this) as EventListener);
+        window.addEventListener('thilo:search', this.#onSearchEvent.bind(this) as EventListener, { signal });
       }
 
-      // If sections not embedded, fetch them
-      if (this.sections.length === 0) {
-        this.#fetchSections();
-      } else {
+      // Keep page-dependent state (dropdown vs full-page mode, query) in sync
+      // after view transitions.
+      document.addEventListener('astro:page-load', this.#onPageLoad.bind(this), { signal });
+
+      this.#performSearch();
+      this.#renderResults();
+    }
+
+    disconnectedCallback() {
+      this.controller?.abort();
+      this.controller = null;
+    }
+
+    #isOnSearchPage(): boolean {
+      const path = window.location.pathname.replace(/\/$/, '');
+      return path.endsWith('/search');
+    }
+
+    #onPageLoad() {
+      if (!this.inline) return;
+      const onSearchPage = this.#isOnSearchPage();
+      if (onSearchPage !== this.noDropdown) {
+        this.noDropdown = onSearchPage;
+        this.showDropdown = false;
+        this.selectedIndex = -1;
+        this.dropdown?.classList.remove('open');
+      }
+      if (onSearchPage && this.input) {
+        this.query = new URLSearchParams(window.location.search).get('q') ?? '';
+        this.input.value = this.query;
         this.#performSearch();
-        this.#renderResults();
       }
     }
 
@@ -190,7 +224,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         ? Math.min(this.results.length - 1, 2)
         : this.results.length - 1;
 
-      if (!this.showDropdown || this.results.length === 0) {
+      if (this.noDropdown || !this.showDropdown || this.results.length === 0) {
         if (e.key === 'Enter') this.#navigateToSearch();
         return;
       }
@@ -239,22 +273,6 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       } else {
         window.location.href = searchUrl;
       }
-    }
-
-    async #fetchSections() {
-      this.#renderResults(); // show loading state
-      try {
-        const apiBase =
-          (import.meta as any).env?.BACKEND_URL || 'https://api.thilo.scouts.ch/';
-        const res = await fetch(`${apiBase}sections?_locale=${this.locale}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        this.sections = json.data || json;
-      } catch (err) {
-        console.error('[search-widget] Failed to fetch sections:', err);
-      }
-      this.#performSearch();
-      this.#renderResults();
     }
 
     #performSearch() {
@@ -370,10 +388,22 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       this.dropdown.innerHTML = html;
       this.dropdown.querySelectorAll<HTMLElement>('[data-result-url]').forEach((btn, idx) => {
         btn.addEventListener('click',      () => { window.location.href = btn.dataset.resultUrl!; });
-        btn.addEventListener('mouseenter', () => { this.selectedIndex = idx; });
+        btn.addEventListener('mouseenter', () => {
+          this.selectedIndex = idx;
+          this.#updateDropdownSelection();
+        });
       });
       this.dropdown.querySelector('[data-more-results]')
         ?.addEventListener('click', () => this.#navigateToSearch());
+    }
+
+    #updateDropdownSelection() {
+      this.dropdown?.querySelectorAll<HTMLElement>('[data-result-url]').forEach((btn, idx) => {
+        const selected = idx === this.selectedIndex;
+        const color = this.results[idx]?.section?.color_primary ?? '#521d3a';
+        btn.classList.toggle('bg-gray-100', selected);
+        btn.style.backgroundColor = selected ? `color-mix(in srgb, ${color} 10%, white)` : '';
+      });
     }
 
     // ── Full-page results list ──────────────────────────────────────────────
@@ -382,13 +412,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       if (!this.resultsContainer) return;
       let html = '';
 
-      if (this.sections.length === 0) {
-        html = `
-          <div class="text-center py-12 text-gray-500">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-            <p>${escapeHtml(this.i18n.loading ?? '')}</p>
-          </div>`;
-      } else if (this.query.trim().length < this.MIN) {
+      if (this.query.trim().length < this.MIN) {
         html = `<div class="text-center py-12 text-gray-500"><p>${escapeHtml(this.i18n.enterQuery ?? '')}</p></div>`;
       } else if (this.results.length === 0) {
         html = `<div class="text-center py-8"><p>${escapeHtml((this.i18n.noResultsFor ?? '').replace('{query}', this.query))}</p></div>`;
