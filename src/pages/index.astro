@@ -21,8 +21,9 @@ const homepageSection: SectionT = {
 };
 
 
+// Re-exported by the /[lang]/ pages; 'de' is unprefixed, so only fr/it get a lang param
 export async function getStaticPaths() {
-  const locales = ['en', 'de', 'fr', 'it'];
+  const locales = ['fr', 'it'];
   return locales.map(lang => ({ params: { lang } }));
 }
 
