@@ -49,12 +49,13 @@ function getSectionUrl(section: SectionT, locale: string): string {
     <ul class="space-y-0.5">
       <!-- Home Link -->
       <li>
-        <AstroLink 
+        <AstroLink
           href={lang === 'de' ? '/' : `/${lang}/`}
-          class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors ${
+          data-nav="home"
+          class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors hover:bg-gray-100 ${
             (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-              ? 'active font-medium' 
-              : 'text-gray-700 hover:bg-gray-100'
+              ? 'active font-medium'
+              : 'text-gray-700'
           }`}
         >
           <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,6 +77,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
             <div class="section relative flex items-center text-sm rounded-md transition-colors group font-medium">
               <AstroLink
                 href={sectionPath}
+                data-nav="section"
                 class={`flex items-center flex-1 min-w-0 px-3 py-1 rounded-md ${isActivePage ? 'active' : 'text-gray-700'}`}
               >
                 {section.icon ? (
@@ -97,6 +99,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
                   class="relative z-10 w-6 h-6 mr-1 flex-shrink-0 flex items-center justify-center transform transition-transform rounded chapter-toggle"
                   data-section={section.slug}
                   aria-label="Toggle chapters"
+                  aria-expanded={isCurrentSection ? 'true' : 'false'}
                 >
                   <svg
                     class={`w-3 h-3 transition-transform ${isCurrentSection ? 'rotate-90' : ''}`}
@@ -194,11 +197,38 @@ function getSectionUrl(section: SectionT, locale: string): string {
       sidebarNav?.classList.add('sidebar-open');
       sidebarOverlay?.classList.remove('hidden');
       scrollToCurrentInToC('smooth');
+      // Move focus into the sidebar for keyboard/screen-reader users
+      sidebarToggle?.focus();
     }
 
     function closeSidebar() {
+      const wasOpen = sidebarNav?.classList.contains('sidebar-open');
       sidebarNav?.classList.remove('sidebar-open');
       sidebarOverlay?.classList.add('hidden');
+      if (wasOpen) document.getElementById('sidebar-toggle-header')?.focus();
+    }
+
+    // The sidebar persists across view transitions, so its server-rendered
+    // active/expanded states go stale after every navigation. Recompute them
+    // from the current URL.
+    function updateActiveNav() {
+      if (!sidebarNav) return;
+      const norm = (p) => (p || '').replace(/\/$/, '') || '/';
+      const path = norm(window.location.pathname);
+      sidebarNav.querySelectorAll('a[data-nav="home"], a[data-nav="section"]').forEach(link => {
+        const isActive = norm(link.getAttribute('href')) === path;
+        link.classList.toggle('active', isActive);
+        link.classList.toggle('text-gray-700', !isActive);
+        if (link.dataset.nav === 'home') link.classList.toggle('font-medium', isActive);
+        if (isActive) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+        if (link.dataset.nav === 'section') {
+          const li = link.closest('li');
+          li?.querySelector('.chapters-list')?.classList.toggle('hidden', !isActive);
+          li?.querySelector('.chapter-toggle svg')?.classList.toggle('rotate-90', isActive);
+          li?.querySelector('.chapter-toggle')?.setAttribute('aria-expanded', String(isActive));
+        }
+      });
     }
 
     function updateActiveChapter() {
@@ -221,6 +251,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
       });
     }
 
+    updateActiveNav();
     setTimeout(() => scrollToCurrentInToC('instant'), 100);
 
     window.addEventListener('hashchange',    () => scrollToCurrentInToC('smooth'), { signal });
