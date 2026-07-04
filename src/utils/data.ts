@@ -52,13 +52,6 @@ export interface StartPageT {
   locale: string;
 }
 
-export interface LinkT {
-  title: string;
-  link: string | undefined;
-  key: string;
-  slug: string | null;
-}
-
 // Fetch data from Strapi with caching
 const dataCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache (was 5 minutes)
@@ -117,11 +110,6 @@ export async function getSections(locale: string = 'de'): Promise<SectionT[]> {
   });
 }
 
-// Get links
-export async function getLinks(locale: string = 'de'): Promise<LinkT[]> {
-  return fetchFromStrapi<LinkT[]>('links', locale);
-}
-
 // Get section by slug
 export async function getSectionBySlug(slug: string, locale: string = 'de'): Promise<SectionT | null> {
   // First try to find by custom slug mapping
@@ -134,58 +122,4 @@ export async function getSectionBySlug(slug: string, locale: string = 'de'): Pro
   // Fall back to regular slug matching
   const sections = await getSections(locale);
   return sections.find(section => section.slug === slug) || null;
-}
-
-
-
-// Search function
-export async function searchContent(query: string, sections: SectionT[]): Promise<any[]> {
-  const results: any[] = [];
-  const searchTerm = query.toLowerCase();
-
-  sections.forEach(section => {
-    // Search in section title and content
-    if (section.title.toLowerCase().includes(searchTerm) || 
-        section.content.toLowerCase().includes(searchTerm)) {
-      results.push({
-        type: 'section',
-        section: section,
-        title: section.title,
-        content: section.content,
-        url: `/${section.slug}`
-      });
-    }
-
-    // Search in chapters
-    section.chapters.forEach(chapter => {
-      if (chapter.title.toLowerCase().includes(searchTerm) || 
-          chapter.content.toLowerCase().includes(searchTerm)) {
-        results.push({
-          type: 'chapter',
-          section: section,
-          chapter: chapter,
-          title: chapter.title,
-          content: chapter.content,
-          url: `/${section.slug}#${chapter.slug}`
-        });
-      }
-    });
-  });
-
-  return results;
-}
-
-// Format date utility
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('de-CH', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
-
-// Get section by ID (alias for getSectionBySlug)
-export async function getSectionById(id: string, locale: string = 'de'): Promise<SectionT | null> {
-  return getSectionBySlug(id, locale);
 }
