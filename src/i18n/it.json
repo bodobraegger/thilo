@@ -51,9 +51,24 @@
     },
     "language": {
       "de": "Deutsch",
-      "fr": "Français", 
+      "fr": "Français",
       "it": "Italiano",
       "en": "English"
+    },
+    "notFoundPage": {
+      "title": "Pagina non trovata",
+      "message": "Purtroppo la pagina richiesta non è stata trovata.",
+      "home": "Alla pagina iniziale",
+      "search": "Ricerca"
+    },
+    "imprintPage": {
+      "loadError": "Non è stato possibile caricare l'impressum."
+    },
+    "pwa": {
+      "updateAvailable": "È disponibile una nuova versione.",
+      "reload": "Aggiorna",
+      "later": "Più tardi",
+      "offlineReady": "Thilo è ora disponibile offline."
     }
   }
 }

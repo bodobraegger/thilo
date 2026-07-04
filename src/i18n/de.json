@@ -51,9 +51,24 @@
     },
     "language": {
       "de": "Deutsch",
-      "fr": "Français", 
+      "fr": "Français",
       "it": "Italiano",
       "en": "English"
+    },
+    "notFoundPage": {
+      "title": "Seite nicht gefunden",
+      "message": "Die gesuchte Seite konnte leider nicht gefunden werden.",
+      "home": "Zur Startseite",
+      "search": "Suche"
+    },
+    "imprintPage": {
+      "loadError": "Das Impressum konnte nicht geladen werden."
+    },
+    "pwa": {
+      "updateAvailable": "Eine neue Version ist verfügbar.",
+      "reload": "Aktualisieren",
+      "later": "Später",
+      "offlineReady": "Thilo ist jetzt offline verfügbar."
     }
   }
 }

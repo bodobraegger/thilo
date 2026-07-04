@@ -9,8 +9,6 @@ interface QuizComponentProps {
 }
 
 const QuizComponent: React.FC<QuizComponentProps> = ({ url }) => {
-  console.log('QuizComponent rendered with url:', url);
-
   const [quizData, setQuizData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,14 +16,11 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ url }) => {
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
-        console.log('Fetching quiz from:', url);
         const response = await fetch(url);
-        console.log('Fetch response:', response);
         if (!response.ok) {
           throw new Error(`Failed to fetch quiz: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log('Quiz data loaded:', data);
         setQuizData(data);
       } catch (err) {
         console.error('Failed to fetch quiz data', err);
