@@ -1,12 +1,28 @@
 ---
 // PWA update notification - shown when a new service worker is waiting
+import { getTranslations, type Locale } from '../i18n';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'de' } = Astro.props;
+const pwaText = getTranslations(locale as Locale).translation.pwa;
 ---
 
-<div id="pwa-update-toast" class="pwa-toast" aria-live="polite" aria-atomic="true" hidden>
-  <p id="pwa-update-message">Eine neue Version ist verfügbar.</p>
+<div
+  id="pwa-update-toast"
+  class="pwa-toast"
+  aria-live="polite"
+  aria-atomic="true"
+  data-offline-ready-text={pwaText.offlineReady}
+  data-update-text={pwaText.updateAvailable}
+  hidden
+>
+  <p id="pwa-update-message">{pwaText.updateAvailable}</p>
   <div class="pwa-toast-buttons">
-    <button id="pwa-update-reload" class="pwa-btn pwa-btn-primary">Aktualisieren</button>
-    <button id="pwa-update-dismiss" class="pwa-btn pwa-btn-ghost">Später</button>
+    <button id="pwa-update-reload" class="pwa-btn pwa-btn-primary">{pwaText.reload}</button>
+    <button id="pwa-update-dismiss" class="pwa-btn pwa-btn-ghost">{pwaText.later}</button>
   </div>
 </div>
 
@@ -89,18 +105,37 @@
   import { registerSW } from 'virtual:pwa-register';
 
   const toast = document.getElementById('pwa-update-toast') as HTMLElement;
+  const message = document.getElementById('pwa-update-message') as HTMLElement;
+  const buttons = toast?.querySelector('.pwa-toast-buttons') as HTMLElement;
   const reloadBtn = document.getElementById('pwa-update-reload') as HTMLButtonElement;
   const dismissBtn = document.getElementById('pwa-update-dismiss') as HTMLButtonElement;
+
+  const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000; // 1 hour
 
   // registerSW returns an updateSW function; the onNeedRefresh callback fires
   // when a new service worker is installed and waiting to activate.
   const updateSW = registerSW({
+    onRegisteredSW(_swUrl: string, registration?: ServiceWorkerRegistration) {
+      if (!registration) return;
+      // The precached content only refreshes when the service worker sees a
+      // new build, so poll periodically and when the tab regains focus to
+      // surface content updates without waiting for a manual reload.
+      const checkForUpdate = () => registration.update().catch(() => {});
+      setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+    },
     onNeedRefresh() {
+      message.textContent = toast.dataset.updateText ?? '';
+      buttons.hidden = false;
       toast.hidden = false;
     },
     onOfflineReady() {
-      // Optionally show a "ready for offline use" toast here
-      console.log('[PWA] App ready for offline use');
+      message.textContent = toast.dataset.offlineReadyText ?? '';
+      buttons.hidden = true;
+      toast.hidden = false;
+      setTimeout(() => { toast.hidden = true; }, 4000);
     },
   });
 
