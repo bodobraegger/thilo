@@ -6,15 +6,23 @@ export interface Props {
   description?: string;
   canonicalUrl?: string;
   hreflangUrls?: Array<{ hreflang: string; url: string }>;
+  structuredData?: object[];
 }
 
-const { title, lang = 'de', allSectionsData, description, canonicalUrl, hreflangUrls } = Astro.props;
+const { title, lang = 'de', allSectionsData, description, canonicalUrl, hreflangUrls, structuredData } = Astro.props;
+
+const OG_LOCALES: Record<string, string> = { de: 'de_CH', fr: 'fr_CH', it: 'it_CH' };
+const ogLocale = OG_LOCALES[lang] ?? 'de_CH';
+const ogLocaleAlternates = Object.entries(OG_LOCALES)
+  .filter(([locale]) => locale !== lang)
+  .map(([, value]) => value);
 
 import '../styles/global.css';
 import '../styles/colors.css';
 import '../styles/layout.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
 import { ClientRouter } from 'astro:transitions';
+import { absoluteUrl } from '../utils/urls';
 import fontRegular from '../styles/fonts/SourceSansPro-Regular.woff2';
 import fontBold from '../styles/fonts/SourceSansPro-Bold.woff2';
 
@@ -58,12 +66,24 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thilo" />
     <meta property="og:title" content={title} />
+    <meta property="og:locale" content={ogLocale} />
+    {ogLocaleAlternates.map(locale => (
+      <meta property="og:locale:alternate" content={locale} />
+    ))}
+    <meta property="og:image" content={absoluteUrl('/pwa-512.png')} />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
     {description && <meta property="og:description" content={description} />}
     {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
     {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta name="twitter:card" content="summary" />
     {hreflangUrls?.map(({ hreflang, url }) => (
       <link rel="alternate" hreflang={hreflang} href={url} />
+    ))}
+    {structuredData?.map(entry => (
+      <script type="application/ld+json" set:html={JSON.stringify(entry)} />
     ))}
     <ClientRouter />
     {allSectionsData && (
@@ -86,7 +106,11 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
   function applyColor(): void {
     const el = document.querySelector('section.content') as HTMLElement | null;
     const color = el?.dataset?.color;
-    if (color) document.documentElement.style.setProperty('--color-primary', color);
+    if (color) {
+      document.documentElement.style.setProperty('--color-primary', color);
+      // Tint the browser/PWA chrome to match the section
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color);
+    }
   }
 
   // Scroll an anchor target into view without the content shifting under the

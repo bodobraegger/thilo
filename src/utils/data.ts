@@ -42,6 +42,10 @@ export interface SectionT {
   color_primary_light?: string;
   icon?: IconT;
   chapters: ChapterT[];
+  // Optional SEO overrides: not in the Strapi schema yet, but picked up
+  // automatically for meta tags once the fields are added to the backend
+  seo_title?: string;
+  seo_description?: string;
 }
 
 export interface StartPageT {
