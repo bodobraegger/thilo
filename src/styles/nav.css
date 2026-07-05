@@ -108,6 +108,24 @@ nav.header-nav {
   &.sidebar-open {
     display: flex;
   }
+
+  /* display:none -> flex can't transition, but a keyframe animation replays
+     each time the element becomes displayed */
+  @media (prefers-reduced-motion: no-preference) {
+    &.sidebar-open {
+      animation: sidebar-slide-in 0.2s ease-out;
+    }
+  }
+}
+
+@keyframes sidebar-slide-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @media (min-width: 1024px) {
@@ -118,6 +136,12 @@ nav.header-nav {
     height: calc(100vh - 52px);
     z-index: auto;
     left: auto;
+
+    /* A lingering .sidebar-open (mobile toggle, then resize) must not replay
+       the slide-in on desktop */
+    &.sidebar-open {
+      animation: none;
+    }
   }
 }
 
@@ -160,6 +184,12 @@ nav.header-nav {
 
 #sidebar-overlay {
   backdrop-filter: blur(1px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #sidebar-overlay:not(.hidden) {
+    animation: overlay-fade-in 0.2s ease-out;
+  }
 }
 
 /* Read chapters get a half-filled bookmark; the fully filled one stays

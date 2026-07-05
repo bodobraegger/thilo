@@ -16,32 +16,26 @@
 
 ## Architecture & Code Quality
 
-- [ ] **Unify data fetching** — `src/utils/data.ts` and `src/utils/sectionMappings.ts` both fetch sections from Strapi independently with different caches (1 hr vs 1 min) and different API URL handling (`sectionMappings.ts` hardcodes `https://api.thilo.scouts.ch/` instead of using `BACKEND_URL`). Merge into one module: have `fetchAllSections()` call `getSections()` internally and build mappings from that result.
+- [x] **Unify data fetching** — `fetchAllSections()` now calls `getSections()` internally, so there is a single fetch path, cache, and `BACKEND_URL` handling in `src/utils/data.ts`.
 
-- [ ] **Replace `is:inline` + init-guard pattern** — `Header.astro` and `TableOfContents.astro` both use `window.__headerInit` / `window.__tocInit` guards to prevent listener duplication across Astro ViewTransitions. This is fragile. Better approach: use `document.addEventListener('astro:before-swap', cleanup)` with `AbortController` to tear down listeners cleanly before each transition, then re-add on `astro:page-load`.
+- [x] **Replace `is:inline` + init-guard pattern** — `Header.astro`, `TableOfContents.astro`, and `Search.astro` now use `AbortController`: each `setup()` aborts the previous controller and re-registers listeners on `astro:page-load`.
 
-- [ ] **Split oversized components** — Three components carry too many responsibilities:
-  - `Search.astro` (514 lines): relevance scoring + highlight logic + dropdown render + full-page render — extract the pure JS utilities (relevance, highlight, excerpt) into `src/utils/search.ts` so they're testable and reusable
-  - `TableOfContents.astro` (420 lines): sidebar toggle, scroll sync, active link tracking, chapter toggle — extract sidebar open/close logic into a separate script or utility
-  - `Header.astro` (374 lines): search embed, language switcher, menu dropdown, theme toggle — extract language-switching logic into `src/utils/languageSwitcher.ts`
+- [x] **Split oversized components** — Pure search utilities live in `src/utils/search.ts`, language switching in `src/utils/languageSwitcher.ts`, markdown rendering in `src/utils/markdown.ts`, URL building in `src/utils/urls.ts`. `TableOfContents.astro` keeps its sidebar logic in one script but it is now scoped, documented, and torn down cleanly.
 
-- [ ] **Complete i18n coverage** — Several hardcoded strings remain:
-  - `src/components/Section.astro`: `"Zielgruppe"` label not translated
-  - `src/components/Header.astro`: `"Language"` label hardcoded in English
-  - `src/components/Section.astro`: scroll-to-top `aria-label="Nach oben"` is German-only
+- [x] **Complete i18n coverage** — `Zielgruppe` (`section.targetGroup`), the language label (`header.language`), and the scroll-to-top `aria-label` (`section.backToTop`) all come from `src/i18n/`; 404, imprint error, and PWA prompt strings were added for de/fr/it.
 
 ## UX & Visual
 
-- [ ] **Search dropdown excerpt** — The header dropdown shows only result title + section badge. The full search page shows a content excerpt. Add a short excerpt (1–2 lines) to dropdown results so users can see why something matched without navigating away.
+- [x] **Search dropdown excerpt** — Dropdown results show a highlighted 1-2 line excerpt (`getExcerpt` + `highlightHtml` in `src/utils/search.ts`).
 
-- [ ] **Sidebar animation on mobile** — The mobile sidebar appears/disappears instantly (display toggle). Add a CSS slide-in transition (translate + opacity) for a smoother feel.
+- [x] **Sidebar animation on mobile** — Slide-in keyframe on `.sidebar-open` plus overlay fade, both behind `prefers-reduced-motion: no-preference`.
 
-- [ ] **Breadcrumb / location indicator** — On section pages, there is no visual indicator of where you are in the hierarchy beyond the sidebar highlight. Add a simple `Section > Chapter` breadcrumb at the top of the content area.
+- [x] **Breadcrumb / location indicator** — Section pages render a `Home › Section` breadcrumb above the title; the current chapter is tracked live in the sidebar.
 
-- [ ] **Scroll-to-top button** — Exists in `Section.astro` but aria-label is untranslated. Fix aria-label and ensure button is visible enough on mobile (currently might be hidden behind content).
+- [x] **Scroll-to-top button** — `aria-label` translated via `section.backToTop`; button floats above content with z-50.
 
-- [ ] **Print styles** — No `@media print` styles. Adding basic print CSS (hide header/sidebar/search, full-width content, legible font size) would help users printing scout guides.
+- [x] **Print styles** — `src/styles/print.css` hides chrome and formats content for printing.
 
 ## Functionality
 
-- [ ] **Offline / PWA improvement** — Service worker is set up via `@vite-pwa/astro` but API responses are cached with StaleWhileRevalidate. Consider also precaching section HTML pages so the app is fully usable offline after first visit.
+- [x] **Offline / PWA improvement** — Workbox `globPatterns` precaches built HTML (plus JS/CSS/fonts/icons); API responses stay StaleWhileRevalidate. Content updates are picked up via hourly and on-focus service worker update checks with a localized update prompt.
