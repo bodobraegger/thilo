@@ -86,6 +86,23 @@ header {
     background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, var(--mix-light) 95%);
     color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, var(--mix-dark) 30%);
   }
+
+  /* Section rows highlight as a whole so the chapter-toggle arrow sits
+     inside the hover/active surface; the link's own background goes
+     transparent to avoid a narrower second highlight. Link navigation and
+     arrow toggling are unaffected. */
+  .section:has(> a.active) {
+    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 10%, var(--mix-light) 90%);
+  }
+
+  .section:not(:has(> a.active)):hover {
+    background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 5%, var(--mix-light) 95%);
+  }
+
+  .section > a.active,
+  .section > a:not(.active):hover {
+    background-color: transparent;
+  }
 }
 
 .chapter-toggle::before {
