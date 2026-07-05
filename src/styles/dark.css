@@ -22,3 +22,7 @@ html.dark .border-gray-300 { border-color: #404040; }
 html.dark .placeholder-opacity-70::placeholder { color: #8f8f8f; }
 
 html.dark #sidebar-overlay { background-color: rgba(0, 0, 0, 0.5); }
+
+/* The sidebar sits directly on the page background; a lighter surface would
+   show as a visible band against the empty gutter left of it */
+html.dark #sidebar-nav { background-color: var(--background-color); }

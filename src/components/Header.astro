@@ -136,10 +136,10 @@ if (currentSection) {
                     class="language-option last:mb-1 w-full flex items-center rounded-md px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     data-locale={altLocale}
                   >
-                    <span class="mr-2">{locale === altLocale ? '✓' : ''}</span>
                     <span>
                       {altLocale === 'de' ? 'Deutsch' : altLocale === 'fr' ? 'Français' : altLocale === 'it' ? 'Italiano' : altLocale}
                     </span>
+                    <span class="ml-auto">{locale === altLocale ? '✓' : ''}</span>
                   </AstroLink>
                 ))}
               </div>
@@ -159,8 +159,8 @@ if (currentSection) {
                     data-theme={theme}
                     aria-pressed="false"
                   >
-                    <span class="mr-2" data-theme-check></span>
                     <span>{label}</span>
+                    <span class="ml-auto" data-theme-check></span>
                     <span class="ml-auto text-xs text-gray-500 hidden" data-theme-auto>
                       {t.translation.header.theme_auto_name}
                     </span>
@@ -253,9 +253,10 @@ if (currentSection) {
       if (e.key === 'Escape' && !menuDropdown?.classList.contains('hidden')) closeMenu();
     }, { signal });
 
-    // Theme options behave like the language list: until the user picks one,
-    // the option matching the system preference is marked (with an "Auto"
-    // badge); an explicit pick is stored and marked without the badge.
+    // Theme options: while syncing with the system, the matching option shows
+    // a small "Auto" text instead of a checkmark. Clicking an option stores it
+    // as an explicit choice (checkmark); clicking the checked option reverts
+    // to syncing.
     const themeOptions = document.querySelectorAll<HTMLElement>('.theme-option');
 
     function storedThemeSetting(): string {
@@ -263,23 +264,27 @@ if (currentSection) {
     }
     function refreshThemeOptions() {
       const setting = storedThemeSetting();
-      const active = setting === 'light' || setting === 'dark'
+      const isExplicit = setting === 'light' || setting === 'dark';
+      const active = isExplicit
         ? setting
         : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       themeOptions.forEach(option => {
         const isActive = option.dataset.theme === active;
-        option.setAttribute('aria-pressed', String(isActive));
+        option.setAttribute('aria-pressed', String(isActive && isExplicit));
         const check = option.querySelector('[data-theme-check]');
-        if (check) check.textContent = isActive ? '✓' : '';
+        if (check) check.textContent = isActive && isExplicit ? '✓' : '';
         option.querySelector('[data-theme-auto]')
-          ?.classList.toggle('hidden', !(isActive && setting === 'sync'));
+          ?.classList.toggle('hidden', !(isActive && !isExplicit));
       });
     }
     refreshThemeOptions();
 
     themeOptions.forEach(option => {
       option.addEventListener('click', () => {
-        try { localStorage.setItem('thilo-theme', option.dataset.theme ?? 'sync'); } catch { /* storage unavailable */ }
+        const next = storedThemeSetting() === option.dataset.theme
+          ? 'sync'
+          : option.dataset.theme ?? 'sync';
+        try { localStorage.setItem('thilo-theme', next); } catch { /* storage unavailable */ }
         (window as any).thiloApplyStoredTheme?.();
         refreshThemeOptions();
       }, { signal });
