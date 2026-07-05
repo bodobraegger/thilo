@@ -1,5 +1,56 @@
 # Improvements, July 2026 (branch `astro-rewrite-f-changes`)
 
+## Second pass: payload, runtime and UX
+
+### Static search index
+
+The search widget used to receive all section data as JSON in `data-*`
+attributes; the search page embedded the full Strapi content **three times**
+(two header widgets + the page widget). Now a per-locale
+`/search-index/[locale].json` is generated at build time
+(`src/pages/search-index/[locale].json.ts`) with markdown stripped to plain
+text (chapter entries include their target-group content, which was
+previously unsearchable). The widget fetches it on first focus/typing, keeps
+it in a module-level cache across view transitions, and the service worker
+precaches it for offline search. Consequences:
+
+- pages no longer carry section JSON for search at all
+- header search matches *content* on every page (before, section pages only
+  provided titles, so content matches silently failed outside `/search`)
+- excerpts and scoring operate on plain text, so no more `**bold**` or
+  `[link](...)` artifacts in results
+- the header renders one search widget instead of two identical ones
+- result clicks navigate via view transitions (no full reload)
+
+### Slimmer per-page metadata
+
+The `all-sections` meta tag now carries only what the client language
+switcher reads: section ids, slugs, and chapter slug/sorting pairs, plus
+slug/url mapping entries. Titles, menu names, icon URLs and colors are no
+longer serialized into every page.
+
+### Cheaper scroll handling
+
+- sidebar chapter tracking resolves link/heading pairs once per navigation
+  instead of `querySelectorAll` + `getElementById` per scroll frame, and
+  exits early when the active chapter is unchanged
+- back-to-top visibility only touches the DOM on state change
+- scroll listeners are `passive`
+- content images get `decoding="async"`
+- exact hash matching when centering the ToC (`#foo` no longer matches
+  `#foo-2`)
+
+### UX fixes
+
+- quiz loading/error/empty states localized (de/fr/it) via props from
+  `Section.astro`
+- keyboard skip-to-content link before the header (`.skip-link`, visible on
+  focus)
+- the invisible back-to-top button no longer intercepts taps in the
+  bottom-right corner (`pointer-events` follows visibility)
+
+---
+
 Full audit and improvement pass over the Astro rewrite: bug fixes (linking,
 language switching, i18n), SEO, performance, PWA reliability, dark mode, and
 gamification groundwork. One section per commit, in order.
