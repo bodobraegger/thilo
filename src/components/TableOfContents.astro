@@ -1,18 +1,17 @@
 ---
-import type { SectionT } from '../utils/data';
-import { getTranslations } from '../i18n';
+import type { SectionData } from '../utils/sectionMappings';
+import { getTranslations, type Locale } from '../i18n';
 import { getAllSlugsForSection } from '../utils/slugMapping';
 import AstroLink from './AstroLink.astro';
 
 import '../styles/nav.css';
 
 interface Props {
-  sections: SectionT[];
-  currentSection?: SectionT;
+  sections: SectionData[];
   lang?: string;
 }
 
-const { sections, currentSection, lang = 'de' } = Astro.props;
+const { sections, lang = 'de' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 // Strip the base prefix from pathname so it matches bare sectionPath values like /section-slug
 const currentPath = Astro.url.pathname.startsWith(base)
@@ -20,11 +19,11 @@ const currentPath = Astro.url.pathname.startsWith(base)
   : Astro.url.pathname;
 const currentHash = Astro.url.hash;
 
-const t = getTranslations(lang as 'de' | 'fr' | 'it');
+const t = getTranslations(lang as Locale);
 
 
 // Helper function to generate section URL based on language (no base prefix — AstroLink adds it)
-function getSectionUrl(section: SectionT, locale: string): string {
+function getSectionUrl(section: SectionData, locale: string): string {
   const slugVariants = getAllSlugsForSection(section.id.toString());
   const localeSlug = slugVariants.find(s => s.locale === locale)?.slug;
   const slug = localeSlug || section.slug;
@@ -66,7 +65,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
       </li>
 
       <!-- Sections -->
-      {sections.map((section: SectionT) => {
+      {sections.map((section) => {
         const sectionPath = getSectionUrl(section, lang);
         const isActivePage = currentPath === sectionPath || currentPath.startsWith(sectionPath);
         const isCurrentSection = isActivePage; // Only expand if we're actually on this section's page

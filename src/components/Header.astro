@@ -1,12 +1,13 @@
 ---
 import { getTranslations, type Locale } from '../i18n';
 import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
+import type { SectionT } from '../utils/data';
 import AstroLink from './AstroLink.astro';
 import SearchComponent from './Search.astro';
 
 interface Props {
   locale?: Locale;
-  currentSection?: any;
+  currentSection?: SectionT | null;
 }
 
 const { locale = 'de', currentSection } = Astro.props;

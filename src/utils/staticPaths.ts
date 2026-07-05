@@ -1,10 +1,10 @@
-import { getSections } from './data';
+import { getSections, type SectionT } from './data';
 import { getAllSlugsForSection } from './slugMapping';
 
 export async function generateSectionPaths(locales: string[], includeLocaleParam = false) {
   const paths: Array<{
     params: { lang?: string; slug: string };
-    props: { section: any; locale: string };
+    props: { section: SectionT; locale: string };
   }> = [];
   
   for (const locale of locales) {

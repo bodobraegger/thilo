@@ -19,15 +19,15 @@ export function t(key: string, locale: Locale = 'de'): string {
   const translation = getTranslations(locale);
   const keys = key.split('.');
   
-  let result: any = translation.translation;
+  let result: unknown = translation.translation;
   for (const k of keys) {
     if (result && typeof result === 'object' && k in result) {
-      result = result[k];
+      result = (result as Record<string, unknown>)[k];
     } else {
       return key; // Return key if translation not found
     }
   }
-  
+
   return typeof result === 'string' ? result : key;
 }
 

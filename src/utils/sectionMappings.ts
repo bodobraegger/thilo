@@ -21,18 +21,20 @@ export interface SectionData {
   }>;
 }
 
+export interface SectionLocaleEntry {
+  title: string;
+  slug: string;
+  url: string;
+  color_primary?: string;
+}
+
 export interface SimpleSectionsData {
   sections: {
     [locale: string]: SectionData[];
   };
   sectionMappings: {
     [sectionId: string]: {
-      [locale: string]: {
-        title: string;
-        slug: string;
-        url: string;
-        color_primary?: string;
-      };
+      [locale: string]: SectionLocaleEntry;
     };
   };
 }
@@ -89,7 +91,7 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
     }
   }
 
-  function toLocaleEntry(section: SectionData) {
+  function toLocaleEntry(section: SectionData): SectionLocaleEntry {
     const url = section.locale === 'de'
       ? `/${section.slug}`
       : `/${section.locale}/${section.slug}`;
@@ -126,7 +128,7 @@ export async function fetchAllSections(): Promise<SimpleSectionsData> {
       }
     }
 
-    const localeMap: { [locale: string]: any } = {};
+    const localeMap: { [locale: string]: SectionLocaleEntry } = {};
     for (const section of Object.values(canonical)) {
       localeMap[section.locale] = toLocaleEntry(section);
     }

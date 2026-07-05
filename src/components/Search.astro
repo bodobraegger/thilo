@@ -89,7 +89,17 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
 <script>
   import { navigate } from 'astro:transitions/client';
-  import { escapeHtml, highlightHtml, scoreResult, getExcerpt } from '../utils/search';
+  import { escapeHtml, highlightHtml, scoreResult, getExcerpt, type SearchIndexEntry } from '../utils/search';
+
+  interface SearchResult {
+    type: 'section' | 'chapter';
+    title: string;
+    content: string;
+    url: string;
+    sectionTitle: string;
+    color: string;
+    relevance: number;
+  }
 
   function baseUrl(): string {
     return document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
@@ -102,8 +112,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
   // The per-locale index is fetched once per session (module scope survives
   // view transitions) and is precached by the service worker for offline use.
-  const indexPromises: Record<string, Promise<any[]>> = {};
-  function fetchSearchIndex(locale: string): Promise<any[]> {
+  const indexPromises: Record<string, Promise<SearchIndexEntry[]>> = {};
+  function fetchSearchIndex(locale: string): Promise<SearchIndexEntry[]> {
     indexPromises[locale] ??= fetch(`${baseUrl()}/search-index/${locale}.json`)
       .then(response => (response.ok ? response.json() : []))
       .catch(() => {
@@ -118,9 +128,9 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
   class SearchWidget extends HTMLElement {
     private query = '';
-    private entries: any[] | null = null;
+    private entries: SearchIndexEntry[] | null = null;
     private loadingIndex = false;
-    private results: any[] = [];
+    private results: SearchResult[] = [];
     private selectedIndex = -1;
     private showDropdown = false;
     private locale = 'de';
@@ -322,15 +332,15 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         this.results = [];
         return;
       }
-      const out: any[] = [];
+      const out: SearchResult[] = [];
       for (const entry of this.entries) {
-        const relevance = scoreResult(entry.title ?? '', entry.text ?? '', this.query);
+        const relevance = scoreResult(entry.title, entry.text, this.query);
         if (relevance > 0) {
           out.push({
             type: entry.type,
             title: entry.title,
             content: entry.text,
-            url: getLocalizedUrl(this.locale, entry.slug ?? '', entry.chapterSlug),
+            url: getLocalizedUrl(this.locale, entry.slug, entry.chapterSlug),
             sectionTitle: entry.sectionTitle,
             color: entry.color ?? '#521d3a',
             relevance,

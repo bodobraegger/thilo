@@ -11,7 +11,7 @@
 export interface Props {
   href: string;
   class?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const { href, class: className, ...rest } = Astro.props;

@@ -1,12 +1,12 @@
 ---
 import MainLayoutWithToC from '../layouts/MainLayoutWithToC.astro';
 import QuizComponent from '../components/Quiz';
-import { getTranslations } from '../i18n';
+import { getTranslations, type Locale } from '../i18n';
 import { renderMarkdownParts } from '../utils/markdown';
 
-const BACKEND_URL = (import.meta as any).env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
+const BACKEND_URL = import.meta.env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
 const locale = Astro.currentLocale || 'de';
-const t = getTranslations(locale as any);
+const t = getTranslations(locale as Locale);
 
 async function fetchImpressum(locale: string) {
   try {

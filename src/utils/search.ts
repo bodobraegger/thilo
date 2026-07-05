@@ -1,3 +1,14 @@
+// One searchable unit, precomputed at build time by search-index/[locale].json
+export interface SearchIndexEntry {
+  type: 'section' | 'chapter';
+  title: string;
+  text: string;
+  slug: string;
+  chapterSlug?: string;
+  sectionTitle: string;
+  color?: string;
+}
+
 export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

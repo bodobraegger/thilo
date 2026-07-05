@@ -1,7 +1,20 @@
 const LOCALE_PREFIXES = ['fr', 'it'];
 
+// Shape of the slimmed-down meta[name="all-sections"] payload built in
+// BaseLayout.astro; keep the two in sync.
+interface MetaChapter {
+  slug: string;
+  sorting: number;
+}
+
+interface MetaSection {
+  id: number;
+  slug: string;
+  chapters: MetaChapter[];
+}
+
 interface AllSectionsMeta {
-  sections: Record<string, any[]>;
+  sections: Record<string, MetaSection[]>;
   mappings: Record<string, Record<string, { slug: string; url: string }>>;
 }
 
@@ -46,11 +59,11 @@ export function handleLanguageChange(targetLocale: string, base: string): void {
         (s) => s.slug === targetEntry.slug
       );
       const curChapter = (currentSection.chapters ?? []).find(
-        (c: any) => c.slug === currentHash.slice(1)
+        (chapter) => chapter.slug === currentHash.slice(1)
       );
       if (curChapter && targetSection) {
         const tgtChapter = (targetSection.chapters ?? []).find(
-          (c: any) => c.sorting === curChapter.sorting
+          (chapter) => chapter.sorting === curChapter.sorting
         );
         if (tgtChapter) {
           window.location.href = targetUrl + `#${tgtChapter.slug}`;

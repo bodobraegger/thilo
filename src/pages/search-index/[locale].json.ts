@@ -1,20 +1,10 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { getSections } from '../../utils/data';
-import { stripMarkdown } from '../../utils/search';
+import { stripMarkdown, type SearchIndexEntry } from '../../utils/search';
 
 // Static per-locale search index, fetched lazily by the search widget and
 // precached by the service worker. Keeps section content out of every page's
 // HTML and lets search score plain text instead of raw markdown.
-
-export interface SearchIndexEntry {
-  type: 'section' | 'chapter';
-  title: string;
-  text: string;
-  slug: string;
-  chapterSlug?: string;
-  sectionTitle: string;
-  color?: string;
-}
 
 export const getStaticPaths: GetStaticPaths = () =>
   ['de', 'fr', 'it'].map(locale => ({ params: { locale } }));

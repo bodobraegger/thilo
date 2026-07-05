@@ -2,7 +2,7 @@
 import { getSlugForLocale, getSectionIdFromSlug } from './slugMapping';
 import { slugify } from './slugify';
 
-const BACKEND_URL = (import.meta as any).env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
+const BACKEND_URL = import.meta.env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
 
 export interface IconT {
   id: number;
@@ -56,32 +56,33 @@ export interface StartPageT {
   locale: string;
 }
 
-// Fetch data from Strapi with caching
-const dataCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache (was 5 minutes)
+// Fetch data from Strapi with caching (in-memory, shared across the build)
+const dataCache = new Map<string, { data: unknown; timestamp: number }>();
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 async function fetchFromStrapi<T>(endpoint: string, locale: string = 'de'): Promise<T> {
   const cacheKey = `${endpoint}-${locale}`;
   const cached = dataCache.get(cacheKey);
-  
+
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
+    return cached.data as T;
   }
 
   const url = `${BACKEND_URL}${endpoint}?_locale=${locale}`;
   const response = await fetch(url);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch ${endpoint}: ${response.status} ${response.statusText}`);
   }
-  
+
   const data = await response.json();
-  
-  // Handle Strapi v4 response format
+
+  // Strapi v3 responds with flat arrays/objects; the .data unwrap only kicks
+  // in if the backend is ever upgraded to the v4+ envelope format
   const processedData = data.data || data;
-  
+
   dataCache.set(cacheKey, { data: processedData, timestamp: Date.now() });
-  return processedData;
+  return processedData as T;
 }
 
 // Get start page data

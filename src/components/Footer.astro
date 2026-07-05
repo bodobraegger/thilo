@@ -1,13 +1,15 @@
 ---
 import { getTranslations, type Locale } from "../i18n";
+import type { SectionT } from "../utils/data";
+import type { SectionData } from "../utils/sectionMappings";
 import AstroLink from "./AstroLink.astro";
 
 import "../styles/footer.css";
 
 export interface Props {
     locale?: Locale;
-    currentSection?: any;
-    sections?: any[];
+    currentSection?: SectionT | null;
+    sections?: SectionData[];
 }
 
 
@@ -19,8 +21,8 @@ const t = getTranslations(locale);
 const currentSectionSlug = currentSection ? currentSection.slug : '';
 
 // Find previous and next sections
-let prevSection = null,
-    nextSection = null;
+let prevSection: SectionData | null = null,
+    nextSection: SectionData | null = null;
 if (sections && currentSectionSlug) {
     for (let i = 0; i < sections.length; i++) {
         if (sections[i].slug === currentSectionSlug) {

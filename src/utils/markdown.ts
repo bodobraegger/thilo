@@ -2,10 +2,10 @@
 // Replaces the client-side React MarkdownRenderer so pages ship plain HTML;
 // only quizzes remain interactive islands.
 import { marked } from 'marked';
-import type { Token } from 'marked';
+import type { Token, Tokens } from 'marked';
 import { slugify } from './slugify';
 
-const BACKEND_URL = (import.meta as any).env?.BACKEND_URL || 'https://api.thilo.scouts.ch/';
+const BACKEND_URL = import.meta.env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
 
 export type MarkdownPart =
   | { type: 'html'; value: string }
@@ -52,14 +52,14 @@ function createRenderer(base: string, locale: string) {
   const renderer = new marked.Renderer();
 
   // Give headings stable ids so in-content anchor links and deep links work
-  renderer.heading = function (token: any): string {
+  renderer.heading = function (token: Tokens.Heading): string {
     const inner = this.parser.parseInline(token.tokens);
     const id = slugify(token.text ?? '');
     const idAttr = id ? ` id="${id}"` : '';
     return `<h${token.depth}${idAttr}>${inner}</h${token.depth}>\n`;
   };
 
-  renderer.link = function (token: any): string {
+  renderer.link = function (token: Tokens.Link): string {
     const { href, title, text } = token;
     const isExternal = href && (href.startsWith('http') || href.startsWith('//'));
     const titleAttr = title ? ` title="${title}"` : '';
@@ -69,7 +69,7 @@ function createRenderer(base: string, locale: string) {
     return `<a href="${localizeHref(href ?? '', base, locale)}"${titleAttr}>${text}</a>`;
   };
 
-  renderer.image = function (token: any): string {
+  renderer.image = function (token: Tokens.Image): string {
     const { href, title, text } = token;
 
     let altText = text || '';
@@ -129,18 +129,18 @@ export function renderMarkdownParts(content: string, base: string, locale: strin
   const renderTokens = (blockTokens: Token[]) => marked.parser(blockTokens);
 
   for (const token of tokens) {
-    if (token.type === 'paragraph' && token.tokens?.some((t: any) => t.type === 'link' && isQuizLink(t.href))) {
+    if (token.type === 'paragraph' && token.tokens?.some((t) => t.type === 'link' && isQuizLink((t as Tokens.Link).href))) {
       flushHtml();
       // Re-parse the surrounding inline markdown (via its raw source) so text
       // next to a quiz link is preserved.
       let rawRemainder = '';
-      for (const t of token.tokens as any[]) {
-        if (t.type === 'link' && isQuizLink(t.href)) {
+      for (const t of token.tokens as Token[]) {
+        if (t.type === 'link' && isQuizLink((t as Tokens.Link).href)) {
           if (rawRemainder.trim()) {
             parts.push({ type: 'html', value: renderTokens(marked.lexer(rawRemainder)) });
           }
           rawRemainder = '';
-          parts.push({ type: 'quiz', value: t.href });
+          parts.push({ type: 'quiz', value: (t as Tokens.Link).href });
         } else {
           rawRemainder += t.raw ?? '';
         }

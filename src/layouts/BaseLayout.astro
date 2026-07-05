@@ -2,7 +2,7 @@
 export interface Props {
   title: string;
   lang?: string;
-  allSectionsData?: any;
+  allSectionsData?: SimpleSectionsData;
   description?: string;
   canonicalUrl?: string;
   hreflangUrls?: Array<{ hreflang: string; url: string }>;
@@ -21,6 +21,7 @@ import '../styles/global.css';
 import PWAUpdatePrompt from '../components/PWAUpdatePrompt.astro';
 import { ClientRouter } from 'astro:transitions';
 import { absoluteUrl } from '../utils/urls';
+import type { SimpleSectionsData } from '../utils/sectionMappings';
 import fontRegular from '../styles/fonts/SourceSansPro-Regular.woff2';
 import fontBold from '../styles/fonts/SourceSansPro-Bold.woff2';
 
@@ -37,12 +38,12 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
 let allSectionsMeta: string | null = null;
 if (allSectionsData) {
   const sections = Object.fromEntries(
-    Object.entries(allSectionsData.sections as Record<string, any[]>).map(([locale, list]) => [
+    Object.entries(allSectionsData.sections).map(([locale, list]) => [
       locale,
       list.map(section => ({
         id: section.id,
         slug: section.slug,
-        chapters: (section.chapters ?? []).map((chapter: any) => ({
+        chapters: (section.chapters ?? []).map(chapter => ({
           slug: chapter.slug,
           sorting: chapter.sorting,
         })),
@@ -50,17 +51,15 @@ if (allSectionsData) {
     ])
   );
   const mappings = Object.fromEntries(
-    Object.entries(allSectionsData.sectionMappings as Record<string, Record<string, any>>).map(
-      ([id, localeMap]) => [
-        id,
-        Object.fromEntries(
-          Object.entries(localeMap).map(([locale, entry]) => [
-            locale,
-            { slug: entry.slug, url: entry.url },
-          ])
-        ),
-      ]
-    )
+    Object.entries(allSectionsData.sectionMappings).map(([id, localeMap]) => [
+      id,
+      Object.fromEntries(
+        Object.entries(localeMap).map(([locale, entry]) => [
+          locale,
+          { slug: entry.slug, url: entry.url },
+        ])
+      ),
+    ])
   );
   allSectionsMeta = JSON.stringify({ sections, mappings });
 }

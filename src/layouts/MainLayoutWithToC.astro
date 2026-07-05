@@ -3,14 +3,15 @@ import BaseLayout from './BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import TableOfContents from '../components/TableOfContents.astro';
-import { fetchAllSections } from '../utils/sectionMappings';
+import { fetchAllSections, type SimpleSectionsData, type SectionData } from '../utils/sectionMappings';
+import type { SectionT } from '../utils/data';
 import { absoluteUrl } from '../utils/urls';
 import { getTranslations, type Locale } from '../i18n';
 
 export interface Props {
   title: string;
   lang?: string;
-  currentSection?: any;
+  currentSection?: SectionT | null;
   useFooter?: boolean;
 }
 
@@ -39,16 +40,14 @@ const description = currentSection?.seo_description || extractDescription(curren
 const pageTitle = currentSection?.seo_title ? `${currentSection.seo_title} | Thilo` : title;
 const canonicalUrl = `${siteBase}${Astro.url.pathname}`;
 
-let sections: any[] = [];
-let allSectionsData: any = null;
+let sections: SectionData[] = [];
+let allSectionsData: SimpleSectionsData = { sections: {}, sectionMappings: {} };
 try {
   // Fetch all sections data once (includes all locales)
   allSectionsData = await fetchAllSections();
   sections = allSectionsData.sections[lang] ?? [];
 } catch (e) {
   console.error('Error loading sections:', e);
-  sections = [];
-  allSectionsData = { sections: {}, sectionMappings: {} };
 }
 
 // Build hreflang alternates
@@ -56,11 +55,11 @@ type HreflangEntry = { hreflang: string; url: string };
 let hreflangUrls: HreflangEntry[] = [];
 
 const sectionMapping = currentSection
-  ? allSectionsData?.sectionMappings?.[currentSection.id.toString()]
+  ? allSectionsData.sectionMappings[currentSection.id.toString()]
   : null;
 
 if (sectionMapping) {
-  hreflangUrls = Object.entries(sectionMapping).map(([locale, info]: [string, any]) => ({
+  hreflangUrls = Object.entries(sectionMapping).map(([locale, info]) => ({
     hreflang: locale,
     url: absoluteUrl(info.url),
   }));
@@ -145,13 +144,12 @@ if (strippedPath === '/' || strippedPath === '') {
 
 <BaseLayout title={pageTitle} lang={lang} allSectionsData={allSectionsData} description={description} canonicalUrl={canonicalUrl} hreflangUrls={hreflangUrls} structuredData={structuredData}>
   <a href="#main-content" class="skip-link">{t.translation.section.skipToContent}</a>
-  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} transition:persist />
+  <Header locale={lang as Locale} currentSection={currentSection} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
     <!-- Table of Contents Sidebar -->
-    <TableOfContents 
-      sections={sections} 
-      currentSection={currentSection}
+    <TableOfContents
+      sections={sections}
       lang={lang}
       transition:persist
     />
@@ -161,7 +159,7 @@ if (strippedPath === '/' || strippedPath === '') {
       <div class="px-4 lg:px-10 py-8 max-w-3xl">
         <slot />
         {useFooter &&
-          <Footer locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} />
+          <Footer locale={lang as Locale} currentSection={currentSection} sections={sections} />
         }
       </div>
     </main>

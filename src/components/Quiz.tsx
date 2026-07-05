@@ -11,6 +11,12 @@ interface QuizStrings {
   empty: string;
 }
 
+// Subset of react-quiz-component's untyped onComplete payload that we use
+interface QuizCompletionResult {
+  numberOfCorrectAnswers?: number;
+  numberOfQuestions?: number;
+}
+
 interface QuizComponentProps {
   url: string;
   strings?: QuizStrings;
@@ -64,7 +70,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ url, strings = DEFAULT_ST
       <Quiz
         quiz={quizData}
         shuffle={true}
-        onComplete={(result: any) =>
+        onComplete={(result: QuizCompletionResult) =>
           recordQuizResult(url, result?.numberOfCorrectAnswers ?? 0, result?.numberOfQuestions ?? 0)
         }
       />
