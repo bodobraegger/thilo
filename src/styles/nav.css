@@ -105,6 +105,11 @@ header {
   }
 }
 
+/* Buttons default to cursor: default; the expand arrow must read as clickable */
+.chapter-toggle {
+  cursor: pointer;
+}
+
 .chapter-toggle::before {
   content: '';
   position: absolute;
