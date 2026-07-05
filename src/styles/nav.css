@@ -161,3 +161,9 @@ nav.header-nav {
 #sidebar-overlay {
   backdrop-filter: blur(1px);
 }
+
+/* Read chapters get a half-filled bookmark; the fully filled one stays
+   reserved for the active chapter (see layout.css nav .active rules) */
+#sidebar-nav a.chapter.read:not(.active) .bookmark-fill {
+  opacity: 0.35;
+}

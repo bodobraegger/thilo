@@ -115,6 +115,54 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
 </html>
 
 <script>
+  import {
+    getProgress,
+    isChapterRead,
+    markChapterRead,
+    getSectionReadCount,
+    onProgressChange,
+    PROGRESS_EVENT,
+  } from '../utils/progress';
+
+  // Progress API for inline scripts (e.g. the persisted ToC) and future
+  // gamification UI; see docs/GAMIFICATION.md
+  (window as any).thiloProgress = {
+    getProgress,
+    isChapterRead,
+    markChapterRead,
+    getSectionReadCount,
+    onProgressChange,
+  };
+  // Inline scripts may have run before this module: let listeners re-decorate
+  window.dispatchEvent(new CustomEvent(PROGRESS_EVENT));
+
+  // Mark a chapter as read once its heading is fully visible. The heading is
+  // observed instead of the chapter div because tall chapters never reach a
+  // meaningful intersection ratio.
+  function setupReadTracking(): void {
+    (window as any).__readObserver?.disconnect();
+    const headings = document.querySelectorAll('section.content .chapter > h2');
+    if (headings.length === 0) return;
+
+    const base = document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+    let path = window.location.pathname;
+    if (base && path.startsWith(base)) path = path.slice(base.length);
+    path = path.replace(/^\/(fr|it)(?=\/|$)/, '');
+    const sectionSlug = path.replace(/\/$/, '').split('/').pop() ?? '';
+    if (!sectionSlug) return;
+
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const chapterSlug = (entry.target.closest('.chapter') as HTMLElement | null)?.id;
+        if (chapterSlug) markChapterRead(sectionSlug, chapterSlug);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 1 });
+    headings.forEach(heading => observer.observe(heading));
+    (window as any).__readObserver = observer;
+  }
+
   function applyColor(): void {
     const el = document.querySelector('section.content') as HTMLElement | null;
     const color = el?.dataset?.color;
@@ -193,5 +241,6 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
   document.addEventListener('astro:page-load', () => {
     applyColor();
     setupBackToTop();
+    setupReadTracking();
   });
 </script>

@@ -251,7 +251,25 @@ function getSectionUrl(section: SectionT, locale: string): string {
       });
     }
 
+    // Show which chapters the scout has already read (bookmark partially filled).
+    // window.thiloProgress is exposed by BaseLayout's module script, which may
+    // load after this inline script; it dispatches 'thilo:progress' once ready.
+    function decorateReadChapters() {
+      const progress = window.thiloProgress;
+      if (!progress || !sidebarNav) return;
+      sidebarNav.querySelectorAll('a.chapter').forEach(link => {
+        const href = link.getAttribute('href') || '';
+        const hashIndex = href.indexOf('#');
+        if (hashIndex === -1) return;
+        const sectionSlug = href.slice(0, hashIndex).replace(/\/$/, '').split('/').pop() || '';
+        const chapterSlug = href.slice(hashIndex + 1);
+        link.classList.toggle('read', progress.isChapterRead(sectionSlug, chapterSlug));
+      });
+    }
+
     updateActiveNav();
+    decorateReadChapters();
+    window.addEventListener('thilo:progress', decorateReadChapters, { signal });
     setTimeout(() => scrollToCurrentInToC('instant'), 100);
 
     window.addEventListener('hashchange',    () => scrollToCurrentInToC('smooth'), { signal });

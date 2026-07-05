@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 //@ts-ignore
 import Quiz from 'react-quiz-component';
+import { recordQuizResult } from '../utils/progress';
 
 interface QuizComponentProps {
   url: string;
@@ -47,7 +48,13 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ url }) => {
 
   return (
     <div className="quiz-container">
-      <Quiz quiz={quizData} shuffle={true} />
+      <Quiz
+        quiz={quizData}
+        shuffle={true}
+        onComplete={(result: any) =>
+          recordQuizResult(url, result?.numberOfCorrectAnswers ?? 0, result?.numberOfQuestions ?? 0)
+        }
+      />
     </div>
   );
 };
