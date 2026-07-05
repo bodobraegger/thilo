@@ -90,7 +90,7 @@ function createRenderer(base: string, locale: string) {
       finalAltText = altText;
     }
 
-    let imgTag = `<img src="${resolveImageSrc(href ?? '')}" alt="${finalAltText}" loading="lazy"`;
+    let imgTag = `<img src="${resolveImageSrc(href ?? '')}" alt="${finalAltText}" loading="lazy" decoding="async"`;
     if (styleFromAlt) {
       imgTag += ` style="${styleFromAlt}"`;
     } else if (title) {

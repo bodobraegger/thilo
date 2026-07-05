@@ -175,7 +175,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
       const hash = window.location.hash;
       const path = window.location.pathname;
       let activeLink = hash
-        ? sidebarNav?.querySelector(`a[href*="#${hash.slice(1)}"]`)
+        ? chapterTargets.find(target => target.hash === hash.slice(1))?.link
         : null;
       if (!activeLink) activeLink = sidebarNav?.querySelector(`a[href="${path}"], a[href*="${path}"]`);
       if (activeLink && sidebarNav) {
@@ -231,24 +231,34 @@ function getSectionUrl(section: SectionT, locale: string): string {
       });
     }
 
+    // Resolved once per navigation so the scroll handler doesn't re-query the
+    // DOM on every frame; only links whose hash target exists on the current
+    // page carry an element.
+    let chapterTargets = [];
+    let activeChapterId = null;
+    function collectChapterTargets() {
+      chapterTargets = [];
+      activeChapterId = null;
+      document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach(link => {
+        const hash = link.getAttribute('href')?.split('#')[1];
+        if (hash) chapterTargets.push({ link, hash, el: document.getElementById(hash) });
+      });
+    }
+
     function updateActiveChapter() {
       const viewportTop = window.scrollY;
       let activeId = null, minDist = Infinity;
-      document.querySelectorAll('#sidebar-nav a[href*="#"]').forEach(link => {
-        const hash = link.getAttribute('href')?.split('#')[1];
-        const el   = hash ? document.getElementById(hash) : null;
-        if (el) {
-          const dist = Math.abs(el.offsetTop - viewportTop);
-          if (dist < minDist) { minDist = dist; activeId = hash; }
-        }
-      });
-      document.querySelectorAll('#sidebar-nav a').forEach(link => {
-        const hash = link.getAttribute('href')?.split('#')[1];
-        if (hash) {
-          link.classList.toggle('active',        hash === activeId);
-          link.classList.toggle('text-gray-600', hash !== activeId);
-        }
-      });
+      for (const target of chapterTargets) {
+        if (!target.el) continue;
+        const dist = Math.abs(target.el.offsetTop - viewportTop);
+        if (dist < minDist) { minDist = dist; activeId = target.hash; }
+      }
+      if (activeId === activeChapterId) return;
+      activeChapterId = activeId;
+      for (const target of chapterTargets) {
+        target.link.classList.toggle('active',        target.hash === activeId);
+        target.link.classList.toggle('text-gray-600', target.hash !== activeId);
+      }
     }
 
     // Show which chapters the scout has already read (bookmark partially filled).
@@ -268,6 +278,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
     }
 
     updateActiveNav();
+    collectChapterTargets();
     decorateReadChapters();
     window.addEventListener('thilo:progress', decorateReadChapters, { signal });
     setTimeout(() => scrollToCurrentInToC('instant'), 100);
@@ -328,7 +339,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
         requestAnimationFrame(() => { updateActiveChapter(); ticking = false; });
         ticking = true;
       }
-    }, { signal });
+    }, { signal, passive: true });
 
     // Chapter expand/collapse toggles
     document.querySelectorAll('.chapter-toggle').forEach(toggle => {

@@ -249,11 +249,16 @@ if (allSectionsData) {
     (window as any).__sectionController = ctrl;
     const btn = document.getElementById('back-to-top');
     if (!btn) return;
-    window.addEventListener('scroll', () => {
+    let pastThreshold = false;
+    const refresh = (force: boolean) => {
       const past = window.scrollY > 300;
+      if (!force && past === pastThreshold) return;
+      pastThreshold = past;
       btn.classList.toggle('opacity-0', !past);
       btn.classList.toggle('opacity-100', past);
-    }, { signal: ctrl.signal });
+    };
+    refresh(true);
+    window.addEventListener('scroll', () => refresh(false), { signal: ctrl.signal, passive: true });
   }
 
   // Apply color immediately after the DOM swap so the transition animation
