@@ -1,4 +1,4 @@
-.quiz-container {
+.quiz-container, .quiz-loading {
   display: block;
   padding: 10px;
   /* Reserve roughly the hydrated quiz's start-screen height: the island is
