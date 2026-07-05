@@ -158,10 +158,15 @@ if (allSectionsData) {
   // Inline scripts may have run before this module: let listeners re-decorate
   window.dispatchEvent(new CustomEvent(PROGRESS_EVENT));
 
+  // Read tracking is built but not yet enabled for scouts; flip this on to
+  // start recording chapters as read (see docs/GAMIFICATION.md)
+  const READ_TRACKING_ENABLED = false;
+
   // Mark a chapter as read once its heading is fully visible. The heading is
   // observed instead of the chapter div because tall chapters never reach a
   // meaningful intersection ratio.
   function setupReadTracking(): void {
+    if (!READ_TRACKING_ENABLED) return;
     (window as any).__readObserver?.disconnect();
     const headings = document.querySelectorAll('section.content .chapter > h2');
     if (headings.length === 0) return;

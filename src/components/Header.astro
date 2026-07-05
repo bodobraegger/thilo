@@ -143,23 +143,29 @@ if (currentSection) {
                   </AstroLink>
                 ))}
               </div>
-              <!-- Theme Section -->
-              <div class="border-b border-gray-200 mb-2">
-                <button
-                  type="button"
-                  id="theme-toggle"
-                  class="w-full text-left block rounded-md px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  data-theme-labels={JSON.stringify({
-                    sync: t.translation.header.theme_auto_name,
-                    light: t.translation.header.theme_light_name,
-                    dark: t.translation.header.theme_dark_name,
-                  })}
-                >
-                  <span class="flex items-center justify-between">
-                    <span>{t.translation.header.theme}</span>
-                    <span class="text-xs text-gray-500" id="theme-label"></span>
-                  </span>
-                </button>
+              <!-- Theme Section: light/dark list; sync with the system until
+                   the user picks one, then that choice is stored -->
+              <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4 mt-2">
+                {t.translation.header.theme}
+              </p>
+              <div class="themes-container my-1 border-b border-gray-200">
+                {[
+                  { theme: 'light', label: t.translation.header.theme_light_name },
+                  { theme: 'dark', label: t.translation.header.theme_dark_name },
+                ].map(({ theme, label }) => (
+                  <button
+                    type="button"
+                    class="theme-option last:mb-1 w-full flex items-center rounded-md px-4 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900 text-left"
+                    data-theme={theme}
+                    aria-pressed="false"
+                  >
+                    <span class="mr-2" data-theme-check></span>
+                    <span>{label}</span>
+                    <span class="ml-auto text-xs text-gray-500 hidden" data-theme-auto>
+                      {t.translation.header.theme_auto_name}
+                    </span>
+                  </button>
+                ))}
               </div>
               <!-- Impressum Section -->
               <div class="impressum-container">
@@ -216,7 +222,6 @@ if (currentSection) {
     const sidebarToggleHeader = document.getElementById('sidebar-toggle-header');
     const menuDropdownToggle  = document.getElementById('menu-dropdown-toggle');
     const menuDropdown        = document.getElementById('menu-dropdown');
-    const themeToggle         = document.getElementById('theme-toggle');
 
     function openMenu()  {
       menuDropdown?.classList.remove('hidden');
@@ -248,24 +253,41 @@ if (currentSection) {
       if (e.key === 'Escape' && !menuDropdown?.classList.contains('hidden')) closeMenu();
     }, { signal });
 
-    const THEME_ORDER = ['sync', 'light', 'dark'];
-    const themeLabel = document.getElementById('theme-label');
-    const themeLabels: Record<string, string> = JSON.parse(themeToggle?.dataset.themeLabels ?? '{}');
+    // Theme options behave like the language list: until the user picks one,
+    // the option matching the system preference is marked (with an "Auto"
+    // badge); an explicit pick is stored and marked without the badge.
+    const themeOptions = document.querySelectorAll<HTMLElement>('.theme-option');
 
-    function currentTheme(): string {
+    function storedThemeSetting(): string {
       try { return localStorage.getItem('thilo-theme') || 'sync'; } catch { return 'sync'; }
     }
-    function refreshThemeLabel() {
-      if (themeLabel) themeLabel.textContent = themeLabels[currentTheme()] ?? '';
+    function refreshThemeOptions() {
+      const setting = storedThemeSetting();
+      const active = setting === 'light' || setting === 'dark'
+        ? setting
+        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      themeOptions.forEach(option => {
+        const isActive = option.dataset.theme === active;
+        option.setAttribute('aria-pressed', String(isActive));
+        const check = option.querySelector('[data-theme-check]');
+        if (check) check.textContent = isActive ? '✓' : '';
+        option.querySelector('[data-theme-auto]')
+          ?.classList.toggle('hidden', !(isActive && setting === 'sync'));
+      });
     }
-    refreshThemeLabel();
+    refreshThemeOptions();
 
-    themeToggle?.addEventListener('click', () => {
-      const next = THEME_ORDER[(THEME_ORDER.indexOf(currentTheme()) + 1) % THEME_ORDER.length];
-      try { localStorage.setItem('thilo-theme', next); } catch { /* storage unavailable */ }
-      (window as any).thiloApplyStoredTheme?.();
-      refreshThemeLabel();
-    }, { signal });
+    themeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        try { localStorage.setItem('thilo-theme', option.dataset.theme ?? 'sync'); } catch { /* storage unavailable */ }
+        (window as any).thiloApplyStoredTheme?.();
+        refreshThemeOptions();
+      }, { signal });
+    });
+
+    // Keep the Auto badge on the right option if the OS theme changes while syncing
+    window.matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', refreshThemeOptions, { signal });
 
     document.querySelectorAll<HTMLElement>('.language-option').forEach(option => {
       option.addEventListener('click', (e) => {

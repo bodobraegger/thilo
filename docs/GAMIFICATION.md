@@ -35,7 +35,8 @@ locale progress" below for the fix if it becomes a problem.
 - `BaseLayout.astro` exposes the store as `window.thiloProgress` for inline
   scripts and marks a chapter as read when its `<h2>` heading has been fully
   scrolled into view (IntersectionObserver, re-armed on every
-  `astro:page-load`).
+  `astro:page-load`). Currently switched off via `READ_TRACKING_ENABLED =
+  false` in `BaseLayout.astro` until the feature launches.
 - `TableOfContents.astro` shows a partially filled bookmark next to chapters
   that have been read and updates live via the `thilo:progress` event.
 - `Quiz.tsx` records the score whenever a scout completes a
