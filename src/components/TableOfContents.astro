@@ -73,7 +73,7 @@ function getSectionUrl(section: SectionData, locale: string): string {
         return (
           <li style={section.color_primary ? `--section-color: ${section.color_primary}` : ''}>
             <!-- Section header: link wraps icon+text, toggle button sits alongside -->
-            <div class="section relative flex items-center text-sm rounded-md transition-colors group font-medium">
+            <div class="section relative flex items-center text-sm rounded-md transition-colors group">
               <AstroLink
                 href={sectionPath}
                 data-nav="section"
