@@ -194,7 +194,14 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     }
 
     #onPageLoad() {
-      if (!this.inline) return;
+      if (!this.inline) {
+        // The full-page widget connects during the DOM swap, before the
+        // router has pushed the new URL, so the query it read then can be
+        // stale or empty; re-read it once navigation has settled.
+        this.query = new URLSearchParams(window.location.search).get('q') ?? '';
+        this.#search();
+        return;
+      }
       const onSearchPage = this.#isOnSearchPage();
       if (onSearchPage !== this.noDropdown) {
         this.noDropdown = onSearchPage;
