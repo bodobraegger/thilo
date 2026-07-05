@@ -33,6 +33,39 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
     iconUrls.push(section.icon.url);
   }
 }
+
+// The all-sections meta only feeds the client-side language switcher, so
+// strip it down to the fields that lookup needs (see languageSwitcher.ts)
+let allSectionsMeta: string | null = null;
+if (allSectionsData) {
+  const sections = Object.fromEntries(
+    Object.entries(allSectionsData.sections as Record<string, any[]>).map(([locale, list]) => [
+      locale,
+      list.map(section => ({
+        id: section.id,
+        slug: section.slug,
+        chapters: (section.chapters ?? []).map((chapter: any) => ({
+          slug: chapter.slug,
+          sorting: chapter.sorting,
+        })),
+      })),
+    ])
+  );
+  const mappings = Object.fromEntries(
+    Object.entries(allSectionsData.sectionMappings as Record<string, Record<string, any>>).map(
+      ([id, localeMap]) => [
+        id,
+        Object.fromEntries(
+          Object.entries(localeMap).map(([locale, entry]) => [
+            locale,
+            { slug: entry.slug, url: entry.url },
+          ])
+        ),
+      ]
+    )
+  );
+  allSectionsMeta = JSON.stringify({ sections, mappings });
+}
 ---
 
 <!DOCTYPE html>
@@ -98,15 +131,7 @@ for (const section of allSectionsData?.sections?.[lang] ?? []) {
       <script type="application/ld+json" set:html={JSON.stringify(entry)} />
     ))}
     <ClientRouter />
-    {allSectionsData && (
-      <meta
-        name="all-sections"
-        content={JSON.stringify({
-          sections: allSectionsData.sections,
-          mappings: allSectionsData.sectionMappings,
-        })}
-      />
-    )}
+    {allSectionsMeta && <meta name="all-sections" content={allSectionsMeta} />}
   </head>
   <body>
     <slot />
