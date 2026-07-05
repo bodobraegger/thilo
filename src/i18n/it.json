@@ -38,7 +38,8 @@
     },
     "section": {
       "backToTop": "Torna in alto",
-      "targetGroup": "Gruppo target"
+      "targetGroup": "Gruppo target",
+      "skipToContent": "Vai al contenuto"
     },
     "footer": {
       "copyright": "© 2023 Movimento Scout Svizzero",
@@ -69,6 +70,11 @@
       "reload": "Aggiorna",
       "later": "Più tardi",
       "offlineReady": "Thilo è ora disponibile offline."
+    },
+    "quiz": {
+      "loading": "Caricamento del quiz…",
+      "error": "Impossibile caricare il quiz",
+      "empty": "Nessun dato del quiz disponibile"
     }
   }
 }

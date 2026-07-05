@@ -5,11 +5,24 @@ import React, { useEffect, useState } from 'react';
 import Quiz from 'react-quiz-component';
 import { recordQuizResult } from '../utils/progress';
 
-interface QuizComponentProps {
-  url: string;
+interface QuizStrings {
+  loading: string;
+  error: string;
+  empty: string;
 }
 
-const QuizComponent: React.FC<QuizComponentProps> = ({ url }) => {
+interface QuizComponentProps {
+  url: string;
+  strings?: QuizStrings;
+}
+
+const DEFAULT_STRINGS: QuizStrings = {
+  loading: 'Loading quiz...',
+  error: 'Error loading quiz',
+  empty: 'No quiz data available',
+};
+
+const QuizComponent: React.FC<QuizComponentProps> = ({ url, strings = DEFAULT_STRINGS }) => {
   const [quizData, setQuizData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +48,15 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ url }) => {
   }, [url]);
 
   if (loading) {
-    return <div className="quiz-loading">Loading quiz...</div>;
+    return <div className="quiz-loading">{strings.loading}</div>;
   }
 
   if (error) {
-    return <div className="quiz-error">Error loading quiz: {error}</div>;
+    return <div className="quiz-error">{strings.error}: {error}</div>;
   }
 
   if (!quizData) {
-    return <div className="quiz-error">No quiz data available</div>;
+    return <div className="quiz-error">{strings.empty}</div>;
   }
 
   return (

@@ -58,7 +58,7 @@ const sectionColor = section.color_primary || "#521d3a";
                 <div class="section-description markdown-content">
                     {sectionParts.map((part) =>
                         part.type === "quiz" ? (
-                            <QuizComponent url={part.value} client:visible />
+                            <QuizComponent url={part.value} strings={t.translation.quiz} client:visible />
                         ) : (
                             <div set:html={part.value} />
                         )
@@ -78,7 +78,7 @@ const sectionColor = section.color_primary || "#521d3a";
                             <div class="chapter-content markdown-content">
                                 {render(chapter.content).map((part) =>
                                     part.type === "quiz" ? (
-                                        <QuizComponent url={part.value} client:visible />
+                                        <QuizComponent url={part.value} strings={t.translation.quiz} client:visible />
                                     ) : (
                                         <div set:html={part.value} />
                                     )
@@ -97,7 +97,7 @@ const sectionColor = section.color_primary || "#521d3a";
                                                 <div class="markdown-content">
                                                     {render(target.content).map((part) =>
                                                         part.type === "quiz" ? (
-                                                            <QuizComponent url={part.value} client:visible />
+                                                            <QuizComponent url={part.value} strings={t.translation.quiz} client:visible />
                                                         ) : (
                                                             <div set:html={part.value} />
                                                         )
@@ -117,7 +117,7 @@ const sectionColor = section.color_primary || "#521d3a";
     <!-- Back to top button -->
     <button
         id="back-to-top"
-        class="opacity-0 fixed bottom-4 right-4 h-10 w-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-[opacity,transform] duration-300 active:scale-[0.96] z-50"
+        class="opacity-0 pointer-events-none fixed bottom-4 right-4 h-10 w-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-[opacity,transform] duration-300 active:scale-[0.96] z-50"
         onclick="document.getElementById('section-title')?.scrollIntoView({behavior: 'smooth'})"
         aria-label={t.translation.section.backToTop}
     >

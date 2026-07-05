@@ -256,6 +256,8 @@ if (allSectionsData) {
       pastThreshold = past;
       btn.classList.toggle('opacity-0', !past);
       btn.classList.toggle('opacity-100', past);
+      // Invisible button must not swallow taps in the bottom-right corner
+      btn.classList.toggle('pointer-events-none', !past);
     };
     refresh(true);
     window.addEventListener('scroll', () => refresh(false), { signal: ctrl.signal, passive: true });
