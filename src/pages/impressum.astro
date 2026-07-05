@@ -42,11 +42,11 @@ const contentParts = impressumData?.content
 
 <MainLayoutWithToC title={(impressumData?.title || t.translation.header.imprint) + " | Thilo"} lang={locale}>
   <div class="content">
-    <div class="section-title mb-2">
+    <div class="section-title mb-4">
       <h1 class="bg-primary px-2">{impressumData?.title || t.translation.header.imprint}</h1>
     </div>
 
-    <div class="section-body rounded p-2 color-bg-default">
+    <div class="section-body rounded-md p-2 color-bg-default">
       <div class="impressum-content markdown-content">
         {contentParts.length > 0 ? (
           contentParts.map((part) =>

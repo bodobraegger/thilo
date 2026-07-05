@@ -30,7 +30,7 @@ const sectionColor = section.color_primary || "#521d3a";
 <section class="content" data-color={sectionColor}>
     {
         !isIndex && (
-            <nav class="text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+            <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
                 <AstroLink href={lang === "de" ? "/" : `/${lang}/`} class="hover:underline">
                     {t.translation.homePage.title}
                 </AstroLink>
@@ -41,7 +41,7 @@ const sectionColor = section.color_primary || "#521d3a";
     }
     <div
         id="section-title"
-        class={`section-title section-${section.sorting} mb-2`}
+        class={`section-title section-${section.sorting} mb-4`}
     >
         <h1 class="bg-primary px-2">
             {section.title}
@@ -54,7 +54,7 @@ const sectionColor = section.color_primary || "#521d3a";
     </div>
     {
         sectionParts.length > 0 && (
-            <div class="section-body rounded p-3 color-bg-default">
+            <div class="section-body rounded-md p-4 color-bg-default">
                 <div class="section-description markdown-content">
                     {sectionParts.map((part) =>
                         part.type === "quiz" ? (
@@ -117,7 +117,7 @@ const sectionColor = section.color_primary || "#521d3a";
     <!-- Back to top button -->
     <button
         id="back-to-top"
-        class="opacity-0 pointer-events-none fixed bottom-4 right-4 h-10 w-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-[opacity,transform] duration-300 active:scale-[0.96] z-50"
+        class="opacity-0 pointer-events-none fixed bottom-4 right-4 h-10 w-10 rounded-full bg-primary text-white shadow-lg hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary-500 transition-[opacity,transform] duration-300 active:scale-[0.96] z-50"
         onclick="document.getElementById('section-title')?.scrollIntoView({behavior: 'smooth'})"
         aria-label={t.translation.section.backToTop}
     >

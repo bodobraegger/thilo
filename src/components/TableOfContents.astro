@@ -96,7 +96,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
 
               {section.chapters && section.chapters.length > 0 && (
                 <button
-                  class="relative z-10 w-6 h-6 mr-1 flex-shrink-0 flex items-center justify-center transform transition-transform rounded chapter-toggle"
+                  class="relative z-10 w-6 h-6 mr-1 flex-shrink-0 flex items-center justify-center transform transition-transform rounded-md chapter-toggle"
                   data-section={section.slug}
                   aria-label="Toggle chapters"
                   aria-expanded={isCurrentSection ? 'true' : 'false'}
@@ -117,7 +117,7 @@ function getSectionUrl(section: SectionT, locale: string): string {
             <!-- Chapters submenu (expandable) -->
             {section.chapters && section.chapters.length > 0 && (
               <ul 
-                class={`mt-1 ml-4 border-l-2 border-gray-200 pl-4 chapters-list transition-all duration-200 ${
+                class={`mt-2 ml-4 border-l-2 border-gray-200 pl-4 chapters-list transition-all duration-200 ${
                   isCurrentSection ? '' : 'hidden'
                 }`}
                 data-chapters={section.slug}>

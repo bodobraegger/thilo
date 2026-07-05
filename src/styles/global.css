@@ -1,11 +1,11 @@
 @import "tailwindcss";
 @import './variables.css';
+@import './colors.css';
 @import './dark.css';
 @import './layout.css';
 @import './quiz.css';
 @import './table.css';
 @import './print.css';
-/* Font imports */
 @import './fonts/fonts.css';
 
 * {
