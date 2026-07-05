@@ -1,13 +1,10 @@
 ---
 import { t, type Locale } from '../i18n';
-import type { SectionT } from '../utils/data';
 
 interface Props {
   initialQuery?: string;
   locale: string;
-  initialSections?: SectionT[];
   inline?: boolean;
-  isMobile?: boolean;
   hideInput?: boolean;
   noDropdown?: boolean;
 }
@@ -15,9 +12,7 @@ interface Props {
 const {
   initialQuery = '',
   locale,
-  initialSections = [],
   inline = false,
-  isMobile = false,
   hideInput = false,
   noDropdown = false,
 } = Astro.props;
@@ -40,7 +35,6 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
 <search-widget
   data-locale={locale}
-  data-sections={JSON.stringify(initialSections)}
   data-initial-query={initialQuery}
   data-inline={String(inline)}
   data-hide-input={String(hideInput)}
@@ -88,20 +82,38 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 </search-widget>
 
 <script>
-  import { escapeHtml, highlightHtml, calculateRelevance, getExcerpt } from '../utils/search';
+  import { navigate } from 'astro:transitions/client';
+  import { escapeHtml, highlightHtml, scoreResult, getExcerpt } from '../utils/search';
+
+  function baseUrl(): string {
+    return document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+  }
 
   function getLocalizedUrl(locale: string, slug: string, hash?: string): string {
-    const base =
-      document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
     const lp = locale === 'de' ? '' : `/${locale}`;
-    return `${base}${lp}/${slug}${hash ? '#' + hash : ''}`;
+    return `${baseUrl()}${lp}/${slug}${hash ? '#' + hash : ''}`;
+  }
+
+  // The per-locale index is fetched once per session (module scope survives
+  // view transitions) and is precached by the service worker for offline use.
+  const indexPromises: Record<string, Promise<any[]>> = {};
+  function fetchSearchIndex(locale: string): Promise<any[]> {
+    indexPromises[locale] ??= fetch(`${baseUrl()}/search-index/${locale}.json`)
+      .then(response => (response.ok ? response.json() : []))
+      .catch(() => {
+        // Allow a later widget instance to retry after a transient failure
+        delete indexPromises[locale];
+        return [];
+      });
+    return indexPromises[locale];
   }
 
   // ─── Web Component ───────────────────────────────────────────────────────────
 
   class SearchWidget extends HTMLElement {
     private query = '';
-    private sections: any[] = [];
+    private entries: any[] | null = null;
+    private loadingIndex = false;
     private results: any[] = [];
     private selectedIndex = -1;
     private showDropdown = false;
@@ -128,7 +140,6 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       this.inline    = this.dataset.inline    === 'true';
       this.hideInput = this.dataset.hideInput === 'true';
       this.i18n      = JSON.parse(this.dataset.i18n     ?? '{}');
-      this.sections  = JSON.parse(this.dataset.sections ?? '[]');
       this.noDropdown= this.inline ? this.#isOnSearchPage() : this.dataset.noDropdown === 'true';
       // read query from url if not provided via props
       this.query     = new URLSearchParams(window.location.search).get('q') ?? this.dataset.initialQuery ?? '';
@@ -153,8 +164,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       // after view transitions.
       document.addEventListener('astro:page-load', this.#onPageLoad.bind(this), { signal });
 
-      this.#performSearch();
-      this.#renderResults();
+      this.#search();
     }
 
     disconnectedCallback() {
@@ -179,23 +189,20 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       if (onSearchPage && this.input) {
         this.query = new URLSearchParams(window.location.search).get('q') ?? '';
         this.input.value = this.query;
-        this.#performSearch();
+        this.#search();
       }
     }
 
     #onSearchEvent(e: CustomEvent<{ query: string }>) {
       this.query = e.detail.query;
-      this.#performSearch();
-      this.#renderResults();
+      this.#search();
     }
 
     #onInput(e: Event) {
       this.query = (e.target as HTMLInputElement).value;
       this.selectedIndex = -1;
       this.showDropdown = this.query.trim().length >= 1;
-      this.#performSearch();
-      if (!this.noDropdown) this.#renderDropdown();
-      if (!this.inline) this.#renderResults();
+      this.#search();
       if (this.noDropdown) {
         window.dispatchEvent(
           new CustomEvent('thilo:search', { detail: { query: this.query } })
@@ -204,6 +211,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     }
 
     #onFocus() {
+      // Start fetching the index before the user finishes typing
+      this.#ensureIndex();
       if (this.query.trim().length >= 1) {
         this.showDropdown = true;
         this.#renderDropdown();
@@ -243,7 +252,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         case 'Enter':
           e.preventDefault();
           if (this.selectedIndex >= 0 && this.selectedIndex < this.results.length) {
-            window.location.href = this.results[this.selectedIndex].url;
+            navigate(this.results[this.selectedIndex].url);
           } else {
             this.#navigateToSearch();
           }
@@ -258,8 +267,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     }
 
     #navigateToSearch() {
-      const base =
-        document.querySelector('meta[name="base-url"]')?.getAttribute('content') ?? '';
+      const base = baseUrl();
       const searchUrl =
         this.locale === 'de'
           ? `${base}/search?q=${encodeURIComponent(this.query)}`
@@ -271,45 +279,56 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         history.pushState({}, '', searchUrl);
         window.dispatchEvent(new CustomEvent('thilo:search', { detail: { query: this.query } }));
       } else {
-        window.location.href = searchUrl;
+        navigate(searchUrl);
       }
     }
 
+    #renderAll() {
+      if (!this.noDropdown) this.#renderDropdown();
+      if (!this.inline) this.#renderResults();
+    }
+
+    // Ensure the index is loaded, then re-run the current query. Safe to call
+    // repeatedly: the fetch promise is cached at module scope.
+    #ensureIndex(): Promise<void> | undefined {
+      if (this.entries || this.loadingIndex) return;
+      this.loadingIndex = true;
+      return fetchSearchIndex(this.locale).then(entries => {
+        this.entries = entries;
+        this.loadingIndex = false;
+        if (this.query.trim().length >= this.MIN) {
+          this.#performSearch();
+          this.#renderAll();
+        }
+      });
+    }
+
+    #search() {
+      if (this.query.trim().length >= this.MIN && !this.entries) {
+        this.#ensureIndex();
+      }
+      this.#performSearch();
+      this.#renderAll();
+    }
+
     #performSearch() {
-      if (this.query.trim().length < this.MIN || this.sections.length === 0) {
+      if (this.query.trim().length < this.MIN || !this.entries) {
         this.results = [];
         return;
       }
       const out: any[] = [];
-      for (const section of this.sections) {
-        const tr = calculateRelevance(section.content ?? '', section.title ?? '', this.query, true);
-        const cr = calculateRelevance(section.content ?? '', section.title ?? '', this.query, false);
-        const r  = Math.max(tr, cr);
-        if (r > 0) {
+      for (const entry of this.entries) {
+        const relevance = scoreResult(entry.title ?? '', entry.text ?? '', this.query);
+        if (relevance > 0) {
           out.push({
-            type: 'section',
-            title: section.title,
-            content: section.content,
-            url: getLocalizedUrl(this.locale, section.slug ?? ''),
-            section,
-            relevance: r,
+            type: entry.type,
+            title: entry.title,
+            content: entry.text,
+            url: getLocalizedUrl(this.locale, entry.slug ?? '', entry.chapterSlug),
+            sectionTitle: entry.sectionTitle,
+            color: entry.color ?? '#521d3a',
+            relevance,
           });
-        }
-        for (const ch of section.chapters ?? []) {
-          const ctr = calculateRelevance(ch.content ?? '', ch.title ?? '', this.query, true);
-          const ccr = calculateRelevance(ch.content ?? '', ch.title ?? '', this.query, false);
-          const cr2 = Math.max(ctr, ccr);
-          if (cr2 > 0) {
-            out.push({
-              type: 'chapter',
-              title: ch.title,
-              content: ch.content,
-              url: getLocalizedUrl(this.locale, section.slug ?? '', ch.slug),
-              section,
-              chapter: ch,
-              relevance: cr2,
-            });
-          }
         }
       }
       out.sort((a, b) => b.relevance - a.relevance);
@@ -336,12 +355,14 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
           </svg>
           ${escapeHtml(this.i18n.keepTyping ?? '')}
         </div>`;
+      } else if (this.loadingIndex) {
+        html = `<div class="px-4 py-3 text-gray-400 text-sm">${escapeHtml(this.i18n.loading ?? '')}</div>`;
       } else if (this.results.length === 0) {
         html = `<div class="px-4 py-3 text-gray-500 text-sm">${escapeHtml(this.i18n.noResults ?? '')}</div>`;
       } else {
         html = '<ul>';
         this.results.slice(0, MAX).forEach((result, idx) => {
-          const color = result.section.color_primary ?? '#521d3a';
+          const color = result.color;
           const sel = idx === this.selectedIndex;
           const bg = sel ? `background-color:color-mix(in srgb, ${color} 10%, var(--mix-light, white))` : '';
           const excerpt = getExcerpt(result.content ?? '', this.query, 100);
@@ -364,7 +385,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
                         style="background-color:color-mix(in srgb, ${color} 15%, var(--mix-light, white));color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
                         ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
                       </span>
-                      <span class="text-xs text-gray-500 truncate">${escapeHtml(result.section.title)}</span>
+                      <span class="text-xs text-gray-500 truncate">${escapeHtml(result.sectionTitle)}</span>
                     </div>
                   </div>
                 </div>
@@ -387,7 +408,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
       this.dropdown.innerHTML = html;
       this.dropdown.querySelectorAll<HTMLElement>('[data-result-url]').forEach((btn, idx) => {
-        btn.addEventListener('click',      () => { window.location.href = btn.dataset.resultUrl!; });
+        btn.addEventListener('click',      () => { navigate(btn.dataset.resultUrl!); });
         btn.addEventListener('mouseenter', () => {
           this.selectedIndex = idx;
           this.#updateDropdownSelection();
@@ -400,9 +421,9 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     #updateDropdownSelection() {
       this.dropdown?.querySelectorAll<HTMLElement>('[data-result-url]').forEach((btn, idx) => {
         const selected = idx === this.selectedIndex;
-        const color = this.results[idx]?.section?.color_primary ?? '#521d3a';
+        const color = this.results[idx]?.color ?? '#521d3a';
         btn.classList.toggle('bg-gray-100', selected);
-        btn.style.backgroundColor = selected ? `color-mix(in srgb, ${color} 10%, white)` : '';
+        btn.style.backgroundColor = selected ? `color-mix(in srgb, ${color} 10%, var(--mix-light, white))` : '';
       });
     }
 
@@ -414,13 +435,15 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
 
       if (this.query.trim().length < this.MIN) {
         html = `<div class="text-center py-12 text-gray-500"><p>${escapeHtml(this.i18n.enterQuery ?? '')}</p></div>`;
+      } else if (this.loadingIndex) {
+        html = `<div class="text-center py-12 text-gray-500"><p>${escapeHtml(this.i18n.loading ?? '')}</p></div>`;
       } else if (this.results.length === 0) {
         html = `<div class="text-center py-8"><p>${escapeHtml((this.i18n.noResultsFor ?? '').replace('{query}', this.query))}</p></div>`;
       } else {
         html = '<div class="space-y-4">';
         for (const result of this.results) {
           const excerpt = getExcerpt(result.content ?? '', this.query);
-          const color   = result.section.color_primary ?? '#521d3a';
+          const color   = result.color;
           html += `
             <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
               style="--section-color:${color};border-color:${color};scroll-margin-top:80px">
@@ -437,7 +460,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
                   style="background-color:color-mix(in srgb, ${color} 20%, var(--mix-light, white));color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
                   ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
                 </span>
-                <span style="color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">${escapeHtml(result.section.title)}</span>
+                <span style="color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">${escapeHtml(result.sectionTitle)}</span>
               </div>
             </div>`;
         }

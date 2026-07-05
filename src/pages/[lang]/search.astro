@@ -1,20 +1,14 @@
 ---
 import MainLayoutWithToC from '../../layouts/MainLayoutWithToC.astro';
 import { getTranslations } from '../../i18n';
-import { getSections } from '../../utils/data';
 import SearchComponent from '../../components/Search.astro';
 
 export { getStaticPaths } from "../index.astro";
 
 const locale = Astro.currentLocale || 'de';
 const t = getTranslations(locale as any);
-const url = new URL(Astro.request.url);
-const initialQuery = url.searchParams.get('q') || '';
-
-// Pre-fetch sections data server-side
-const sections = await getSections(locale);
 ---
 
-<MainLayoutWithToC title={t.translation.searchPage.title + " | Thilo"} lang={locale} currentSection={null} useFooter={false} sections={sections}>
-  <SearchComponent initialQuery={initialQuery} locale={locale} initialSections={sections} hideInput={true} />
+<MainLayoutWithToC title={t.translation.searchPage.title + " | Thilo"} lang={locale} currentSection={null} useFooter={false}>
+  <SearchComponent locale={locale} hideInput={true} />
 </MainLayoutWithToC>

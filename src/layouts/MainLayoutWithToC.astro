@@ -3,7 +3,6 @@ import BaseLayout from './BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import TableOfContents from '../components/TableOfContents.astro';
-import { getSections } from '../utils/data';
 import { fetchAllSections } from '../utils/sectionMappings';
 import { absoluteUrl } from '../utils/urls';
 
@@ -12,10 +11,9 @@ export interface Props {
   lang?: string;
   currentSection?: any;
   useFooter?: boolean;
-  sections?: any[];
 }
 
-const { title, lang = 'de', currentSection, useFooter=true, sections: providedSections } = Astro.props;
+const { title, lang = 'de', currentSection, useFooter=true } = Astro.props;
 
 const SITE_DESC = 'Das digitale Handbuch der Schweizer Pfadibewegung';
 const siteBase = (Astro.site?.href ?? 'https://thilo.scouts.ch').replace(/\/$/, '');
@@ -44,17 +42,7 @@ let allSectionsData: any = null;
 try {
   // Fetch all sections data once (includes all locales)
   allSectionsData = await fetchAllSections();
-  
-  // Use provided sections if available, otherwise extract from allSectionsData
-  if (providedSections) {
-    sections = providedSections;
-  } else if (allSectionsData.sections[lang]) {
-    // Convert SimpleSectionsData format to SectionT format
-    sections = allSectionsData.sections[lang];
-  } else {
-    // Fallback to getSections if needed
-    sections = await getSections(lang);
-  }
+  sections = allSectionsData.sections[lang] ?? [];
 } catch (e) {
   console.error('Error loading sections:', e);
   sections = [];
@@ -154,7 +142,7 @@ if (strippedPath === '/' || strippedPath === '') {
 ---
 
 <BaseLayout title={pageTitle} lang={lang} allSectionsData={allSectionsData} description={description} canonicalUrl={canonicalUrl} hreflangUrls={hreflangUrls} structuredData={structuredData}>
-  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} sections={sections} transition:persist />
+  <Header locale={lang as 'de' | 'fr' | 'it'} currentSection={currentSection} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
     <!-- Table of Contents Sidebar -->

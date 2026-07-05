@@ -49,6 +49,15 @@ export function calculateRelevance(
   return score;
 }
 
+// A result matches if the query appears in the title or the text; the score
+// is whichever perspective ranks it higher.
+export function scoreResult(title: string, text: string, query: string): number {
+  return Math.max(
+    calculateRelevance(text, title, query, true),
+    calculateRelevance(text, title, query, false),
+  );
+}
+
 export function stripMarkdown(text: string): string {
   if (!text) return '';
   return text
