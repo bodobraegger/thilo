@@ -1,5 +1,60 @@
 # Improvements, July 2026 (branch `astro-rewrite-f-changes`)
 
+## Third pass: code-review cleanup (CSS, HTML, types)
+
+### CSS consolidation
+
+- `colors.css` is the single source of the `--color-primary-*` ramp;
+  `layout.css` previously defined the same variable names with different
+  mix percentages, and the winner depended on bundle order
+- `layout.css` shrank from 177 lines (62 `!important`s) to the handful of
+  classes Tailwind does not provide (`.bg-primary`, skip link, sidebar
+  active states); the unused `.bg/text/border-primary-*` utility blocks are
+  gone
+- custom `.mt-*`, `.mb-*`, `.p-*`, `.rounded` classes that silently
+  overrode Tailwind's scale with different values were removed; templates
+  now use the Tailwind classes with the same rendered values (`mb-3` →
+  `mb-6` etc.)
+- dead `nav.header-nav` accordion CSS from the pre-rewrite React header
+  removed; undefined classes (`hover:bg-primary-dark`,
+  `focus:ring-primary`) replaced with defined ones
+- `global.css` owns all stylesheet imports; `BaseLayout` no longer
+  re-imports `layout.css`/`colors.css`
+- `variables.css` keeps only tokens with consumers (breakpoint/z-index
+  scales and unused type/shadow/spacing steps deleted)
+
+### Fonts
+
+- `fonts.css`: 12 `@font-face` blocks with `.eot`/`.svg`/`.ttf` fallbacks
+  reduced to 6 faces as woff2+woff; unused Black/ExtraLight/Light files
+  deleted from the repo
+- the SemiBold face now spans `font-weight: 500 600`, so `font-medium`
+  renders an actual medium weight (it previously fell back to Regular
+  because no 500 cut existed)
+
+### HTML / accessibility
+
+- search input is a real combobox: `aria-expanded`,
+  `aria-activedescendant`, options with `role="option"`/`aria-selected`;
+  full-page results announce via `aria-live="polite"`
+- menu and sidebar toggles expose `aria-haspopup`/`aria-controls` and keep
+  `aria-expanded` in sync
+- previously hardcoded English/German labels (Toggle sidebar, Open menu,
+  Navigation, Toggle chapters, Close) are localized de/fr/it
+- removed the React-ism `key={...}` that leaked into the DOM as a literal
+  attribute through AstroLink's prop spread
+
+### TypeScript
+
+- no `any` remains outside `(window as any)` globals: layouts and
+  components use `SectionT`/`SectionData`/`SimpleSectionsData`, the search
+  widget uses `SearchIndexEntry`/`SearchResult`, the markdown renderer uses
+  marked's `Tokens`, the language switcher has typed meta shapes
+- `BACKEND_URL` is declared on `ImportMetaEnv` instead of `(import.meta as
+  any)` casts
+- corrected the stale "Strapi v4 response format" comment (backend is v3)
+  and dropped the unused `currentSection` prop from `TableOfContents`
+
 ## Second pass: payload, runtime and UX
 
 ### Static search index
