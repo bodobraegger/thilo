@@ -200,6 +200,42 @@ if (allSectionsData) {
     }
   }
 
+  // After a programmatic scroll, content can still shift under the target:
+  // an image that outlived the wait timeout, a quiz island hydrating from its
+  // small stub, fonts swapping in. Watch the target for a few seconds and
+  // snap back whenever the scroll has settled off-position. Any user scroll
+  // input stops the correction immediately.
+  let alignController: AbortController | null = null;
+  function keepAnchorAligned(el: HTMLElement): void {
+    alignController?.abort();
+    const ctrl = new AbortController();
+    alignController = ctrl;
+    for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+      window.addEventListener(type, () => ctrl.abort(), { signal: ctrl.signal, passive: true });
+    }
+    const expectedTop = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    const deadline = performance.now() + 4000;
+    let lastY = -1;
+    let stableFrames = 0;
+    const tick = () => {
+      if (ctrl.signal.aborted || performance.now() > deadline) return;
+      if (window.scrollY === lastY) {
+        stableFrames++;
+      } else {
+        stableFrames = 0;
+        lastY = window.scrollY;
+      }
+      // Only correct while the scroll is at rest, so a smooth scroll still in
+      // flight (which moves every frame) is never interrupted
+      if (stableFrames >= 2) {
+        const drift = el.getBoundingClientRect().top - expectedTop;
+        if (Math.abs(drift) > 4) window.scrollBy({ top: drift, behavior: 'instant' });
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   // Scroll an anchor target into view without the content shifting under the
   // user: images above the target are forced to load first (lazy ones are
   // flipped to eager), with a timeout so a stalled image can't block forever.
@@ -209,6 +245,7 @@ if (allSectionsData) {
     pending.forEach(img => { if (img.loading === 'lazy') img.loading = 'eager'; });
     if (pending.length === 0) {
       el.scrollIntoView({ behavior, block: 'start' });
+      keepAnchorAligned(el);
       return;
     }
     const settled = Promise.all(pending.map(img => new Promise<void>(resolve => {
@@ -216,7 +253,10 @@ if (allSectionsData) {
       img.addEventListener('error', () => resolve(), { once: true });
     })));
     const timeout = new Promise<void>(resolve => setTimeout(resolve, 3000));
-    Promise.race([settled, timeout]).then(() => el.scrollIntoView({ behavior, block: 'start' }));
+    Promise.race([settled, timeout]).then(() => {
+      el.scrollIntoView({ behavior, block: 'start' });
+      keepAnchorAligned(el);
+    });
   }
   (window as any).thiloScrollToAnchor = scrollToAnchor;
 

@@ -123,7 +123,7 @@ if (currentSection) {
             id="menu-dropdown" 
             class="hidden absolute right-0 xl:left-0 mt-4 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
           >
-            <div class="px-4 py-2 border-gray-200">
+            <div class="px-4 py-2">
               <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">
                 {t.translation.header.language}
               </p>
@@ -198,7 +198,8 @@ if (currentSection) {
   (function () {
     var q = new URLSearchParams(location.search).get('q');
     if (!q) return;
-    // Populate SSR-rendered search inputs immediately, before React hydrates
+    // Populate the server-rendered search input immediately, before the
+    // search web component connects
     document.querySelectorAll('header input[type="text"]').forEach(function (el) {
       el.value = q;
     });
@@ -252,6 +253,10 @@ if (currentSection) {
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !menuDropdown?.classList.contains('hidden')) closeMenu();
     }, { signal });
+
+    // The header persists across view transitions; an open menu must not
+    // carry over onto the next page
+    document.addEventListener('astro:before-swap', closeMenu, { signal });
 
     // Theme options: while syncing with the system, the matching option shows
     // a small "Auto" text instead of a checkmark. Clicking an option stores it

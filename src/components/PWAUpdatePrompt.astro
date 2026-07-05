@@ -61,6 +61,12 @@ const pwaText = getTranslations(locale as Locale).translation.pwa;
       display: flex;
       gap: var(--spacing-sm);
       flex-shrink: 0;
+
+      /* display: flex would otherwise beat the UA's [hidden] rule, showing
+         the buttons on the button-less offline-ready toast */
+      &[hidden] {
+        display: none;
+      }
     }
 
     .pwa-btn {
