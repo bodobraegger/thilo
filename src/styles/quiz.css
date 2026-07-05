@@ -4,7 +4,7 @@
   /* Reserve roughly the hydrated quiz's start-screen height: the island is
      server-rendered as a small loading stub, and growing on hydration shifts
      all content below it (breaks anchor scrolling) */
-  min-height: 280px;
+  min-height: 418px;
   background-color: var(--background-light);
   border-radius: var(--border-radius-md);
   --color-correct: #28a745;
