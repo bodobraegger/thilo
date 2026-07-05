@@ -3,7 +3,8 @@ import QuizComponent from "./Quiz";
 import AstroLink from "./AstroLink.astro";
 import type { SectionT } from "../utils/data";
 import { getTranslations, type Locale } from "../i18n";
-import { renderMarkdownParts } from "../utils/markdown";
+import { renderMarkdownParts, extractImageUrls } from "../utils/markdown";
+import { probeImages } from "../utils/imageDimensions";
 
 import "../styles/quiz.css";
 import "../styles/section.css";
@@ -17,6 +18,17 @@ export interface Props {
 const { section, lang = "de", isIndex = false } = Astro.props;
 const t = getTranslations(lang as Locale);
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// Probe every content image's dimensions before rendering so the markdown
+// renderer can emit width/height attributes (space is reserved, no shift)
+const markdownSources = [
+    section.content,
+    ...(section.chapters ?? []).flatMap((chapter) => [
+        chapter.content,
+        ...(chapter.targets ?? []).map((target) => target.content),
+    ]),
+];
+await probeImages(markdownSources.flatMap(extractImageUrls));
 
 const render = (content?: string) =>
     content ? renderMarkdownParts(content, base, lang) : [];

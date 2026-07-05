@@ -12,6 +12,8 @@ section {
   }
   img {
     max-width: 100%;
+    /* Keep the width/height attributes' aspect ratio when max-width kicks in */
+    height: auto;
   }
   
   ul, ol {

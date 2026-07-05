@@ -4,6 +4,7 @@
 import { marked } from 'marked';
 import type { Token, Tokens } from 'marked';
 import { slugify } from './slugify';
+import { getCachedImageDimensions } from './imageDimensions';
 
 const BACKEND_URL = import.meta.env.BACKEND_URL || 'https://api.thilo.scouts.ch/';
 
@@ -29,6 +30,14 @@ function localizeHref(href: string, base: string, locale: string): string {
 function resolveImageSrc(href: string): string {
   if (href.startsWith('/')) return BACKEND_URL.replace(/\/$/, '') + href;
   return href;
+}
+
+// Resolved URLs of all images embedded in the given markdown, for probing
+// their dimensions (imageDimensions.ts) before rendering.
+export function extractImageUrls(content: string | undefined): string[] {
+  if (!content) return [];
+  return [...content.matchAll(/!\[[^\]]*\]\(\s*([^)\s]+)/g)]
+    .map(match => resolveImageSrc(match[1]));
 }
 
 // Content editors encode CSS and captions in image alt text, e.g.
@@ -90,7 +99,14 @@ function createRenderer(base: string, locale: string) {
       finalAltText = altText;
     }
 
-    let imgTag = `<img src="${resolveImageSrc(href ?? '')}" alt="${finalAltText}" loading="lazy" decoding="async"`;
+    const src = resolveImageSrc(href ?? '');
+    let imgTag = `<img src="${src}" alt="${finalAltText}" loading="lazy" decoding="async"`;
+    // Dimensions probed at build time let the browser reserve space (no
+    // layout shift); CSS keeps images responsive via max-width/height:auto
+    const dimensions = getCachedImageDimensions(src);
+    if (dimensions) {
+      imgTag += ` width="${dimensions.width}" height="${dimensions.height}"`;
+    }
     if (styleFromAlt) {
       imgTag += ` style="${styleFromAlt}"`;
     } else if (title) {
