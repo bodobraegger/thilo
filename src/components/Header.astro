@@ -82,7 +82,9 @@ if (currentSection) {
         type="button"
         id="sidebar-toggle-header"
         class="lg:hidden p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-        aria-label="Toggle sidebar"
+        aria-label={t.translation.header.toggleSidebar}
+        aria-controls="sidebar-nav"
+        aria-expanded="false"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -105,7 +107,10 @@ if (currentSection) {
             type="button"
             id="menu-dropdown-toggle"
             class="p-1.5 rounded-md transition-colors bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-            aria-label="Open menu"
+            aria-label={t.translation.header.openMenu}
+            aria-haspopup="true"
+            aria-controls="menu-dropdown"
+            aria-expanded="false"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
@@ -125,8 +130,7 @@ if (currentSection) {
               <!-- Language Options -->
               <div class="languages-container my-1 border-b border-gray-200 *:rounded *:w-full *:text-left *:flex *:items-center *:px-4 *:py-2 *:text-sm *:transition-colors *:text-gray-700 *:hover:bg-gray-100 *:hover:text-gray-900 *:"> 
                 {languageAlternatives.map(({ locale: altLocale, url }) => (
-                  <AstroLink 
-                    key={altLocale}
+                  <AstroLink
                     href={url}
                     class="language-option last:mb-1"
                     data-locale={altLocale}
@@ -213,8 +217,14 @@ if (currentSection) {
     const menuDropdown        = document.getElementById('menu-dropdown');
     const themeToggle         = document.getElementById('theme-toggle');
 
-    function openMenu()  { menuDropdown?.classList.remove('hidden'); }
-    function closeMenu() { menuDropdown?.classList.add('hidden'); }
+    function openMenu()  {
+      menuDropdown?.classList.remove('hidden');
+      menuDropdownToggle?.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu() {
+      menuDropdown?.classList.add('hidden');
+      menuDropdownToggle?.setAttribute('aria-expanded', 'false');
+    }
 
     sidebarToggleHeader?.addEventListener('click', () => {
       window.dispatchEvent(new CustomEvent('toggleSidebar'));

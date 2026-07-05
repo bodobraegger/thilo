@@ -13,7 +13,9 @@
       "theme": "Thème",
       "theme_auto_name": "Sync",
       "theme_light_name": "Clair",
-      "theme_dark_name": "Sombre"
+      "theme_dark_name": "Sombre",
+      "openMenu": "Ouvrir le menu",
+      "toggleSidebar": "Afficher la table des matières"
     },
     "homePage": {
       "title": "Accueil"
@@ -75,6 +77,11 @@
       "loading": "Chargement du quiz…",
       "error": "Impossible de charger le quiz",
       "empty": "Aucune donnée de quiz disponible"
+    },
+    "toc": {
+      "title": "Table des matières",
+      "close": "Fermer la table des matières",
+      "toggleChapters": "Afficher ou masquer les chapitres"
     }
   }
 }

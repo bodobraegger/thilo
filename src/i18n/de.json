@@ -13,7 +13,9 @@
       "theme": "Theme",
       "theme_auto_name": "Sync",
       "theme_light_name": "Hell",
-      "theme_dark_name": "Dunkel"
+      "theme_dark_name": "Dunkel",
+      "openMenu": "Menü öffnen",
+      "toggleSidebar": "Inhaltsverzeichnis anzeigen"
     },
     "homePage": {
       "title": "Home"
@@ -75,6 +77,11 @@
       "loading": "Quiz wird geladen…",
       "error": "Quiz konnte nicht geladen werden",
       "empty": "Keine Quizdaten verfügbar"
+    },
+    "toc": {
+      "title": "Inhaltsverzeichnis",
+      "close": "Inhaltsverzeichnis schliessen",
+      "toggleChapters": "Kapitel ein- oder ausklappen"
     }
   }
 }

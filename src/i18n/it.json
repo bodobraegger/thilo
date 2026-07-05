@@ -13,7 +13,9 @@
       "theme": "Tema",
       "theme_auto_name": "Sync",
       "theme_light_name": "Chiaro",
-      "theme_dark_name": "Scuro"
+      "theme_dark_name": "Scuro",
+      "openMenu": "Apri il menu",
+      "toggleSidebar": "Mostra l'indice"
     },
     "homePage": {
       "title": "Home"
@@ -75,6 +77,11 @@
       "loading": "Caricamento del quiz…",
       "error": "Impossibile caricare il quiz",
       "empty": "Nessun dato del quiz disponibile"
+    },
+    "toc": {
+      "title": "Indice",
+      "close": "Chiudi l'indice",
+      "toggleChapters": "Mostra o nascondi i capitoli"
     }
   }
 }

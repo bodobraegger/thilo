@@ -49,14 +49,19 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         type="text"
         value={initialQuery}
         placeholder={i18n.placeholder}
+        aria-label={i18n.placeholder}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls="search-dropdown"
         class={inlineInputClass}
         autocomplete="off"
         data-search-input
       />
-      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
-      <div data-search-dropdown class="search-dropdown absolute z-50 w-full mt-4 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"></div>
+      <div data-search-dropdown id="search-dropdown" role="listbox" class="search-dropdown absolute z-50 w-full mt-4 bg-white border border-gray-300 rounded-md shadow-lg max-h-96 overflow-y-auto"></div>
     </div>
   )}
 
@@ -66,18 +71,19 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         type="text"
         value={initialQuery}
         placeholder={i18n.placeholder}
+        aria-label={i18n.placeholder}
         class="w-full pl-4 pr-10 py-3 text-base border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
         autocomplete="off"
         data-search-input
       />
-      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
     </div>
   )}
 
   {!inline && (
-    <div id="search-results" data-search-results></div>
+    <div id="search-results" data-search-results aria-live="polite"></div>
   )}
 </search-widget>
 
@@ -341,9 +347,12 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       if (!this.dropdown || this.noDropdown) return;
       if (!this.showDropdown || !this.query.trim()) {
         this.dropdown.classList.remove('open');
+        this.input?.setAttribute('aria-expanded', 'false');
+        this.input?.removeAttribute('aria-activedescendant');
         return;
       }
       this.dropdown.classList.add('open');
+      this.input?.setAttribute('aria-expanded', 'true');
 
       const MAX = 3;
       let html = '';
@@ -360,15 +369,18 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       } else if (this.results.length === 0) {
         html = `<div class="px-4 py-3 text-gray-500 text-sm">${escapeHtml(this.i18n.noResults ?? '')}</div>`;
       } else {
-        html = '<ul>';
+        html = '<ul role="none">';
         this.results.slice(0, MAX).forEach((result, idx) => {
           const color = result.color;
           const sel = idx === this.selectedIndex;
           const bg = sel ? `background-color:color-mix(in srgb, ${color} 10%, var(--mix-light, white))` : '';
           const excerpt = getExcerpt(result.content ?? '', this.query, 100);
           html += `
-            <li>
+            <li role="none">
               <button
+                role="option"
+                id="search-option-${idx}"
+                aria-selected="${sel}"
                 class="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition-colors${sel ? ' bg-gray-100' : ''}"
                 style="${bg}"
                 data-result-url="${escapeHtml(result.url)}"
@@ -396,8 +408,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
           const extra = this.results.length - MAX;
           const moreText = (this.i18n.moreResults ?? '').replace('{count}', String(extra));
           html += `
-            <li>
-              <button class="w-full px-4 py-2 text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 text-center transition-colors" data-more-results>
+            <li role="none">
+              <button role="option" aria-selected="false" class="w-full px-4 py-2 text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 text-center transition-colors" data-more-results>
                 ${escapeHtml(moreText)}
                 <span class="hidden sm:inline"> ${escapeHtml(this.i18n.moreResultsHint ?? '')}</span>
               </button>
@@ -416,6 +428,7 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       });
       this.dropdown.querySelector('[data-more-results]')
         ?.addEventListener('click', () => this.#navigateToSearch());
+      this.#updateDropdownSelection();
     }
 
     #updateDropdownSelection() {
@@ -423,8 +436,14 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
         const selected = idx === this.selectedIndex;
         const color = this.results[idx]?.color ?? '#521d3a';
         btn.classList.toggle('bg-gray-100', selected);
+        btn.setAttribute('aria-selected', String(selected));
         btn.style.backgroundColor = selected ? `color-mix(in srgb, ${color} 10%, var(--mix-light, white))` : '';
       });
+      if (this.selectedIndex >= 0) {
+        this.input?.setAttribute('aria-activedescendant', `search-option-${this.selectedIndex}`);
+      } else {
+        this.input?.removeAttribute('aria-activedescendant');
+      }
     }
 
     // ── Full-page results list ──────────────────────────────────────────────
