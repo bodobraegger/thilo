@@ -197,8 +197,10 @@ function getSectionUrl(section: SectionData, locale: string): string {
       sidebarOverlay?.classList.remove('hidden');
       document.getElementById('sidebar-toggle-header')?.setAttribute('aria-expanded', 'true');
       scrollToCurrentInToC('smooth');
-      // Move focus into the sidebar for keyboard/screen-reader users
-      sidebarToggle?.focus();
+      // Move focus for keyboard/screen-reader users; preventScroll because
+      // focus() otherwise honors the global [id] scroll-margin and nudges
+      // the page scroll position
+      sidebarToggle?.focus({ preventScroll: true });
     }
 
     function closeSidebar() {
@@ -207,7 +209,7 @@ function getSectionUrl(section: SectionData, locale: string): string {
       sidebarOverlay?.classList.add('hidden');
       const headerToggle = document.getElementById('sidebar-toggle-header');
       headerToggle?.setAttribute('aria-expanded', 'false');
-      if (wasOpen) headerToggle?.focus();
+      if (wasOpen) headerToggle?.focus({ preventScroll: true });
     }
 
     // The sidebar persists across view transitions, so its server-rendered
