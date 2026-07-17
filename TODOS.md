@@ -10,7 +10,7 @@
    - [x] Vorarbeiten für Progressive Web App Integration (Service Worker Setup, Manifest)
    - [x] Evaluierung von Mobile App Optionen (z.B. React Native, Flutter) für zukünftige Entwicklung - siehe [docs/MOBILE-APP-EVALUATION.md](./docs/MOBILE-APP-EVALUATION.md)
 - [x] Erste AI Quiz Tests
-   - [x] Recherche und Test-Integration von generierten Q&As
+   - [x] Recherche und Test-Integration von generierten Q&As - siehe [docs/GAMIFICATION.md](./docs/GAMIFICATION.md#ai-quiz-tooling-evaluation-july-2026)
 - [x] Bug Triage & Fixes
    - [x] Behandlung neuer Bugs und kleinerer Anpassungen
 

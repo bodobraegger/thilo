@@ -42,6 +42,53 @@ locale progress" below for the fix if it becomes a problem.
 - `Quiz.tsx` records the score whenever a scout completes a
   react-quiz-component quiz.
 
+## AI quiz tooling evaluation (July 2026)
+
+Research question for the "Erste AI Quiz Tests" position: can an existing
+AI quiz platform generate and host the Thilo quizzes, or should generation
+stay in-house?
+
+### skillbuddy.io
+
+AI-assisted course and quiz platform with a learn-to-earn model: organisers
+build courses (AI structures uploaded material into chapters, lessons, and
+quizzes), learners earn Bitcoin (SATS) rewards for completing them. The
+platform itself is free; skillbuddy takes 10% of rewards distributed to
+learners. White-label branding and native iOS/Android apps are included.
+
+Findings against the Thilo constraints:
+
+- Content would be duplicated into their platform. Strapi stays the source
+  of truth for the book, so every content change would need a second,
+  manual sync into skillbuddy.
+- Monetary (Bitcoin) rewards for an audience of mostly minors is not a
+  model PBS can adopt; without the reward system, the platform's core
+  engagement loop and pricing model fall away.
+- No documented quiz export or API: quizzes render inside their hosted
+  apps, not inside the offline PWA, and cannot be extracted as the
+  react-quiz-component JSON the site consumes.
+- The white-label mobile apps duplicate what the shipped PWA already does.
+
+### Other hosted AI quiz makers
+
+Sampled the current field (Edcafe AI, Questgen, ClassPoint, forms.app,
+Fillout, MyQuizGPT). All generate questions from pasted or uploaded
+content, but none export plain JSON; the closest is Questgen's QTI/Moodle
+XML, which would still need conversion. They are priced per editor per
+month, and most render quizzes on their own hosted pages, which breaks
+offline use and adds a permanent third-party dependency.
+
+### Conclusion
+
+No hosted platform fits the constraints: offline static PWA, three
+locales, react-quiz-component JSON as the delivery format, and no accounts
+or rewards involving minors. The test integration therefore targeted the
+in-repo pipeline instead: hand-authored quiz JSON rendered by the
+`Quiz.tsx` island with results recorded in the local progress store (see
+"What exists today"), and build-time generation with the Claude API as the
+scaling path (see roadmap below), which keeps quizzes reviewable in the
+repo and costs API calls only when chapter content changes.
+
 ## Roadmap
 
 ### 1. AI-generated quizzes per chapter
