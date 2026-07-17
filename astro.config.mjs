@@ -18,6 +18,26 @@ const getBaseUrl = () => {
   return '/thilo/'; // Your default fallback
 };
 
+// react-quiz-component appends its entire stylesheet to <head> at import time
+// with no opt-out; blank the CSS payload so src/styles/quiz.css is the only
+// styling the quiz gets. Throws instead of degrading silently so a package
+// update that changes the bundle shape fails the build instead of shipping
+// the library's look.
+const stripQuizComponentCss = () => ({
+  name: 'strip-quiz-component-css',
+  transform(code, id) {
+    if (!id.includes('react-quiz-component')) return;
+    const cssStart = code.indexOf("(':root{--quiz-");
+    if (cssStart === -1) {
+      throw new Error(
+        'react-quiz-component style injection not found; adapt stripQuizComponentCss in astro.config.mjs'
+      );
+    }
+    const cssEnd = code.indexOf("')", cssStart);
+    return code.slice(0, cssStart + 1) + "''" + code.slice(cssEnd + 1);
+  },
+});
+
 // https://astro.build/config
 export default defineConfig({
   site: process.env.SITE_URL || 'https://thilo.scouts.ch',
@@ -29,7 +49,12 @@ export default defineConfig({
   },
   
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), stripQuizComponentCss()],
+    // Pre-bundled deps skip transform plugins in dev; keep the quiz island
+    // going through stripQuizComponentCss there too
+    optimizeDeps: {
+      exclude: ['react-quiz-component'],
+    },
   },
   integrations: [
     react(),
