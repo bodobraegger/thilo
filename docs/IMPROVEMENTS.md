@@ -182,6 +182,11 @@ stacking duplicate listeners, and its dropdown/full-page mode went stale.
 Listeners now use an `AbortController` (aborted in `disconnectedCallback`),
 and mode + query re-sync on `astro:page-load`.
 
+This listener lifecycle also resolves the long-standing iOS Safari search
+bug from the React app, where stacked and orphaned event listeners left the
+search unresponsive; the widget was rebuilt from scratch with exactly one
+registration path per mount.
+
 ## Performance
 
 ### Build-time markdown rendering
