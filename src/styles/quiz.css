@@ -1,7 +1,8 @@
 /* Complete styling for the quiz island. The stylesheet react-quiz-component
    injects at runtime is stripped at build time (stripQuizComponentCss in
    astro.config.mjs), so everything the quiz shows is styled here, on the
-   site's design tokens. */
+   site's design tokens. Flat look: surfaces are distinguished by background
+   (white cards on the light container, tints for feedback), not borders. */
 
 .quiz-container,
 .quiz-loading {
@@ -14,14 +15,13 @@
   background-color: var(--background-light);
   border-radius: var(--border-radius-md);
 
-  /* Correct/incorrect palette, mixed against the same targets as the primary
-     ramp in colors.css so it stays readable when dark mode flips them */
-  --color-correct: color-mix(in srgb, #28a745 var(--accent-keep), var(--mix-dark));
-  --color-incorrect: color-mix(in srgb, #dc3545 var(--accent-keep), var(--mix-dark));
-  --background-correct: color-mix(in srgb, #28a745 12%, var(--mix-light));
-  --background-incorrect: color-mix(in srgb, #dc3545 12%, var(--mix-light));
-  --border-correct: color-mix(in srgb, #28a745 35%, var(--mix-light));
-  --border-incorrect: color-mix(in srgb, #dc3545 35%, var(--mix-light));
+  /* Correct/incorrect palette. Text mixes toward --mix-dark, backgrounds
+     toward --mix-light, like the primary ramp in colors.css, so both flip
+     correctly in dark mode while keeping the text readable on the tint */
+  --color-correct: color-mix(in srgb, #28a745 55%, var(--mix-dark));
+  --color-incorrect: color-mix(in srgb, #dc3545 55%, var(--mix-dark));
+  --background-correct: color-mix(in srgb, #28a745 15%, var(--mix-light));
+  --background-incorrect: color-mix(in srgb, #dc3545 15%, var(--mix-light));
 }
 
 .react-quiz-container {
@@ -55,17 +55,16 @@
     align-items: center;
     justify-content: center;
     padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: var(--border-radius-md);
     background-color: var(--background-color);
     color: var(--text-color);
     font: inherit;
     cursor: pointer;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    transition: background-color var(--transition-fast);
 
     &:enabled:hover {
       background-color: var(--color-primary-50);
-      border-color: var(--color-primary-400);
     }
 
     &:focus-visible {
@@ -86,12 +85,10 @@
   .startQuizBtn,
   .nextQuestionBtn {
     background-color: var(--color-primary);
-    border-color: var(--color-primary);
     color: white;
 
     &:enabled:hover {
       background-color: var(--color-primary-hover);
-      border-color: var(--color-primary-hover);
     }
   }
 
@@ -116,19 +113,16 @@
   .incorrect {
     pointer-events: none;
     cursor: not-allowed;
-    opacity: 0.6;
   }
 
   .correct {
     color: var(--color-correct);
     background-color: var(--background-correct);
-    border-color: var(--border-correct);
   }
 
   .incorrect {
     color: var(--color-incorrect);
     background-color: var(--background-incorrect);
-    border-color: var(--border-incorrect);
   }
 
   /* Of the answer-type tags only the "pick N" hint carries information */
@@ -139,7 +133,6 @@
   .tag-container .number-of-selection {
     display: inline-block;
     padding: 0 var(--spacing-sm);
-    border: 1px solid var(--border-correct);
     border-radius: var(--border-radius-md);
     color: var(--color-correct);
     background-color: var(--background-correct);
@@ -151,18 +144,13 @@
     padding: var(--spacing-sm) var(--spacing-md);
     margin-block: var(--spacing-sm);
     border-radius: var(--border-radius-md);
-
-    &.correct,
-    &.incorrect {
-      opacity: 1;
-    }
   }
 
   .explanation {
     padding: var(--spacing-sm) var(--spacing-md);
     margin-block: var(--spacing-sm);
-    border-inline-start: 3px solid var(--border-color);
-    color: var(--text-color);
+    border-radius: var(--border-radius-md);
+    background-color: var(--background-light);
   }
 
   .questionBtnContainer {
@@ -186,12 +174,16 @@
       gap: var(--spacing-sm);
       width: 100%;
       padding: var(--spacing-sm) var(--spacing-md);
-      border: 1px solid var(--border-color);
+      border: none;
       border-radius: var(--border-radius-md);
       background-color: var(--background-color);
       color: var(--text-color);
       font: inherit;
       cursor: pointer;
+
+      &:hover {
+        background-color: var(--color-primary-50);
+      }
 
       &::after {
         content: '▾';
@@ -215,7 +207,6 @@
       z-index: 10;
       display: flex;
       flex-direction: column;
-      border: 1px solid var(--border-color);
       border-radius: var(--border-radius-md);
       background-color: var(--background-color);
       box-shadow: var(--shadow-lg);
@@ -245,15 +236,13 @@
 
   .result-answer-wrapper {
     margin-block: var(--spacing-sm);
-    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     background-color: var(--background-color);
     overflow: hidden;
 
     h3 {
-      padding: var(--spacing-sm) var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md) 0;
       margin: 0;
-      border-bottom: 1px solid var(--border-color);
       font-size: var(--font-size-base);
     }
 
@@ -262,11 +251,14 @@
     }
 
     /* Review mode: states must stay fully readable on disabled buttons */
-    *:disabled,
-    .correct,
-    .incorrect {
+    *:disabled {
       opacity: 1;
       cursor: default;
+    }
+
+    /* Neutral answers need a hint of surface on the white card */
+    .answerBtn:not(.correct):not(.incorrect) {
+      background-color: var(--background-light);
     }
 
     .tag-container {
