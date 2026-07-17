@@ -20,7 +20,7 @@ Key traits:
 - **Quizzes**: the only React islands, hydrated lazily where a chapter links a quiz JSON
 - **Dark mode**: light/dark options in the menu, syncing with the system until the user picks explicitly
 
-See [docs/IMPROVEMENTS.md](./docs/IMPROVEMENTS.md) for a detailed change log of the current overhaul and [docs/GAMIFICATION.md](./docs/GAMIFICATION.md) for the progress-tracking and quiz roadmap. `CLAUDE.md` describes the code layout in more detail.
+See [docs/IMPROVEMENTS.md](./docs/IMPROVEMENTS.md) for a detailed change log of the current overhaul, [docs/GAMIFICATION.md](./docs/GAMIFICATION.md) for the progress-tracking and quiz roadmap, and [docs/MOBILE-APP-EVALUATION.md](./docs/MOBILE-APP-EVALUATION.md) for why the mobile strategy is PWA-first instead of React Native/Flutter. `CLAUDE.md` describes the code layout in more detail.
 
 ## Development
 

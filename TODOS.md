@@ -8,7 +8,7 @@
    - [x] Überprüfung und Optimierung für Google-Indexierung und AI-Search-Integration
 - [x] PWA & Mobile App Groundwork
    - [x] Vorarbeiten für Progressive Web App Integration (Service Worker Setup, Manifest)
-   - [x] Evaluierung von Mobile App Optionen (z.B. React Native, Flutter) für zukünftige Entwicklung
+   - [x] Evaluierung von Mobile App Optionen (z.B. React Native, Flutter) für zukünftige Entwicklung - siehe [docs/MOBILE-APP-EVALUATION.md](./docs/MOBILE-APP-EVALUATION.md)
 - [x] Erste AI Quiz Tests
    - [x] Recherche und Test-Integration von generierten Q&As
 - [x] Bug Triage & Fixes
