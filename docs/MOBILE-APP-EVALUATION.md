@@ -60,14 +60,14 @@ The Thilo is a content reference for scouts, not an interactive tool:
 
 ## Decision
 
-| Criterion | React Native | Flutter | PWA |
-| --- | --- | --- | --- |
-| Offline book content | extra sync layer | extra sync layer | service worker, done |
-| Reuse of existing code | none | none | total |
-| Distribution | stores + accounts | stores + accounts | URL |
-| Content updates | release or sync | release or sync | automatic |
-| Added toolchains | 1 (+ stores) | 2 (+ stores) | 0 |
-| Yearly maintenance | high | high | negligible |
+| Criterion              | React Native      | Flutter           | PWA                  |
+| ---------------------- | ----------------- | ----------------- | -------------------- |
+| Offline book content   | extra sync layer  | extra sync layer  | service worker, done |
+| Reuse of existing code | none              | none              | total                |
+| Distribution           | stores + accounts | stores + accounts | URL                  |
+| Content updates        | release or sync   | release or sync   | automatic            |
+| Added toolchains       | 1 (+ stores)      | 2 (+ stores)      | 0                    |
+| Yearly maintenance     | high              | high              | negligible           |
 
 PWA wins on every criterion that matters for this product. If a store
 presence ever becomes a requirement (e.g. discoverability or push campaigns),
