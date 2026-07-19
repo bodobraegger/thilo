@@ -423,12 +423,11 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
                       ${highlightHtml(result.title, this.query, `color-mix(in srgb, ${color} 30%, var(--mix-light, white))`)}
                     </div>
                     ${excerpt ? `<p class="text-xs text-gray-600 mt-2 line-clamp-2 text-left">${highlightHtml(excerpt, this.query, `color-mix(in srgb, ${color} 30%, var(--mix-light, white))`)}</p>` : ''}
-                    <div class="flex items-center gap-2 mt-2">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+                    <div class="flex items-center mt-2">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium truncate"
                         style="background-color:color-mix(in srgb, ${color} 15%, var(--mix-light, white));color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
-                        ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
+                        ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}: ${escapeHtml(result.sectionTitle)}
                       </span>
-                      <span class="text-xs text-gray-500 truncate">${escapeHtml(result.sectionTitle)}</span>
                     </div>
                   </div>
                 </div>
