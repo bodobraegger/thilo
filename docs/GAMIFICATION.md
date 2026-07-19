@@ -121,6 +121,8 @@ generated file. Auto-append is preferred: `Section.astro` can check for a
 quiz at the conventional path at build time and render the island without any
 editor action.
 
+Move away from the react-quiz-component, with ugly and hardcoded styles. 
+
 ### 2. Badges and section completion
 
 All derivable from the existing store, no schema change needed:

@@ -99,8 +99,6 @@ longer serialized into every page.
 
 - quiz loading/error/empty states localized (de/fr/it) via props from
   `Section.astro`
-- keyboard skip-to-content link before the header (`.skip-link`, visible on
-  focus)
 - the invisible back-to-top button no longer intercepts taps in the
   bottom-right corner (`pointer-events` follows visibility)
 
@@ -233,7 +231,8 @@ React `MarkdownRenderer`/`Link` components. `fetchAllSections()` now calls
 ## SEO
 
 - JSON-LD structured data: `WebSite` + `SearchAction` on home pages,
-  `Article` + `BreadcrumbList` on section pages
+  `Article` + `BreadcrumbList` on section pages - no visible breadcrumbs, not 
+  necessary
 - complete OpenGraph and Twitter tags (`og:site_name`, `og:locale` with
   alternates, `og:image`, `twitter:card`)
 - **Strapi overrides**: if `seo_title` / `seo_description` fields are added
