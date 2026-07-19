@@ -260,6 +260,66 @@ if (allSectionsData) {
   }
   (window as any).thiloScrollToAnchor = scrollToAnchor;
 
+  // Search results link here with ?q=<term> (Search.astro's getLocalizedUrl).
+  // Highlight every occurrence in the rendered content so the match is
+  // visible without needing to scroll to it precisely - the existing
+  // anchor-scroll already lands near it with surrounding context.
+  const SEARCH_QUERY_MIN_LENGTH = 2; // keep in sync with Search.astro's MIN
+  async function highlightSearchTerm(): Promise<void> {
+    const query = new URLSearchParams(location.search).get('q')?.trim();
+    if (!query || query.length < SEARCH_QUERY_MIN_LENGTH) return;
+
+    const root = document.querySelector('section.content');
+    if (!root) return;
+
+    // Yield past the paint-critical work above (color, anchor scroll) so
+    // walking/mutating the content never blocks them.
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    const lowerQuery = query.toLowerCase();
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (node.parentElement?.closest('.react-quiz-container, script, style')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return node.textContent?.toLowerCase().includes(lowerQuery)
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_SKIP;
+      },
+    });
+    // Collect matches before mutating - replacing nodes mid-walk skips siblings
+    const matches: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) matches.push(node as Text);
+
+    for (const textNode of matches) {
+      const text = textNode.textContent ?? '';
+      const lowerText = text.toLowerCase();
+      const frag = document.createDocumentFragment();
+      let cursor = 0;
+      let idx = lowerText.indexOf(lowerQuery);
+      while (idx !== -1) {
+        if (idx > cursor) frag.append(text.slice(cursor, idx));
+        const mark = document.createElement('mark');
+        mark.className = 'search-term-highlight';
+        mark.textContent = text.slice(idx, idx + query.length);
+        frag.append(mark);
+        cursor = idx + query.length;
+        idx = lowerText.indexOf(lowerQuery, cursor);
+      }
+      frag.append(text.slice(cursor));
+      textNode.replaceWith(frag);
+    }
+
+    // Drop ?q= so a reload/share/back-navigation doesn't redo this or leave
+    // it in the address bar; the highlights themselves stay until the next
+    // navigation replaces the page.
+    const params = new URLSearchParams(location.search);
+    params.delete('q');
+    const qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? `?${qs}` : '') + location.hash);
+  }
+
   function applyStoredTheme(): void {
     let theme = 'sync';
     try { theme = localStorage.getItem('thilo-theme') || 'sync'; } catch { /* stay light */ }
@@ -316,5 +376,6 @@ if (allSectionsData) {
     applyColor();
     setupBackToTop();
     setupReadTracking();
+    highlightSearchTerm();
   });
 </script>

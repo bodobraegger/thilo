@@ -46,6 +46,11 @@ section {
   strong {
     color: var(--color-primary);
   }
+  .search-term-highlight {
+    background-color: color-mix(in srgb, var(--color-primary) 30%, var(--mix-light, white));
+    border-radius: 0.25rem;
+    padding: 0 0.125rem;
+  }
   .section-title {
     display: flex;
     h1 {
