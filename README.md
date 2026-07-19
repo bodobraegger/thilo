@@ -7,7 +7,7 @@ The Thilo contains a lot of interesting and useful information about the Scouts 
 The frontend is a static site built with [Astro](https://astro.build): all content is fetched from the Strapi backend at build time and shipped as plain HTML with a small amount of client JavaScript. It is installable as a PWA and fully usable offline after the first visit.
 
 ## Big Picture
-![Architecture](./documentation/architecture.png)
+![Architecture](./docs/architecture.png)
 
 - **Frontend** (this repo): Astro SSG, deployed to GitHub Pages under the `/thilo/` base path
 - **Backend**: [Strapi Backend](https://github.com/scout-ch/thilo-api) at `https://api.thilo.scouts.ch/` (override with the `BACKEND_URL` env var)
