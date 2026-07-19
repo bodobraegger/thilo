@@ -1,3 +1,4 @@
+# Offered
 - [x] Research, Rewrite & Code Maintainability
    - [x] Recherche und Rewrite in geeignetem Framework
    - [x] Verbesserung der Code-Struktur zur langfristigen Wartbarkeit
@@ -16,26 +17,47 @@
 
 ## Architecture & Code Quality
 
-- [x] **Unify data fetching** — `fetchAllSections()` now calls `getSections()` internally, so there is a single fetch path, cache, and `BACKEND_URL` handling in `src/utils/data.ts`.
+- [x] **Unify data fetching**: `fetchAllSections()` now calls `getSections()` internally, so there is a single fetch path, cache, and `BACKEND_URL` handling in `src/utils/data.ts`.
 
-- [x] **Replace `is:inline` + init-guard pattern** — `Header.astro`, `TableOfContents.astro`, and `Search.astro` now use `AbortController`: each `setup()` aborts the previous controller and re-registers listeners on `astro:page-load`.
+- [x] **Replace `is:inline` + init-guard pattern**: `Header.astro`, `TableOfContents.astro`, and `Search.astro` now use `AbortController`: each `setup()` aborts the previous controller and re-registers listeners on `astro:page-load`.
 
-- [x] **Split oversized components** — Pure search utilities live in `src/utils/search.ts`, language switching in `src/utils/languageSwitcher.ts`, markdown rendering in `src/utils/markdown.ts`, URL building in `src/utils/urls.ts`. `TableOfContents.astro` keeps its sidebar logic in one script but it is now scoped, documented, and torn down cleanly.
+- [x] **Split oversized components**: Pure search utilities live in `src/utils/search.ts`, language switching in `src/utils/languageSwitcher.ts`, markdown rendering in `src/utils/markdown.ts`, URL building in `src/utils/urls.ts`. `TableOfContents.astro` keeps its sidebar logic in one script but it is now scoped, documented, and torn down cleanly.
 
-- [x] **Complete i18n coverage** — `Zielgruppe` (`section.targetGroup`), the language label (`header.language`), and the scroll-to-top `aria-label` (`section.backToTop`) all come from `src/i18n/`; 404, imprint error, and PWA prompt strings were added for de/fr/it.
+- [x] **Complete i18n coverage**: `Zielgruppe` (`section.targetGroup`), the language label (`header.language`), and the scroll-to-top `aria-label` (`section.backToTop`) all come from `src/i18n/`; 404, imprint error, and PWA prompt strings were added for de/fr/it.
 
 ## UX & Visual
 
-- [x] **Search dropdown excerpt** — Dropdown results show a highlighted 1-2 line excerpt (`getExcerpt` + `highlightHtml` in `src/utils/search.ts`).
+- [x] **Search dropdown excerpt**: Dropdown results show a highlighted 1-2 line excerpt (`getExcerpt` + `highlightHtml` in `src/utils/search.ts`).
 
-- [x] **Sidebar animation on mobile** — Slide-in keyframe on `.sidebar-open` plus overlay fade, both behind `prefers-reduced-motion: no-preference`.
+- [x] **Sidebar animation on mobile**: Slide-in keyframe on `.sidebar-open` plus overlay fade, both behind `prefers-reduced-motion: no-preference`.
 
-- [x] **Breadcrumb / location indicator** — Section pages render a `Home › Section` breadcrumb above the title; the current chapter is tracked live in the sidebar.
+- [x] **location indicator** the current chapter is tracked live in the sidebar. No visible breadcrumbs because it is not necessary.
 
-- [x] **Scroll-to-top button** — `aria-label` translated via `section.backToTop`; button floats above content with z-50.
+- [x] **Scroll-to-top button**: `aria-label` translated via `section.backToTop`; button floats above content with z-50.
 
-- [x] **Print styles** — `src/styles/print.css` hides chrome and formats content for printing.
+- [x] **Print styles**: `src/styles/print.css` hides chrome and formats content for printing.
 
 ## Functionality
 
-- [x] **Offline / PWA improvement** — Workbox `globPatterns` precaches built HTML (plus JS/CSS/fonts/icons); API responses stay StaleWhileRevalidate. Content updates are picked up via hourly and on-focus service worker update checks with a localized update prompt.
+- [x] **Offline / PWA improvement**: Workbox `globPatterns` precaches built HTML (plus JS/CSS/fonts/icons); API responses stay StaleWhileRevalidate. Content updates are picked up via hourly and on-focus service worker update checks with a localized update prompt.
+
+# Feedback 19.07.26
+- [x] Remove breadcrumbs and skip to content button
+- [ ] on language variants, home links is broken, acceuil -> 404 -> german home trailing slash issue
+- [ ] title level 4 are too small, compare to old website
+- [ ] search
+  - [ ] direct to nearest parent h* heading
+  - [ ] whole box clickable, section pill below
+- [ ] images
+  - [ ] default centered?
+  - [ ] float margins
+  - [ ] alt tags, compare to old code
+- [ ] match github actions for deploy, pass to james
+
+## not for now
+- [ ] future todos:
+  - [ ] own the quiz frontend
+  - [ ] LLM backed question generation, no account / tracking
+  - [ ] how to verify and classify? -> manual verification!
+  - [ ] it rechtlinie
+  - [ ] strapi updates (james), prerequisite for quiz
