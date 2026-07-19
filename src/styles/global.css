@@ -45,6 +45,15 @@ body {
   overflow-y: scroll;
 }
 
+/* Section-colored text selection. Uses the same tint/text-color pairing as
+   every other section-colored surface (colors.css): --accent-keep and
+   --mix-light/--mix-dark flip together in dark mode (variables.css), so the
+   text color inverts automatically instead of needing a manual dark check. */
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 30%, var(--mix-light, white));
+  color: color-mix(in srgb, var(--color-primary) var(--accent-keep, 100%), var(--mix-dark, black));
+}
+
 /* Remove the 300ms tap delay and mobile tap flash for a native-app feel */
 a,
 button,
