@@ -96,9 +96,19 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
     title: string;
     content: string;
     url: string;
+    chapterUrl: string;
     sectionTitle: string;
     color: string;
     relevance: number;
+  }
+
+  // The heading/target chunk (if any) whose own text contains the query,
+  // so results can deep-link to the nearest match instead of just the
+  // containing section/chapter; falls back to the chapter/section itself.
+  function matchAnchor(entry: SearchIndexEntry, query: string): string | undefined {
+    const lowerQuery = query.toLowerCase();
+    const chunk = entry.headings?.find(h => h.text.toLowerCase().includes(lowerQuery));
+    return chunk?.anchor ?? entry.chapterSlug;
   }
 
   function baseUrl(): string {
@@ -347,7 +357,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
             type: entry.type,
             title: entry.title,
             content: entry.text,
-            url: getLocalizedUrl(this.locale, entry.slug, entry.chapterSlug),
+            url: getLocalizedUrl(this.locale, entry.slug, matchAnchor(entry, this.query)),
+            chapterUrl: getLocalizedUrl(this.locale, entry.slug, entry.chapterSlug),
             sectionTitle: entry.sectionTitle,
             color: entry.color ?? '#521d3a',
             relevance,
@@ -481,7 +492,8 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
           const excerpt = getExcerpt(result.content ?? '', this.query);
           const color   = result.color;
           html += `
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            <div class="search-result-card border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+              data-card-url="${escapeHtml(result.url)}"
               style="--section-color:${color};border-color:${color};scroll-margin-top:80px">
               <h3 class="text-lg font-semibold mb-4">
                 <a href="${escapeHtml(result.url)}" class="hover:underline" style="color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
@@ -492,10 +504,10 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
                 ${highlightHtml(excerpt, this.query, `color-mix(in srgb, ${color} 20%, var(--mix-light, white))`)}
               </p>
               <div class="flex items-center gap-3 text-sm">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                <a href="${escapeHtml(result.chapterUrl)}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium hover:underline"
                   style="background-color:color-mix(in srgb, ${color} 20%, var(--mix-light, white));color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
                   ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
-                </span>
+                </a>
                 <span style="color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">${escapeHtml(result.sectionTitle)}</span>
               </div>
             </div>`;
@@ -504,6 +516,15 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
       }
 
       this.resultsContainer.innerHTML = html;
+      // The card itself navigates to the exact match; the pill inside it is
+      // a real link to the containing chapter, so its own click must not
+      // also trigger the card's handler.
+      this.resultsContainer.querySelectorAll<HTMLElement>('[data-card-url]').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if ((e.target as HTMLElement).closest('a')) return;
+          navigate(card.dataset.cardUrl!);
+        });
+      });
     }
   }
 

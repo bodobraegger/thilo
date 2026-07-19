@@ -1,3 +1,13 @@
+import { parseAltDirectives, isLikelyFilename } from './markdown';
+
+// A slice of an entry's content anchored to the heading it falls under (see
+// splitContentByHeading in markdown.ts), so a match can deep-link to the
+// nearest heading instead of just the containing section/chapter.
+export interface SearchIndexHeadingChunk {
+  anchor: string | undefined;
+  text: string;
+}
+
 // One searchable unit, precomputed at build time by search-index/[locale].json
 export interface SearchIndexEntry {
   type: 'section' | 'chapter';
@@ -7,6 +17,7 @@ export interface SearchIndexEntry {
   chapterSlug?: string;
   sectionTitle: string;
   color?: string;
+  headings?: SearchIndexHeadingChunk[];
 }
 
 export function escapeHtml(s: string): string {
@@ -72,7 +83,12 @@ export function scoreResult(title: string, text: string, query: string): number 
 export function stripMarkdown(text: string): string {
   if (!text) return '';
   return text
-    .replace(/!\[.*?\]\(.*?\)/g, '')
+    // Keep an image's caption as plain, searchable text (skip auto-filled
+    // filenames, see isLikelyFilename) instead of discarding it outright.
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, (_match, alt: string) => {
+      const { caption } = parseAltDirectives(alt);
+      return caption && !isLikelyFilename(caption) ? caption : '';
+    })
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/#{1,6}\s+/g, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')

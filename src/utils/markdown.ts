@@ -42,8 +42,45 @@ export function extractImageUrls(content: string | undefined): string[] {
 
 // Strapi pre-fills alt text with the uploaded file's name when an editor
 // doesn't set one explicitly; that's not a real caption worth showing.
-function isLikelyFilename(text: string): boolean {
+export function isLikelyFilename(text: string): boolean {
   return /^[\w-]+\.(jpe?g|png|gif|webp|svg|bmp|tiff?|avif)$/i.test(text.trim());
+}
+
+export interface HeadingChunk {
+  // Matches the `id` renderer.heading assigns via slugify(), or the caller's
+  // fallbackAnchor for content before the first heading / with no headings.
+  anchor: string | undefined;
+  raw: string;
+}
+
+// Splits raw markdown into chunks at each top-level heading, tagging each
+// with the same anchor renderer.heading assigns that heading on the page
+// (slugify(text)) - so a search index built from these chunks can deep-link
+// straight to the heading nearest a match instead of only the containing
+// section/chapter.
+export function splitContentByHeading(content: string, fallbackAnchor?: string): HeadingChunk[] {
+  // Passed as call-local options (not marked.setOptions) so this can't race
+  // with renderMarkdownParts's global gfm/renderer state at build time.
+  const tokens = marked.lexer(content || '', { gfm: true });
+  const chunks: HeadingChunk[] = [];
+  let anchor = fallbackAnchor;
+  let raw = '';
+
+  const flush = () => {
+    if (raw.trim()) chunks.push({ anchor, raw });
+    raw = '';
+  };
+
+  for (const token of tokens) {
+    if (token.type === 'heading') {
+      flush();
+      anchor = slugify((token as Tokens.Heading).text ?? '') || fallbackAnchor;
+    }
+    raw += token.raw ?? '';
+  }
+  flush();
+
+  return chunks;
 }
 
 function escapeHtml(value: string): string {
@@ -56,7 +93,7 @@ function escapeHtml(value: string): string {
 // recognized `tag: value` shape are treated as plain caption/alt prose, so
 // descriptive text mixed with directives (or with no directives at all)
 // survives instead of being silently dropped.
-function parseAltDirectives(alt: string): { caption: string; styles: Record<string, string> } {
+export function parseAltDirectives(alt: string): { caption: string; styles: Record<string, string> } {
   const styles: Record<string, string> = {};
   const captionParts: string[] = [];
   for (const rawSegment of alt.split(';')) {
