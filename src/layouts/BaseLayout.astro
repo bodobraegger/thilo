@@ -261,10 +261,14 @@ if (allSectionsData) {
   (window as any).thiloScrollToAnchor = scrollToAnchor;
 
   // Search results link here with ?q=<term> (Search.astro's getLocalizedUrl).
-  // Highlight every occurrence in the rendered content so the match is
-  // visible without needing to scroll to it precisely - the existing
-  // anchor-scroll already lands near it with surrounding context.
+  // Highlight occurrences in the rendered content so the match is visible
+  // without needing to scroll to it precisely - the existing anchor-scroll
+  // already lands near it with surrounding context. A common term can occur
+  // many times on one page, so only the first MAX_HIGHLIGHTED_OCCURRENCES
+  // (in document order) are marked, fading out so the earliest - closest to
+  // where the anchor scroll lands - reads as the strongest.
   const SEARCH_QUERY_MIN_LENGTH = 2; // keep in sync with Search.astro's MIN
+  const MAX_HIGHLIGHTED_OCCURRENCES = 10;
   async function highlightSearchTerm(): Promise<void> {
     const query = new URLSearchParams(location.search).get('q')?.trim();
     if (!query || query.length < SEARCH_QUERY_MIN_LENGTH) return;
@@ -292,19 +296,32 @@ if (allSectionsData) {
     let node: Node | null;
     while ((node = walker.nextNode())) matches.push(node as Text);
 
+    // CSS opacity on the mark's already-light tint barely reads (it fades
+    // toward the page background, which is close to the tint's own
+    // light-mix target already); scale the color-mix percentage itself
+    // instead for a fade that's actually visible.
+    const primaryColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-primary').trim() || '#521d3a';
+
+    let occurrence = 0; // counts across the whole page, in document order
     for (const textNode of matches) {
+      if (occurrence >= MAX_HIGHLIGHTED_OCCURRENCES) break;
       const text = textNode.textContent ?? '';
       const lowerText = text.toLowerCase();
       const frag = document.createDocumentFragment();
       let cursor = 0;
       let idx = lowerText.indexOf(lowerQuery);
-      while (idx !== -1) {
+      while (idx !== -1 && occurrence < MAX_HIGHLIGHTED_OCCURRENCES) {
         if (idx > cursor) frag.append(text.slice(cursor, idx));
         const mark = document.createElement('mark');
         mark.className = 'search-term-highlight';
+        const strength = 1 - occurrence * 0.1;
+        mark.style.backgroundColor =
+          `color-mix(in srgb, ${primaryColor} ${Math.round(30 * strength)}%, var(--mix-light, white))`;
         mark.textContent = text.slice(idx, idx + query.length);
         frag.append(mark);
         cursor = idx + query.length;
+        occurrence++;
         idx = lowerText.indexOf(lowerQuery, cursor);
       }
       frag.append(text.slice(cursor));
