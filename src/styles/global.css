@@ -51,7 +51,7 @@ body {
    text color inverts automatically instead of needing a manual dark check. */
 ::selection {
   background-color: color-mix(in srgb, var(--color-primary) 30%, var(--mix-light, white));
-  color: color-mix(in srgb, var(--color-primary) var(--accent-keep, 100%), var(--mix-dark, black));
+  /* color: color-mix(in srgb, var(--color-primary) var(--accent-keep, 100%), var(--mix-dark, black)); */
 }
 
 /* Remove the 300ms tap delay and mobile tap flash for a native-app feel */
