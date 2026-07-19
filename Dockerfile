@@ -1,7 +1,7 @@
 # Multi-stage build: Astro's SSG output is pure static files, so production
 # serves them via nginx (gzip + cached assets) instead of Astro's Node
 # preview server.
-FROM node:22.2.0-alpine AS builder
+FROM node:26-alpine AS builder
 
 ############################################
 # General Docker image configuration
@@ -16,7 +16,7 @@ RUN apk update && apk add --no-cache dos2unix
 ############################################
 # Install pnpm
 ############################################
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10
 
 ############################################
 # None root user
