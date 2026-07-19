@@ -58,7 +58,7 @@
   - [x] Support float + margin via the existing alt-text style-directive syntax
   - [x] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
         accessible description text, compare to the old code's handling and fix
-- [ ] Match the GitHub Actions deploy workflow to the old site's, then hand off to James
+- [x] Match the GitHub Actions deploy workflow to the old site's, then hand off to James
 
 ## not for now
 - [ ] future todos:
