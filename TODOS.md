@@ -43,16 +43,16 @@
 
 # Feedback 19.07.26
 - [x] Remove breadcrumbs and skip to content button
-- [ ] **Home link 404s from a chapter page in a non-default locale**: on a French chapter, clicking
+- [x] **Home link 404s from a chapter page in a non-default locale**: on a French chapter, clicking
       "Accueil" (home) 404s instead of going to the French home page. Likely a trailing-slash
       mismatch between the home link's href and the locale's actual route
-- [ ] `h4` in section content renders at the browser default size (`src/styles/section.css` sets
+- [x] `h4` in section content renders at the browser default size (`src/styles/section.css` sets
       color but no `font-size` for it), noticeably smaller than the old site; give it an explicit size
-- [ ] Search
-  - [ ] Result links point at the section/chapter page only (`getLocalizedUrl` in `Search.astro`'s
+- [x] Search
+  - [x] Result links point at the section/chapter page only (`getLocalizedUrl` in `Search.astro`'s
         `#search()`), not the specific heading that matched, add a `#fragment` to the nearest parent
         `h*` so results jump straight to the match
-  - [ ] Full-page results (`#renderResults` in `Search.astro`): only the title is a link inside the
+  - [x] Full-page results (`#renderResults` in `Search.astro`): only the title is a link inside the
         card right now. Make the whole result box clickable, and also the bereich / kapitel text text in the pill below or the title to lead to the containing chapter, but clicking on the pill redirects to the actual result text. include displayed alt-captions in the results.
 - [x] Images (alt-text parsing in `src/utils/markdown.ts`)
   - [x] Support float + margin via the existing alt-text style-directive syntax
