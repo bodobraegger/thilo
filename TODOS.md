@@ -43,21 +43,31 @@
 
 # Feedback 19.07.26
 - [x] Remove breadcrumbs and skip to content button
-- [ ] on language variants, home links is broken, acceuil -> 404 -> german home trailing slash issue
-- [ ] title level 4 are too small, compare to old website
-- [ ] search
-  - [ ] direct to nearest parent h* heading
-  - [ ] whole box clickable, section pill below
-- [ ] images
-  - [ ] default centered?
-  - [ ] float margins
-  - [ ] alt tags, compare to old code
-- [ ] match github actions for deploy, pass to james
+- [ ] **Language switch from the home page 404s** (e.g. "Accueil" link): `handleLanguageChange`'s
+      fallback in `src/utils/languageSwitcher.ts:84-85` builds `/${targetLocale}` for fr/it, missing
+      the trailing slash every other locale link in the codebase uses (`/${lang}/`), since `[lang]/index.astro`
+      is an index route, the slash-less URL 404s and something falls back to the German home page.
+- [ ] `h4` in section content renders at the browser default size (`src/styles/section.css` sets
+      color but no `font-size` for it), noticeably smaller than the old site; give it an explicit size
+- [ ] Search
+  - [ ] Result links point at the section/chapter page only (`getLocalizedUrl` in `Search.astro`'s
+        `#search()`), not the specific heading that matched, add a `#fragment` to the nearest parent
+        `h*` so results jump straight to the match
+  - [ ] Full-page results (`#renderResults` in `Search.astro`): only the title is a link inside the
+        card. Make the whole result box clickable, and move the section-name text out of the inline
+        row into a pill below the title (matching the dropdown's layout)
+- [ ] Images (alt-text parsing in `src/utils/markdown.ts`)
+  - [ ] Center images by default
+  - [ ] Support float + margin via the existing alt-text style-directive syntax
+  - [ ] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
+        accessible description text, compare to the old code's handling and fix
+- [ ] Match the GitHub Actions deploy workflow to the old site's, then hand off to James
 
 ## not for now
 - [ ] future todos:
-  - [ ] own the quiz frontend
-  - [ ] LLM backed question generation, no account / tracking
-  - [ ] how to verify and classify? -> manual verification!
-  - [ ] it rechtlinie
-  - [ ] strapi updates (james), prerequisite for quiz
+  - [ ] Own the quiz frontend, replace `react-quiz-component` with a custom component,
+        see [docs/GAMIFICATION.md](./docs/GAMIFICATION.md#1-ai-generated-quizzes-per-chapter)
+  - [ ] LLM-backed question generation, no account / tracking
+  - [ ] How to verify and classify generated questions? -> manual verification!
+  - [ ] IT Richtlinie
+  - [ ] Strapi updates (James), prerequisite for quiz work
