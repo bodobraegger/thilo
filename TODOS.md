@@ -43,10 +43,9 @@
 
 # Feedback 19.07.26
 - [x] Remove breadcrumbs and skip to content button
-- [ ] **Language switch from the home page 404s** (e.g. "Accueil" link): `handleLanguageChange`'s
-      fallback in `src/utils/languageSwitcher.ts:84-85` builds `/${targetLocale}` for fr/it, missing
-      the trailing slash every other locale link in the codebase uses (`/${lang}/`), since `[lang]/index.astro`
-      is an index route, the slash-less URL 404s and something falls back to the German home page.
+- [ ] **Home link 404s from a chapter page in a non-default locale**: on a French chapter, clicking
+      "Accueil" (home) 404s instead of going to the French home page. Likely a trailing-slash
+      mismatch between the home link's href and the locale's actual route
 - [ ] `h4` in section content renders at the browser default size (`src/styles/section.css` sets
       color but no `font-size` for it), noticeably smaller than the old site; give it an explicit size
 - [ ] Search
@@ -57,7 +56,7 @@
         card. Make the whole result box clickable, and move the section-name text out of the inline
         row into a pill below the title (matching the dropdown's layout)
 - [ ] Images (alt-text parsing in `src/utils/markdown.ts`)
-  - [ ] Center images by default
+  - [ ] Center images by default?
   - [ ] Support float + margin via the existing alt-text style-directive syntax
   - [ ] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
         accessible description text, compare to the old code's handling and fix
