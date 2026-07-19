@@ -121,7 +121,23 @@ generated file. Auto-append is preferred: `Section.astro` can check for a
 quiz at the conventional path at build time and render the island without any
 editor action.
 
-Move away from the react-quiz-component, with ugly and hardcoded styles. 
+**Replace react-quiz-component with a custom quiz component.** The library's
+own stylesheet is unusable as-is (see `stripQuizComponentCss` in
+`astro.config.mjs`, a Vite transform that reaches into the library's bundled
+JS to cut its injected `:root{--quiz-...}` CSS at build time) and `quiz.css`
+now re-implements the full look by targeting the library's internal class
+names (`.questionWrapperBody`, `.answerBtn`, `.quiz-result-filter`, etc.).
+That's a lot of surface area riding on an untyped dependency (`Quiz.tsx`
+imports it with `@ts-ignore`) whose DOM structure we don't control and that
+could shift on any version bump, silently breaking the CSS overrides.
+
+Since quizzes are build-time generated JSON (3-5 multiple-choice questions,
+see above) and don't need the library's other question types (open-ended,
+picture-choice, polls) or its result-filtering UI, a small purpose-built
+component covering start screen, one question at a time, correct/incorrect
+feedback, and a result summary would be less code than the override
+stylesheet it replaces, fully typed, and would let `stripQuizComponentCss`
+and the `react-quiz-component` dependency be deleted outright.
 
 ### 2. Badges and section completion
 
