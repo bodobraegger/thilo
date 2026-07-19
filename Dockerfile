@@ -23,7 +23,7 @@ RUN npm install -g pnpm
 ############################################
 RUN chown -R node:node /srv/app
 USER node
-COPY --chown=node:node [ "package.json", "pnpm-lock.yaml", "astro.config.mjs", "tailwind.config.mjs", "tsconfig.json", "./"]
+COPY --chown=node:node [ "package.json", "pnpm-lock.yaml", "astro.config.mjs", "tsconfig.json", "./"]
 COPY --chown=node:node [ "./docker/entrypoint.sh", "./entrypoint.sh"]
 COPY --chown=node:node [ "public", "public"]
 COPY --chown=node:node [ "src", "src"]
