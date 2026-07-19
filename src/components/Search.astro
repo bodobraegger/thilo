@@ -503,12 +503,11 @@ const inlineInputClass = `w-full rounded-md pl-4 pr-10 text-base focus:outline-n
               <p class="text-gray-700 leading-relaxed mb-6">
                 ${highlightHtml(excerpt, this.query, `color-mix(in srgb, ${color} 20%, var(--mix-light, white))`)}
               </p>
-              <div class="flex items-center gap-3 text-sm">
+              <div class="flex items-center text-sm">
                 <a href="${escapeHtml(result.chapterUrl)}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium hover:underline"
                   style="background-color:color-mix(in srgb, ${color} 20%, var(--mix-light, white));color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">
-                  ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}
+                  ${escapeHtml(result.type === 'section' ? (this.i18n.section ?? '') : (this.i18n.chapter ?? ''))}: ${escapeHtml(result.sectionTitle)}
                 </a>
-                <span style="color:color-mix(in srgb, ${color} var(--accent-keep, 100%), var(--mix-dark, black))">${escapeHtml(result.sectionTitle)}</span>
               </div>
             </div>`;
         }
