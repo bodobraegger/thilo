@@ -79,6 +79,7 @@ header {
     &.active {
       background-color: color-mix(in srgb, var(--section-color, var(--color-primary)) 10%, var(--mix-light) 90%);
       color: color-mix(in srgb, var(--section-color, var(--color-primary)) 70%, var(--mix-dark) 30%);
+      font-weight: 500;
     }
   }
 
