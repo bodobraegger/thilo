@@ -9,6 +9,8 @@ section {
   h4 {
     color: var(--color-primary-light);
     text-wrap: balance;
+    font-size: 18px;
+    font-weight: bold;
   }
   img {
     max-width: 100%;
