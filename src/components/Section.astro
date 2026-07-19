@@ -40,17 +40,6 @@ const sectionColor = section.color_primary || "#521d3a";
 ---
 
 <section class="content" data-color={sectionColor}>
-    {
-        !isIndex && (
-            <nav class="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
-                <AstroLink href={lang === "de" ? "/" : `/${lang}/`} class="hover:underline">
-                    {t.translation.homePage.title}
-                </AstroLink>
-                <span class="mx-1" aria-hidden="true">›</span>
-                <span class="text-gray-700">{section.menu_name || section.title}</span>
-            </nav>
-        )
-    }
     <div
         id="section-title"
         class={`section-title section-${section.sorting} mb-4`}

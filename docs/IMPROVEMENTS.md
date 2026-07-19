@@ -240,7 +240,6 @@ React `MarkdownRenderer`/`Link` components. `fetchAllSections()` now calls
   to the Section content type in Strapi, they are used automatically;
   otherwise title and description fall back to section title and extracted
   content
-- breadcrumb (`Home › Section`) on section pages
 
 ## PWA
 
