@@ -44,9 +44,6 @@ section {
   strong {
     color: var(--color-primary);
   }
-  .md-img {
-    display: block;
-  }
   .section-title {
     display: flex;
     h1 {
@@ -77,13 +74,6 @@ section {
       font-size: 24px;
       font-weight: bold;
       margin-bottom: 16px;
-    }
-
-    .md-img {
-      display: inline-block;
-      figcaption {
-        margin: -.5em 0em 0em 0em;
-      }
     }
 
     h3 {

@@ -53,12 +53,10 @@
         `#search()`), not the specific heading that matched, add a `#fragment` to the nearest parent
         `h*` so results jump straight to the match
   - [ ] Full-page results (`#renderResults` in `Search.astro`): only the title is a link inside the
-        card. Make the whole result box clickable, and move the section-name text out of the inline
-        row into a pill below the title (matching the dropdown's layout)
-- [ ] Images (alt-text parsing in `src/utils/markdown.ts`)
-  - [ ] Center images by default?
-  - [ ] Support float + margin via the existing alt-text style-directive syntax
-  - [ ] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
+        card. Make the whole result box clickable, and also the bereich / kapitel text text in the pill below to
+- [x] Images (alt-text parsing in `src/utils/markdown.ts`)
+  - [x] Support float + margin via the existing alt-text style-directive syntax
+  - [x] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
         accessible description text, compare to the old code's handling and fix
 - [ ] Match the GitHub Actions deploy workflow to the old site's, then hand off to James
 

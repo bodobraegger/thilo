@@ -40,21 +40,38 @@ export function extractImageUrls(content: string | undefined): string[] {
     .map(match => resolveImageSrc(match[1]));
 }
 
+// Strapi pre-fills alt text with the uploaded file's name when an editor
+// doesn't set one explicitly; that's not a real caption worth showing.
+function isLikelyFilename(text: string): boolean {
+  return /^[\w-]+\.(jpe?g|png|gif|webp|svg|bmp|tiff?|avif)$/i.test(text.trim());
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // Content editors encode CSS and captions in image alt text, e.g.
-// "caption: Logo OMMS; width: 300px;" - parse both out.
-function parseCSSProperties(cssText: string): string | null {
-  const properties = cssText.split(';').map(prop => prop.trim()).filter(prop => prop.length > 0);
-  const validProperties: string[] = [];
-  for (const property of properties) {
-    const propMatch = property.match(/^\s*([\w-]+)\s*:\s*(.+)\s*$/);
-    if (propMatch) {
-      const [, propName, propValue] = propMatch;
-      if (/^[\w-]+$/.test(propName) && propValue.trim().length > 0) {
-        validProperties.push(`${propName}: ${propValue.trim()}`);
-      }
+// "caption: Logo OMMS; width: 300px;" (see README.md). Segments without a
+// recognized `tag: value` shape are treated as plain caption/alt prose, so
+// descriptive text mixed with directives (or with no directives at all)
+// survives instead of being silently dropped.
+function parseAltDirectives(alt: string): { caption: string; styles: Record<string, string> } {
+  const styles: Record<string, string> = {};
+  const captionParts: string[] = [];
+  for (const rawSegment of alt.split(';')) {
+    const segment = rawSegment.trim();
+    if (!segment) continue;
+    const match = segment.match(/^([\w-]+)\s*:\s*(.+)$/);
+    if (match && match[1].toLowerCase() === 'caption') {
+      captionParts.push(match[2].trim());
+    } else if (match) {
+      styles[match[1]] = match[2].trim();
+    } else {
+      captionParts.push(segment);
     }
   }
-  return validProperties.length > 0 ? validProperties.join('; ') : null;
+  return { caption: captionParts.join('; '), styles };
 }
 
 function createRenderer(base: string, locale: string) {
@@ -80,45 +97,56 @@ function createRenderer(base: string, locale: string) {
 
   renderer.image = function (token: Tokens.Image): string {
     const { href, title, text } = token;
+    const { caption, styles } = parseAltDirectives(text || '');
 
-    let altText = text || '';
-    let styleFromAlt = '';
-    let finalAltText = '';
-
-    const captionMatch = altText.match(/caption:\s*([^;]+);/i);
-    if (captionMatch) {
-      finalAltText = captionMatch[1].trim();
-      altText = altText.replace(/caption:\s*[^;]+;\s*/i, '').trim();
-    }
-
-    const parsedStyles = altText ? parseCSSProperties(altText) : null;
-    if (parsedStyles) {
-      styleFromAlt = parsedStyles;
-    }
-    if (!captionMatch && !parsedStyles) {
-      finalAltText = altText;
-    }
+    const discardNonNum = (str: string) => +str.replace(/[^0-9]/g, '');
+    const explicitWidth = styles.width ? discardNonNum(styles.width) : null;
+    const explicitHeight = styles.height ? discardNonNum(styles.height) : null;
+    const float = styles.float;
+    delete styles.width;
+    delete styles.height;
+    delete styles.float;
 
     const src = resolveImageSrc(href ?? '');
-    let imgTag = `<img src="${src}" alt="${finalAltText}" loading="lazy" decoding="async"`;
-    // Dimensions probed at build time let the browser reserve space (no
-    // layout shift); CSS keeps images responsive via max-width/height:auto
-    const dimensions = getCachedImageDimensions(src);
-    if (dimensions) {
-      imgTag += ` width="${dimensions.width}" height="${dimensions.height}"`;
-    }
-    if (styleFromAlt) {
-      imgTag += ` style="${styleFromAlt}"`;
-    } else if (title) {
+    // An explicit width/height directive is an authoring decision and wins;
+    // only fall back to the build-time-probed intrinsic size (reserves space,
+    // no layout shift) when no directive overrides it.
+    const dimensions = (!explicitWidth && !explicitHeight) ? getCachedImageDimensions(src) : null;
+    const width = explicitWidth ?? dimensions?.width;
+    const height = explicitHeight ?? dimensions?.height;
+
+    let imgTag = `<img src="${escapeHtml(src)}" alt="${escapeHtml(caption)}" loading="lazy" decoding="async"`;
+    if (width) imgTag += ` width="${width}"`;
+    if (height) imgTag += ` height="${height}"`;
+    if (title) {
       // Strapi sometimes stores style information in the title attribute
       if (title.includes('width:') || title.includes('height:') || title.includes('float:')) {
         imgTag += ` style="${title}"`;
       } else {
-        imgTag += ` title="${title}"`;
+        imgTag += ` title="${escapeHtml(title)}"`;
       }
     }
     imgTag += ' />';
-    return imgTag;
+
+    // Wrapper must stay inline: marked's default paragraph renderer wraps a
+    // standalone `![]()` line in <p>...</p>, and only phrasing content is
+    // valid there - a block-level wrapper (e.g. <figure>) would produce
+    // invalid nesting that browsers "fix" by splitting the <p> in two.
+    // inline-block (not block) so multiple images on the same markdown line
+    // render side by side instead of each forcing its own line.
+    const wrapperClasses = ['md-img', 'inline-block', 'mb-2'];
+    if (float === 'left') wrapperClasses.push('float-left', 'mr-2');
+    else if (float === 'right') wrapperClasses.push('float-right', 'ml-2');
+
+    const remainingStyle = Object.entries(styles)
+      .map(([prop, value]) => `${prop}: ${value}`).join('; ');
+    const styleAttr = remainingStyle ? ` style="${escapeHtml(remainingStyle)}"` : '';
+
+    const captionTag = (caption && !isLikelyFilename(caption))
+      ? `<span class="md-img-caption block text-sm italic mt-1">${escapeHtml(caption)}</span>`
+      : '';
+
+    return `<span class="${wrapperClasses.join(' ')}"${styleAttr}>${imgTag}${captionTag}</span>`;
   };
 
   return renderer;
