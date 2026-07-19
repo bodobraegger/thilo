@@ -14,24 +14,6 @@
   box-shadow: 0 0 0 2px var(--color-primary);
 }
 
-/* Keyboard-only skip link: visually hidden until focused */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  z-index: 100;
-}
-.skip-link:focus {
-  position: fixed;
-  left: 8px;
-  top: 8px;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  background-color: var(--background-light, white);
-  color: var(--text-color, black);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
-  outline: 2px solid var(--color-primary);
-}
-
 /* Sidebar active states (section accent aware) */
 nav {
   .active {

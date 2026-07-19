@@ -143,7 +143,6 @@ if (strippedPath === '/' || strippedPath === '') {
 ---
 
 <BaseLayout title={pageTitle} lang={lang} allSectionsData={allSectionsData} description={description} canonicalUrl={canonicalUrl} hreflangUrls={hreflangUrls} structuredData={structuredData}>
-  <a href="#main-content" class="skip-link">{t.translation.section.skipToContent}</a>
   <Header locale={lang as Locale} currentSection={currentSection} transition:persist />
   
   <div class="flex min-h-[calc(100vh-52px)] w-full max-w-[1400px] mx-auto">
