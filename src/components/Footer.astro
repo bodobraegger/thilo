@@ -2,6 +2,7 @@
 import { getTranslations, type Locale } from "../i18n";
 import type { SectionT } from "../utils/data";
 import type { SectionData } from "../utils/sectionMappings";
+import { localeHomeUrl } from "../utils/urls";
 import AstroLink from "./AstroLink.astro";
 
 import "../styles/footer.css";
@@ -41,7 +42,7 @@ const nextSlug = nextSection ? String(nextSection.slug) : "";
 
 // Function to get section URL
 const getSectionUrl = (slug: string) => {
-    if (!slug) return locale === "de" ? "/" : `/${locale}/`;
+    if (!slug) return localeHomeUrl(locale);
     return locale === "de" ? `/${slug}` : `/${locale}/${slug}`;
 };
 
@@ -60,7 +61,7 @@ if (!currentSectionSlug) {
   leftButton = { text: lastChapterText, subtitle: prevSection ? prevSection.title : '', href: getSectionUrl(prevSlug), icon: 'arrow-left' };
 } else if (sections[0] && sections[0].slug === currentSectionSlug) {
   // First section
-  leftButton = { text: backToBeginningText, subtitle: homeButtonText, href: locale === "de" ? "/" : `/${locale}/`, icon: 'home' };
+  leftButton = { text: backToBeginningText, subtitle: homeButtonText, href: localeHomeUrl(locale), icon: 'home' };
 } else if (prevSection) {
   // Other sections with prev
   leftButton = { text: prevButtonText, subtitle: prevSection.title, href: getSectionUrl(prevSlug), icon: 'arrow-left' };
@@ -74,7 +75,7 @@ if (!currentSectionSlug) {
   rightButton = { text: firstChapterText, subtitle: nextSection ? nextSection.title : '', href: getSectionUrl(nextSlug), icon: 'arrow-right' };
 } else if (!nextSection) {
   // Last section
-  rightButton = { text: backToBeginningText, subtitle: homeButtonText, href: locale === "de" ? "/" : `/${locale}/`, icon: 'home' };
+  rightButton = { text: backToBeginningText, subtitle: homeButtonText, href: localeHomeUrl(locale), icon: 'home' };
 } else {
   // Other sections with next
   rightButton = { text: nextButtonText, subtitle: nextSection.title, href: getSectionUrl(nextSlug), icon: 'arrow-right' };

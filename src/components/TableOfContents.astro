@@ -2,6 +2,7 @@
 import type { SectionData } from '../utils/sectionMappings';
 import { getTranslations, type Locale } from '../i18n';
 import { getAllSlugsForSection } from '../utils/slugMapping';
+import { localeHomeUrl } from '../utils/urls';
 import AstroLink from './AstroLink.astro';
 
 import '../styles/nav.css';
@@ -49,12 +50,10 @@ function getSectionUrl(section: SectionData, locale: string): string {
       <!-- Home Link -->
       <li>
         <AstroLink
-          href={lang === 'de' ? '/' : `/${lang}/`}
+          href={localeHomeUrl(lang)}
           data-nav="home"
           class={`flex items-center px-3 py-1 text-sm rounded-md transition-colors hover:bg-gray-100 ${
-            (currentPath === '/' && lang === 'de') || (currentPath === `/${lang}/` && lang !== 'de')
-              ? 'active font-medium'
-              : 'text-gray-700'
+            currentPath === localeHomeUrl(lang) ? 'active font-medium' : 'text-gray-700'
           }`}
         >
           <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

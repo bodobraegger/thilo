@@ -1,4 +1,5 @@
 import { getSections, type SectionT } from './data';
+import { localeHomeUrl } from './urls';
 
 export interface SectionData {
   id: number;
@@ -156,5 +157,5 @@ export function getSectionUrlForLocaleFromCache(
 ): string {
   const mapping = sectionMappings[sectionId];
   if (mapping?.[targetLocale]) return mapping[targetLocale].url;
-  return targetLocale === 'de' ? '/' : `/${targetLocale}/`;
+  return localeHomeUrl(targetLocale);
 }

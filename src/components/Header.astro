@@ -2,6 +2,7 @@
 import { getTranslations, type Locale } from '../i18n';
 import { fetchAllSections, getSectionUrlForLocaleFromCache, type SimpleSectionsData } from '../utils/sectionMappings';
 import type { SectionT } from '../utils/data';
+import { localeHomeUrl } from '../utils/urls';
 import AstroLink from './AstroLink.astro';
 import SearchComponent from './Search.astro';
 
@@ -66,7 +67,7 @@ if (currentSection) {
     if (targetLocale === 'de') {
       targetUrl = basePath === '/' ? '/' : basePath;
     } else {
-      targetUrl = basePath === '/' ? `/${targetLocale}/` : `/${targetLocale}${basePath}`;
+      targetUrl = basePath === '/' ? localeHomeUrl(targetLocale) : `/${targetLocale}${basePath}`;
     }
     languageAlternatives.push({ locale: targetLocale, url: targetUrl });
   }
