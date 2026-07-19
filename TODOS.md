@@ -53,7 +53,7 @@
         `#search()`), not the specific heading that matched, add a `#fragment` to the nearest parent
         `h*` so results jump straight to the match
   - [ ] Full-page results (`#renderResults` in `Search.astro`): only the title is a link inside the
-        card. Make the whole result box clickable, and also the bereich / kapitel text text in the pill below to
+        card right now. Make the whole result box clickable, and also the bereich / kapitel text text in the pill below or the title to lead to the containing chapter, but clicking on the pill redirects to the actual result text. include displayed alt-captions in the results.
 - [x] Images (alt-text parsing in `src/utils/markdown.ts`)
   - [x] Support float + margin via the existing alt-text style-directive syntax
   - [x] Alt text is being consumed as a carrier for caption/CSS directives rather than left as
